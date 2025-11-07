@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -21,6 +21,7 @@ import java.util.zip.Checksum;
 /**
  * A pure-Java implementation of the CRC32 checksum that uses
  * the same polynomial as the built-in native CRC32.
+ *
  * <p>
  * This is to avoid the JNI overhead for certain uses of checksumming
  * where many small pieces of data are checksummed in succession.
@@ -577,7 +578,7 @@ public class PureJavaCrc32 implements Checksum {
     /** The current CRC value, bit-flipped */
     private int crc;
 
-    /** Create a new PureJavaCrc32 object. */
+    /** Constructs a new PureJavaCrc32 object. */
     public PureJavaCrc32() {
         resetCrc();
     }
@@ -600,7 +601,6 @@ public class PureJavaCrc32 implements Checksum {
     @Override
     public void update(final byte[] b, final int offset, final int len) {
       int localCrc = crc;
-
       final int remainder = len & 0x7;
       int i = offset;
       for (final int end = offset + len - remainder; i < end; i += 8) {
@@ -613,33 +613,36 @@ public class PureJavaCrc32 implements Checksum {
                    T[(b[i + 4] << 24 >>> 24) + 0x300] ^ T[(b[i + 5] << 24 >>> 24) + 0x200] ^
                    T[(b[i + 6] << 24 >>> 24) + 0x100] ^ T[b[i + 7] << 24 >>> 24];
       }
-
-      /* loop unroll - duff's device style */
+      // loop unroll - duff's device style
       switch (remainder) {
       case 7:
           localCrc = localCrc >>> 8 ^ T[(localCrc ^ b[i++]) << 24 >>> 24];
+          // falls-through
       case 6:
           localCrc = localCrc >>> 8 ^ T[(localCrc ^ b[i++]) << 24 >>> 24];
+          // falls-through
       case 5:
           localCrc = localCrc >>> 8 ^ T[(localCrc ^ b[i++]) << 24 >>> 24];
+          // falls-through
       case 4:
           localCrc = localCrc >>> 8 ^ T[(localCrc ^ b[i++]) << 24 >>> 24];
+          // falls-through
       case 3:
           localCrc = localCrc >>> 8 ^ T[(localCrc ^ b[i++]) << 24 >>> 24];
+          // falls-through
       case 2:
           localCrc = localCrc >>> 8 ^ T[(localCrc ^ b[i++]) << 24 >>> 24];
+          // falls-through
       case 1:
           localCrc = localCrc >>> 8 ^ T[(localCrc ^ b[i++]) << 24 >>> 24];
-      default:
-          /* nothing */
+          // falls-through
       }
-
       // Publish crc out to object
       crc = localCrc;
     }
 
     @Override
-    final public void update(final int b) {
+    public final void update(final int b) {
         crc = crc >>> 8 ^ T[(crc ^ b) << 24 >>> 24];
     }
 

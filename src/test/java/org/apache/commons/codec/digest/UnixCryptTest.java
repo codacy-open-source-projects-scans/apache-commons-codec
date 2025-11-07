@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -26,15 +26,18 @@ import java.nio.charset.StandardCharsets;
 
 import org.junit.jupiter.api.Test;
 
-public class UnixCryptTest {
+/**
+ * Tests {@link UnixCrypt}.
+ */
+class UnixCryptTest {
 
     @Test
-    public void testCtor() {
+    void testCtor() {
         assertNotNull(new UnixCrypt());
     }
 
     @Test
-    public void testUnixCryptBytes() {
+    void testUnixCryptBytes() {
         // An empty Bytearray equals an empty String
         assertEquals("12UFlHxel6uMM", Crypt.crypt(new byte[0], "12"));
         // UTF-8 stores \u00e4 "a with dieresis" as two bytes 0xc3 0xa4.
@@ -48,7 +51,7 @@ public class UnixCryptTest {
      * Some salts are invalid for crypt(3) but not for unixCrypt().
      */
     @Test
-    public void testUnixCryptExplicitCall() {
+    void testUnixCryptExplicitCall() {
         // A call to crypt() with an empty salt would result in a "$6$" hash.
         // Using unixCrypt() explicitly results in a random salt.
         assertTrue(UnixCrypt.crypt("secret".getBytes()).matches("^[a-zA-Z0-9./]{13}$"));
@@ -59,17 +62,17 @@ public class UnixCryptTest {
      * Unimplemented "$foo$" salt prefixes would be treated as UnixCrypt salt.
      */
     @Test
-    public void testUnixCryptInvalidSalt() {
+    void testUnixCryptInvalidSalt() {
         assertThrows(IllegalArgumentException.class, () -> UnixCrypt.crypt("secret", "$a"));
     }
 
     @Test
-    public void testUnixCryptNullData() {
+    void testUnixCryptNullData() {
         assertThrows(NullPointerException.class, () -> UnixCrypt.crypt((byte[]) null));
     }
 
     @Test
-    public void testUnixCryptStrings() {
+    void testUnixCryptStrings() {
         // trivial test
         assertEquals("xxWAum7tHdIUw", Crypt.crypt("secret", "xx"));
         // empty data
@@ -80,7 +83,7 @@ public class UnixCryptTest {
     }
 
     @Test
-    public void testUnixCryptWithEmptySalt() {
+    void testUnixCryptWithEmptySalt() {
         assertThrows(IllegalArgumentException.class, () -> UnixCrypt.crypt("secret", ""));
     }
 
@@ -90,12 +93,12 @@ public class UnixCryptTest {
      * crypt("secret", "xx") = "xxWAum7tHdIUw" which makes it unverifiable.
      */
     @Test
-    public void testUnixCryptWithHalfSalt() {
+    void testUnixCryptWithHalfSalt() {
         assertThrows(IllegalArgumentException.class, () -> UnixCrypt.crypt("secret", "x"));
     }
 
     @Test
-    public void testUnixCryptWithoutSalt() {
+    void testUnixCryptWithoutSalt() {
         final String hash = UnixCrypt.crypt("foo");
         assertTrue(hash.matches("^[a-zA-Z0-9./]{13}$"));
         final String hash2 = UnixCrypt.crypt("foo");

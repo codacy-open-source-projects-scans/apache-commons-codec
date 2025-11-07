@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,6 +16,8 @@
  */
 
 package org.apache.commons.codec.language;
+
+import java.util.Locale;
 
 import org.apache.commons.codec.EncoderException;
 import org.apache.commons.codec.StringEncoder;
@@ -55,36 +57,39 @@ import org.apache.commons.codec.StringEncoder;
 public class Metaphone implements StringEncoder {
 
     /**
-     * Five values in the English language
+     * Five values in the English language.
      */
     private static final String VOWELS = "AEIOU";
 
     /**
-     * Variable used in Metaphone algorithm
+     * Variable used in Metaphone algorithm.
      */
     private static final String FRONTV = "EIY";
 
     /**
-     * Variable used in Metaphone algorithm
+     * Variable used in Metaphone algorithm.
      */
     private static final String VARSON = "CSPTG";
 
     /**
-     * The max code length for metaphone is 4
+     * The max code length for Metaphone is 4.
      */
     private int maxCodeLen = 4;
 
     /**
-     * Encodes an Object using the metaphone algorithm.  This method
-     * is provided in order to satisfy the requirements of the
-     * Encoder interface, and will throw an EncoderException if the
-     * supplied object is not of type {@link String}.
+     * Constructs a new instance.
+     */
+    public Metaphone() {
+        // empty
+    }
+
+    /**
+     * Encodes an Object using the Metaphone algorithm. This method is provided in order to satisfy the requirements of the Encoder interface, and will throw an
+     * EncoderException if the supplied object is not of type {@link String}.
      *
-     * @param obj Object to encode
-     * @return An object (or type {@link String}) containing the
-     *         metaphone code which corresponds to the String supplied.
-     * @throws EncoderException if the parameter supplied is not
-     *                          of type {@link String}
+     * @param obj Object to encode.
+     * @return An object (or type {@link String}) containing the Metaphone code which corresponds to the String supplied.
+     * @throws EncoderException if the parameter supplied is not of type {@link String}.
      */
     @Override
     public Object encode(final Object obj) throws EncoderException {
@@ -98,7 +103,7 @@ public class Metaphone implements StringEncoder {
      * Encodes a String using the Metaphone algorithm.
      *
      * @param str String object to encode
-     * @return The metaphone code corresponding to the String supplied
+     * @return The Metaphone code corresponding to the String supplied
      */
     @Override
     public String encode(final String str) {
@@ -106,22 +111,24 @@ public class Metaphone implements StringEncoder {
     }
 
     /**
-     * Returns the maxCodeLen.
-     * @return int
+     * Gets the maxCodeLen.
+     *
+     * @return the maxCodeLen.
      */
-    public int getMaxCodeLen() { return this.maxCodeLen; }
+    public int getMaxCodeLen() {
+        return this.maxCodeLen;
+    }
 
     private boolean isLastChar(final int wdsz, final int n) {
         return n + 1 == wdsz;
     }
 
     /**
-     * Tests is the metaphones of two strings are identical.
+     * Tests is the Metaphones of two strings are identical.
      *
-     * @param str1 First of two strings to compare
-     * @param str2 Second of two strings to compare
-     * @return {@code true} if the metaphones of these strings are identical,
-     *        {@code false} otherwise.
+     * @param str1 First of two strings to compare.
+     * @param str2 Second of two strings to compare.
+     * @return {@code true} if the Metaphones of these strings are identical, {@code false} otherwise.
      */
     public boolean isMetaphoneEqual(final String str1, final String str2) {
         return metaphone(str1).equals(metaphone(str2));
@@ -148,14 +155,14 @@ public class Metaphone implements StringEncoder {
     }
 
     /**
-     * Find the metaphone value of a String. This is similar to the
-     * soundex algorithm, but better at finding similar sounding words.
+     * Find the Metaphone value of a String. This is similar to the
+     * Soundex algorithm, but better at finding similar sounding words.
      * All input is converted to upper case.
      * Limitations: Input format is expected to be a single ASCII word
      * with only characters in the A - Z range, no punctuation or numbers.
      *
-     * @param txt String to find the metaphone code for
-     * @return A metaphone code corresponding to the String supplied
+     * @param txt String to find the Metaphone code for.
+     * @return A Metaphone code corresponding to the String supplied.
      */
     public String metaphone(final String txt) {
         boolean hard = false;
@@ -165,10 +172,10 @@ public class Metaphone implements StringEncoder {
         }
         // single character is itself
         if (txtLength == 1) {
-            return txt.toUpperCase(java.util.Locale.ENGLISH);
+            return txt.toUpperCase(Locale.ENGLISH);
         }
 
-        final char[] inwd = txt.toUpperCase(java.util.Locale.ENGLISH).toCharArray();
+        final char[] inwd = txt.toUpperCase(Locale.ENGLISH).toCharArray();
 
         final StringBuilder local = new StringBuilder(40); // manipulate
         final StringBuilder code = new StringBuilder(10); // output
@@ -216,8 +223,8 @@ public class Metaphone implements StringEncoder {
         while (code.length() < getMaxCodeLen() && n < wdsz) { // max code size of 4 works well
             final char symb = local.charAt(n);
             // remove duplicate letters except C
-            if (symb != 'C' && isPreviousChar(local, n, symb)) {
-            } else { // not dup
+            if (symb == 'C' || !isPreviousChar(local, n, symb)) {
+                // not dup
                 switch (symb) {
                 case 'A':
                 case 'E':
@@ -251,7 +258,7 @@ public class Metaphone implements StringEncoder {
                         code.append('K');
                         break;
                     }
-                    if (!isNextChar(local, n, 'H') || (n == 0 && wdsz >= 3 && isVowel(local, 2))) { // CH consonant -> K consonant
+                    if (!isNextChar(local, n, 'H') || n == 0 && wdsz >= 3 && isVowel(local, 2)) { // CH consonant -> K consonant
                         code.append('K');
                     } else {
                         code.append('X'); // CHvowel -> X
@@ -385,8 +392,11 @@ public class Metaphone implements StringEncoder {
 
     /**
      * Sets the maxCodeLen.
-     * @param maxCodeLen The maxCodeLen to set
+     *
+     * @param maxCodeLen The maxCodeLen to set.
      */
-    public void setMaxCodeLen(final int maxCodeLen) { this.maxCodeLen = maxCodeLen; }
+    public void setMaxCodeLen(final int maxCodeLen) {
+        this.maxCodeLen = maxCodeLen;
+    }
 
 }

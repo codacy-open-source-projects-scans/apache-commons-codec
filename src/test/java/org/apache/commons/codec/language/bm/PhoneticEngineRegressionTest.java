@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -23,13 +23,16 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.regex.Pattern;
 
 import org.junit.jupiter.api.Test;
 
 /**
  * Tests PhoneticEngine and Languages.LanguageSet in ways very similar to code found in solr-3.6.0.
  */
-public class PhoneticEngineRegressionTest {
+class PhoneticEngineRegressionTest {
+
+    private static final Pattern COMMA_PATTERN = Pattern.compile(",");
 
     /**
      * This code is similar in style to code found in Solr:
@@ -57,7 +60,7 @@ public class PhoneticEngineRegressionTest {
         if (languageSetArg == null || languageSetArg.equals("auto")) {
             languageSet = null;
         } else {
-            languageSet = Languages.LanguageSet.from(new HashSet<>(Arrays.asList(languageSetArg.split(","))));
+            languageSet = Languages.LanguageSet.from(new HashSet<>(Arrays.asList(COMMA_PATTERN.split(languageSetArg))));
         }
 
         /*
@@ -76,7 +79,7 @@ public class PhoneticEngineRegressionTest {
     }
 
     @Test
-    public void testCompatibilityWithOriginalVersion() {
+    void testCompatibilityWithOriginalVersion() {
         // see CODEC-187
         // comparison: https://stevemorse.org/census/soundex.html
 
@@ -100,7 +103,7 @@ public class PhoneticEngineRegressionTest {
     }
 
     @Test
-    public void testSolrASHKENAZI() {
+    void testSolrASHKENAZI() {
         Map<String, String> args;
 
         // concat is true, ruleType is EXACT
@@ -165,7 +168,7 @@ public class PhoneticEngineRegressionTest {
     }
 
     @Test
-    public void testSolrGENERIC() {
+    void testSolrGENERIC() {
         Map<String, String> args;
 
         // concat is true, ruleType is EXACT
@@ -227,7 +230,7 @@ public class PhoneticEngineRegressionTest {
     }
 
     @Test
-    public void testSolrSEPHARDIC() {
+    void testSolrSEPHARDIC() {
         Map<String, String> args;
 
         // concat is true, ruleType is EXACT

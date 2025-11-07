@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -19,6 +19,7 @@ package org.apache.commons.codec.binary;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -28,11 +29,14 @@ import java.io.OutputStream;
 import org.apache.commons.codec.CodecPolicy;
 import org.junit.jupiter.api.Test;
 
-public class Base32OutputStreamTest {
+/**
+ * Tests {@link Base32OutputStream}.
+ */
+class Base32OutputStreamTest {
 
-    private final static byte[] CR_LF = {(byte) '\r', (byte) '\n'};
+    private static final byte[] CR_LF = {(byte) '\r', (byte) '\n'};
 
-    private final static byte[] LF = {(byte) '\n'};
+    private static final byte[] LF = {(byte) '\n'};
 
 //    /**
 //     * Test the Base32OutputStream implementation against the special NPE inducing input
@@ -41,7 +45,7 @@ public class Base32OutputStreamTest {
 //     * @throws Exception for some failure scenarios.
 //     */
 //    @Test
-//    public void testCodec98NPE() throws Exception {
+//    void testCodec98NPE() throws Exception {
 //        byte[] codec98 = StringUtils.getBytesUtf8(Base32TestData.CODEC_98_NPE);
 //        byte[] codec98_1024 = new byte[1024];
 //        System.arraycopy(codec98, 0, codec98_1024, 0, codec98.length);
@@ -71,7 +75,7 @@ public class Base32OutputStreamTest {
      *             for some failure scenarios.
      */
     @Test
-    public void testBase32EmptyOutputStreamMimeChunkSize() throws Exception {
+    void testBase32EmptyOutputStreamMimeChunkSize() throws Exception {
         testBase32EmptyOutputStream(BaseNCodec.MIME_CHUNK_SIZE);
     }
 
@@ -82,7 +86,7 @@ public class Base32OutputStreamTest {
      *             for some failure scenarios.
      */
     @Test
-    public void testBase32EmptyOutputStreamPemChunkSize() throws Exception {
+    void testBase32EmptyOutputStreamPemChunkSize() throws Exception {
         testBase32EmptyOutputStream(BaseNCodec.PEM_CHUNK_SIZE);
     }
 
@@ -93,7 +97,7 @@ public class Base32OutputStreamTest {
      *             for some failure scenarios.
      */
     @Test
-    public void testBase32OutputStreamByChunk() throws Exception {
+    void testBase32OutputStreamByChunk() throws Exception {
         // Hello World test.
         byte[] encoded = StringUtils.getBytesUtf8(Base32TestData.BASE32_FIXTURE);
         byte[] decoded = StringUtils.getBytesUtf8(Base32TestData.STRING_FIXTURE);
@@ -127,7 +131,7 @@ public class Base32OutputStreamTest {
      *             for some failure scenarios.
      */
     @Test
-    public void testBase32OutputStreamByteByByte() throws Exception {
+    void testBase32OutputStreamByteByByte() throws Exception {
         // Hello World test.
         byte[] encoded = StringUtils.getBytesUtf8(Base32TestData.BASE32_FIXTURE);
         byte[] decoded = StringUtils.getBytesUtf8(Base32TestData.STRING_FIXTURE);
@@ -152,6 +156,11 @@ public class Base32OutputStreamTest {
             decoded = randomData[0];
             testByteByByte(encoded, decoded, 0, LF);
         }
+    }
+
+    @Test
+    void testBuilder() {
+        assertNotNull(Base32OutputStream.builder().getBaseNCodec());
     }
 
     /**
@@ -278,7 +287,7 @@ public class Base32OutputStreamTest {
      *             for some failure scenarios.
      */
     @Test
-    public void testStrictDecoding() throws Exception {
+    void testStrictDecoding() throws Exception {
         for (final String s : Base32Test.BASE32_IMPOSSIBLE_CASES) {
             final byte[] encoded = StringUtils.getBytesUtf8(s);
             ByteArrayOutputStream bout = new ByteArrayOutputStream();
@@ -291,7 +300,21 @@ public class Base32OutputStreamTest {
 
                 // Strict decoding should throw
                 bout = new ByteArrayOutputStream();
-                try (final Base32OutputStream out2 = new Base32OutputStream(bout, false, 0, null, CodecPolicy.STRICT)) {
+                try (Base32OutputStream out2 = new Base32OutputStream(bout, false, 0, null, CodecPolicy.STRICT)) {
+                    assertTrue(out2.isStrictDecoding());
+                    assertThrows(IllegalArgumentException.class, () -> out2.write(encoded));
+                }
+                try (Base32OutputStream out2 = Base32OutputStream.builder()
+                        .setOutputStream(bout).setEncode(false)
+                        .setBaseNCodec(Base32.builder().setLineLength(0).setLineSeparator(null).setDecodingPolicy(CodecPolicy.STRICT).get())
+                        .get()) {
+                    assertTrue(out2.isStrictDecoding());
+                    assertThrows(IllegalArgumentException.class, () -> out2.write(encoded));
+                }
+                try (Base32OutputStream out2 = Base32OutputStream.builder()
+                        .setOutputStream(bout).setEncode(false)
+                        .setBaseNCodec(Base32.builder().setDecodingPolicy(CodecPolicy.STRICT).get())
+                        .get()) {
                     assertTrue(out2.isStrictDecoding());
                     assertThrows(IllegalArgumentException.class, () -> out2.write(encoded));
                 }
@@ -306,10 +329,10 @@ public class Base32OutputStreamTest {
      *             for some failure scenarios.
      */
     @Test
-    public void testWriteOutOfBounds() throws Exception {
+    void testWriteOutOfBounds() throws Exception {
         final byte[] buf = new byte[1024];
         final ByteArrayOutputStream bout = new ByteArrayOutputStream();
-        try (final Base32OutputStream out = new Base32OutputStream(bout)) {
+        try (Base32OutputStream out = new Base32OutputStream(bout)) {
             assertThrows(IndexOutOfBoundsException.class, () -> out.write(buf, -1, 1), "Base32OutputStream.write(buf, -1, 1)");
             assertThrows(IndexOutOfBoundsException.class, () -> out.write(buf, 1, -1), "Base32OutputStream.write(buf, 1, -1)");
             assertThrows(IndexOutOfBoundsException.class, () -> out.write(buf, buf.length + 1, 0), "Base32OutputStream.write(buf, buf, buf.length + 1, 0)");
@@ -324,9 +347,9 @@ public class Base32OutputStreamTest {
      *             for some failure scenarios.
      */
     @Test
-    public void testWriteToNullCoverage() throws Exception {
+    void testWriteToNullCoverage() throws Exception {
         final ByteArrayOutputStream bout = new ByteArrayOutputStream();
-        try (final Base32OutputStream out = new Base32OutputStream(bout)) {
+        try (Base32OutputStream out = new Base32OutputStream(bout)) {
             assertThrows(NullPointerException.class, () -> out.write(null, 0, 0));
         }
     }

@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -25,6 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertTimeout;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.Duration;
+import java.util.regex.Pattern;
 
 import org.apache.commons.codec.AbstractStringEncoderTest;
 import org.apache.commons.codec.EncoderException;
@@ -34,7 +35,10 @@ import org.junit.jupiter.api.Test;
 /**
  * Tests BeiderMorseEncoder.
  */
-public class BeiderMorseEncoderTest extends AbstractStringEncoderTest<StringEncoder> {
+class BeiderMorseEncoderTest extends AbstractStringEncoderTest<StringEncoder> {
+
+    private static final Pattern PIPE_PATTERN = Pattern.compile("\\|");
+
     private static final char[] TEST_CHARS = { 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'o', 'u' };
 
     private void assertNotEmpty(final BeiderMorseEncoder bmpm, final String value) throws EncoderException {
@@ -58,7 +62,7 @@ public class BeiderMorseEncoderTest extends AbstractStringEncoderTest<StringEnco
      *
      * @throws EncoderException for some failure scenarios     */
     @Test
-    public void testAllChars() throws EncoderException {
+    void testAllChars() throws EncoderException {
         final BeiderMorseEncoder bmpm = createGenericApproxEncoder();
         for (char c = Character.MIN_VALUE; c < Character.MAX_VALUE; c++) {
             bmpm.encode(Character.toString(c));
@@ -66,7 +70,7 @@ public class BeiderMorseEncoderTest extends AbstractStringEncoderTest<StringEnco
     }
 
     @Test
-    public void testAsciiEncodeNotEmpty1Letter() throws EncoderException {
+    void testAsciiEncodeNotEmpty1Letter() throws EncoderException {
         final BeiderMorseEncoder bmpm = createGenericApproxEncoder();
         for (char c = 'a'; c <= 'z'; c++) {
             final String value = Character.toString(c);
@@ -77,7 +81,7 @@ public class BeiderMorseEncoderTest extends AbstractStringEncoderTest<StringEnco
     }
 
     @Test
-    public void testAsciiEncodeNotEmpty2Letters() throws EncoderException {
+    void testAsciiEncodeNotEmpty2Letters() throws EncoderException {
         final BeiderMorseEncoder bmpm = createGenericApproxEncoder();
         for (char c1 = 'a'; c1 <= 'z'; c1++) {
             for (char c2 = 'a'; c2 <= 'z'; c2++) {
@@ -90,7 +94,7 @@ public class BeiderMorseEncoderTest extends AbstractStringEncoderTest<StringEnco
     }
 
     @Test
-    public void testEncodeAtzNotEmpty() throws EncoderException {
+    void testEncodeAtzNotEmpty() throws EncoderException {
         final BeiderMorseEncoder bmpm = createGenericApproxEncoder();
         //String[] names = { "ácz", "átz", "Ignácz", "Ignátz", "Ignác" };
         final String[] names = { "\u00e1cz", "\u00e1tz", "Ign\u00e1cz", "Ign\u00e1tz", "Ign\u00e1c" };
@@ -105,40 +109,40 @@ public class BeiderMorseEncoderTest extends AbstractStringEncoderTest<StringEnco
      *
      * @throws EncoderException for some failure scenarios     */
     @Test
-    public void testEncodeGna() throws EncoderException {
+    void testEncodeGna() throws EncoderException {
         final BeiderMorseEncoder bmpm = createGenericApproxEncoder();
         bmpm.encode("gna");
     }
 
     @Test
-    public void testInvalidLangIllegalArgumentException() {
+    void testInvalidLangIllegalArgumentException() {
         assertThrows(IllegalArgumentException.class, () -> Rule.getInstance(NameType.GENERIC, RuleType.APPROX, "noSuchLanguage"));
     }
 
     @Test
-    public void testInvalidLangIllegalStateException() {
+    void testInvalidLangIllegalStateException() {
         assertThrows(IllegalArgumentException.class, () -> Lang.loadFromResource("thisIsAMadeUpResourceName", Languages.getInstance(NameType.GENERIC)));
     }
 
     @Test
-    public void testInvalidLanguageIllegalArgumentException() {
+    void testInvalidLanguageIllegalArgumentException() {
         assertThrows(IllegalArgumentException.class, () -> Languages.getInstance("thereIsNoSuchLanguage"));
     }
 
     @Test
-    public void testLongestEnglishSurname() {
+    void testLongestEnglishSurname() {
         final BeiderMorseEncoder bmpm = createGenericApproxEncoder();
         assertTimeout(Duration.ofMillis(10000L), () -> bmpm.encode("MacGhilleseatheanaich"));
     }
 
     @Test
-    public void testNegativeIndexForRuleMatchIndexOutOfBoundsException() {
+    void testNegativeIndexForRuleMatchIndexOutOfBoundsException() {
         final Rule r = new Rule("a", "", "", new Rule.Phoneme("", Languages.ANY_LANGUAGE));
         assertThrows(IndexOutOfBoundsException.class, () -> r.patternAndContextMatches("bob", -1));
     }
 
     @Test
-    public void testOOM() throws EncoderException {
+    void testOOM() throws EncoderException {
         final String phrase = "200697900'-->&#1913348150;</  bceaeef >aadaabcf\"aedfbff<!--\'-->?>cae" +
             "cfaaa><?&#<!--</script>&lang&fc;aadeaf?>>&bdquo<    cc =\"abff\"    /></   afe  >" +
             "<script><!-- f(';<    cf aefbeef = \"bfabadcf\" ebbfeedd = fccabeb >";
@@ -151,33 +155,33 @@ public class BeiderMorseEncoderTest extends AbstractStringEncoderTest<StringEnco
         final String phonemes = encoder.encode(phrase);
         assertFalse(phonemes.isEmpty());
 
-        final String[] phonemeArr = phonemes.split("\\|");
+        final String[] phonemeArr = PIPE_PATTERN.split(phonemes);
         assertTrue(phonemeArr.length <= 10);
     }
 
     @Test
-    public void testSetConcat() {
+    void testSetConcat() {
         final BeiderMorseEncoder bmpm = new BeiderMorseEncoder();
         bmpm.setConcat(false);
         assertFalse(bmpm.isConcat(), "Should be able to set concat to false");
     }
 
     @Test
-    public void testSetNameTypeAsh() {
+    void testSetNameTypeAsh() {
         final BeiderMorseEncoder bmpm = new BeiderMorseEncoder();
         bmpm.setNameType(NameType.ASHKENAZI);
         assertEquals(NameType.ASHKENAZI, bmpm.getNameType(), "Name type should have been set to ash");
     }
 
     @Test
-    public void testSetRuleTypeExact() {
+    void testSetRuleTypeExact() {
         final BeiderMorseEncoder bmpm = new BeiderMorseEncoder();
         bmpm.setRuleType(RuleType.EXACT);
         assertEquals(RuleType.EXACT, bmpm.getRuleType(), "Rule type should have been set to exact");
     }
 
     @Test
-    public void testSetRuleTypeToRulesIllegalArgumentException() {
+    void testSetRuleTypeToRulesIllegalArgumentException() {
         final BeiderMorseEncoder bmpm = new BeiderMorseEncoder();
         assertThrows(IllegalArgumentException.class, () -> bmpm.setRuleType(RuleType.RULES));
     }
@@ -188,7 +192,7 @@ public class BeiderMorseEncoderTest extends AbstractStringEncoderTest<StringEnco
      * @throws EncoderException for some failure scenarios
      */
     @Test /* timeout = 20000L */
-    public void testSpeedCheck() throws EncoderException {
+    void testSpeedCheck() throws EncoderException {
         final BeiderMorseEncoder bmpm = createGenericApproxEncoder();
         final StringBuilder stringBuffer = new StringBuilder();
         stringBuffer.append(TEST_CHARS[0]);
@@ -202,7 +206,7 @@ public class BeiderMorseEncoderTest extends AbstractStringEncoderTest<StringEnco
     }
 
     @Test
-    public void testSpeedCheck2() throws EncoderException {
+    void testSpeedCheck2() throws EncoderException {
         final BeiderMorseEncoder bmpm = createGenericApproxEncoder();
         final String phrase = "ItstheendoftheworldasweknowitandIfeelfine";
 
@@ -212,7 +216,7 @@ public class BeiderMorseEncoderTest extends AbstractStringEncoderTest<StringEnco
     }
 
     @Test
-    public void testSpeedCheck3() throws EncoderException {
+    void testSpeedCheck3() throws EncoderException {
         final BeiderMorseEncoder bmpm = createGenericApproxEncoder();
         final String phrase = "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz";
 

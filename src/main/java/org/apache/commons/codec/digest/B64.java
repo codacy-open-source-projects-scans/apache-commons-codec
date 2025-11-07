@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -39,7 +39,7 @@ final class B64 {
      * Table with characters for Base64 transformation.
      */
     static final char[] B64T_ARRAY = B64T_STRING.toCharArray(); // package access for testing
-    // N.B. Do not make this protected or public. Array contents are mutable!
+    // Do not make this protected or public. Array contents are mutable!
 
     /**
      * Base64 like conversion of bytes to ASCII chars.
@@ -69,6 +69,7 @@ final class B64 {
 
     /**
      * Generates a string of random chars from the B64T set.
+     *
      * <p>
      * The salt is generated with {@link SecureRandom}.
      * </p>
@@ -82,6 +83,7 @@ final class B64 {
 
     /**
      * Generates a string of random chars from the B64T set.
+     *
      * <p>
      * The salt is generated with the {@link Random} provided.
      * </p>

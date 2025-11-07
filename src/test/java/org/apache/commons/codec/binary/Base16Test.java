@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -35,16 +35,16 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.junit.jupiter.api.Test;
 
 /**
- * Test cases for Base16 class.
+ * Tests {@link Base16}.
  */
-public class Base16Test {
+class Base16Test {
 
     private static final Charset CHARSET_UTF8 = StandardCharsets.UTF_8;
 
     private final Random random = new Random();
 
     /**
-     * @return Returns the random.
+     * @return the random.
      */
     public Random getRandom() {
         return this.random;
@@ -54,7 +54,7 @@ public class Base16Test {
      * Test the Base16 implementation
      */
     @Test
-    public void testBase16() {
+    void testBase16() {
         final String content = "Hello World";
         final byte[] encodedBytes = new Base16().encode(StringUtils.getBytesUtf8(content));
         final String encodedContent = StringUtils.newStringUtf8(encodedBytes);
@@ -66,17 +66,17 @@ public class Base16Test {
     }
 
     @Test
-    public void testBase16AtBufferEnd() {
+    void testBase16AtBufferEnd() {
         testBase16InBuffer(100, 0);
     }
 
     @Test
-    public void testBase16AtBufferMiddle() {
+    void testBase16AtBufferMiddle() {
         testBase16InBuffer(100, 100);
     }
 
     @Test
-    public void testBase16AtBufferStart() {
+    void testBase16AtBufferStart() {
         testBase16InBuffer(0, 100);
     }
 
@@ -92,7 +92,7 @@ public class Base16Test {
     }
 
     @Test
-    public void testByteToStringVariations() {
+    void testByteToStringVariations() {
         final Base16 base16 = new Base16();
         final byte[] b1 = StringUtils.getBytesUtf8("Hello World");
         final byte[] b2 = {};
@@ -107,7 +107,7 @@ public class Base16Test {
     }
 
     @Test
-    public void testCheckEncodeLengthBounds() {
+    void testCheckEncodeLengthBounds() {
         final Base16 base16 = new Base16();
         assertThrows(IllegalArgumentException.class, () -> base16.encode(new byte[10], 0, 1 << 30));
     }
@@ -116,14 +116,14 @@ public class Base16Test {
      * isBase16 throws RuntimeException on some non-Base16 bytes
      */
     @Test
-    public void testCodec68() {
+    void testCodec68() {
         final byte[] x = { 'n', 'H', '=', '=', (byte) 0x9c };
         final Base16 b16 = new Base16();
         assertThrows(RuntimeException.class, () -> b16.decode(x));
     }
 
     @Test
-    public void testConstructor_LowerCase() {
+    void testConstructor_LowerCase() {
         final Base16 base16 = new Base16(true);
         final byte[] encoded = base16.encode(BaseNTestData.DECODED);
         final String expectedResult = Base16TestData.ENCODED_UTF8_LOWERCASE;
@@ -132,7 +132,7 @@ public class Base16Test {
     }
 
     @Test
-    public void testConstructor_LowerCase_DecodingPolicy() {
+    void testConstructor_LowerCase_DecodingPolicy() {
         final Base16 base16 = new Base16(false, CodecPolicy.STRICT);
         final byte[] encoded = base16.encode(BaseNTestData.DECODED);
         final String expectedResult = Base16TestData.ENCODED_UTF8_UPPERCASE;
@@ -141,7 +141,7 @@ public class Base16Test {
     }
 
     @Test
-    public void testConstructors() {
+    void testConstructors() {
         new Base16();
         new Base16(false);
         new Base16(true);
@@ -150,7 +150,7 @@ public class Base16Test {
     }
 
     @Test
-    public void testDecodeSingleBytes() {
+    void testDecodeSingleBytes() {
         final String encoded = "556E74696C206E6578742074696D6521";
 
         final BaseNCodec.Context context = new BaseNCodec.Context();
@@ -180,7 +180,7 @@ public class Base16Test {
     }
 
     @Test
-    public void testDecodeSingleBytesOptimisation() {
+    void testDecodeSingleBytesOptimization() {
         final BaseNCodec.Context context = new BaseNCodec.Context();
         assertEquals(0, context.ibitWorkArea);
         assertNull(context.buffer);
@@ -205,7 +205,7 @@ public class Base16Test {
      * Test encode and decode of empty byte array.
      */
     @Test
-    public void testEmptyBase16() {
+    void testEmptyBase16() {
         byte[] empty = {};
         byte[] result = new Base16().encode(empty);
         assertEquals(0, result.length, "empty Base16 encode");
@@ -222,7 +222,7 @@ public class Base16Test {
 
     // encode/decode a large random array
     @Test
-    public void testEncodeDecodeRandom() {
+    void testEncodeDecodeRandom() {
         for (int i = 1; i < 5; i++) {
             final int len = getRandom().nextInt(10000) + 1;
             final byte[] data = new byte[len];
@@ -235,7 +235,7 @@ public class Base16Test {
 
     // encode/decode random arrays from size 0 to size 11
     @Test
-    public void testEncodeDecodeSmall() {
+    void testEncodeDecodeSmall() {
         for (int i = 0; i < 12; i++) {
             final byte[] data = new byte[i];
             getRandom().nextBytes(data);
@@ -246,9 +246,9 @@ public class Base16Test {
     }
 
     @Test
-    public void testIsInAlphabet() {
+    void testIsInAlphabet() {
         // invalid bounds
-        Base16 b16 = new Base16(true);
+        Base16 b16 = Base16.builder().setLowerCase(true).get();
         assertFalse(b16.isInAlphabet((byte) 0));
         assertFalse(b16.isInAlphabet((byte) 1));
         assertFalse(b16.isInAlphabet((byte) -1));
@@ -256,7 +256,6 @@ public class Base16Test {
         assertFalse(b16.isInAlphabet((byte) -16));
         assertFalse(b16.isInAlphabet((byte) 128));
         assertFalse(b16.isInAlphabet((byte) 255));
-
         // lower-case
         b16 = new Base16(true);
         for (char c = '0'; c <= '9'; c++) {
@@ -273,7 +272,6 @@ public class Base16Test {
         assertFalse(b16.isInAlphabet((byte) ('a' - 1)));
         assertFalse(b16.isInAlphabet((byte) ('f' + 1)));
         assertFalse(b16.isInAlphabet((byte) ('z' + 1)));
-
         // upper-case
         b16 = new Base16(false);
         for (char c = '0'; c <= '9'; c++) {
@@ -293,7 +291,7 @@ public class Base16Test {
     }
 
     @Test
-    public void testKnownDecodings() {
+    void testKnownDecodings() {
         assertEquals("The quick brown fox jumped over the lazy dogs.", new String(new Base16(true)
                 .decode("54686520717569636b2062726f776e20666f78206a756d706564206f76657220746865206c617a7920646f67732e".getBytes(CHARSET_UTF8))));
         assertEquals("It was the best of times, it was the worst of times.", new String(new Base16(true)
@@ -308,7 +306,7 @@ public class Base16Test {
     }
 
     @Test
-    public void testKnownEncodings() {
+    void testKnownEncodings() {
         assertEquals("54686520717569636b2062726f776e20666f78206a756d706564206f76657220746865206c617a7920646f67732e",
                 new String(new Base16(true).encode("The quick brown fox jumped over the lazy dogs.".getBytes(CHARSET_UTF8))));
         assertEquals("497420776173207468652062657374206f662074696d65732c206974207761732074686520776f727374206f662074696d65732e",
@@ -323,7 +321,7 @@ public class Base16Test {
     }
 
     @Test
-    public void testLenientDecoding() {
+    void testLenientDecoding() {
         final String encoded = "aabbccdde"; // Note the trailing `e` which does not make up a hex-pair and so is only 1/2 byte
 
         final Base16 b16 = new Base16(true, CodecPolicy.LENIENT);
@@ -334,7 +332,7 @@ public class Base16Test {
     }
 
     @Test
-    public void testNonBase16Test() {
+    void testNonBase16Test() {
         final byte[] invalidEncodedChars = { '/', ':', '@', 'G', '%', '`', 'g' };
 
         final byte[] encoded = new byte[1];
@@ -345,12 +343,12 @@ public class Base16Test {
     }
 
     @Test
-    public void testObjectDecodeWithInvalidParameter() {
+    void testObjectDecodeWithInvalidParameter() {
         assertThrows(DecoderException.class, () -> new Base16().decode(Integer.valueOf(5)));
     }
 
     @Test
-    public void testObjectDecodeWithValidParameter() throws Exception {
+    void testObjectDecodeWithValidParameter() throws Exception {
         final String original = "Hello World!";
         final Object o = new Base16().encode(original.getBytes(CHARSET_UTF8));
 
@@ -363,18 +361,18 @@ public class Base16Test {
     }
 
     @Test
-    public void testObjectEncode() {
+    void testObjectEncode() {
         final Base16 b16 = new Base16();
         assertEquals(new String(b16.encode("Hello World".getBytes(CHARSET_UTF8))), "48656C6C6F20576F726C64");
     }
 
     @Test
-    public void testObjectEncodeWithInvalidParameter() {
+    void testObjectEncodeWithInvalidParameter() {
         assertThrows(EncoderException.class, () -> new Base16().encode("Yadayadayada"));
     }
 
     @Test
-    public void testObjectEncodeWithValidParameter() throws Exception {
+    void testObjectEncodeWithValidParameter() throws Exception {
         final String original = "Hello World!";
         final Object origObj = original.getBytes(CHARSET_UTF8);
 
@@ -386,7 +384,7 @@ public class Base16Test {
     }
 
     @Test
-    public void testOddEvenDecoding() {
+    void testOddEvenDecoding() {
         final String encoded = "4142434445";
 
         final BaseNCodec.Context context = new BaseNCodec.Context();
@@ -407,7 +405,7 @@ public class Base16Test {
     }
 
     @Test
-    public void testPairs() {
+    void testPairs() {
         assertEquals("0000", new String(new Base16().encode(new byte[] { (byte) 0, (byte) 0 })));
         assertEquals("0001", new String(new Base16().encode(new byte[] { (byte) 0, (byte) 1 })));
         assertEquals("0002", new String(new Base16().encode(new byte[] { (byte) 0, (byte) 2 })));
@@ -433,7 +431,7 @@ public class Base16Test {
     }
 
     @Test
-    public void testSingletons() {
+    void testSingletons() {
         assertEquals("00", new String(new Base16().encode(new byte[] { (byte) 0 })));
         assertEquals("01", new String(new Base16().encode(new byte[] { (byte) 1 })));
         assertEquals("02", new String(new Base16().encode(new byte[] { (byte) 2 })));
@@ -546,7 +544,7 @@ public class Base16Test {
     }
 
     @Test
-    public void testStrictDecoding() {
+    void testStrictDecoding() {
         final String encoded = "aabbccdde"; // Note the trailing `e` which does not make up a hex-pair and so is only 1/2 byte
 
         final Base16 b16 = new Base16(true, CodecPolicy.STRICT);
@@ -555,7 +553,7 @@ public class Base16Test {
     }
 
     @Test
-    public void testStringToByteVariations() throws DecoderException {
+    void testStringToByteVariations() throws DecoderException {
         final Base16 base16 = new Base16();
         final String s1 = "48656C6C6F20576F726C64";
         final String s2 = "";
@@ -571,7 +569,7 @@ public class Base16Test {
     }
 
     @Test
-    public void testTriplets() {
+    void testTriplets() {
         assertEquals("000000", new String(new Base16().encode(new byte[] { (byte) 0, (byte) 0, (byte) 0 })));
         assertEquals("000001", new String(new Base16().encode(new byte[] { (byte) 0, (byte) 0, (byte) 1 })));
         assertEquals("000002", new String(new Base16().encode(new byte[] { (byte) 0, (byte) 0, (byte) 2 })));

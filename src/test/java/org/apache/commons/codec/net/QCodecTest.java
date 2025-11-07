@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -33,11 +33,11 @@ import org.junit.jupiter.api.Test;
 /**
  * Quoted-printable codec test cases
  */
-public class QCodecTest {
+class QCodecTest {
 
-    static final int SWISS_GERMAN_STUFF_UNICODE[] = { 0x47, 0x72, 0xFC, 0x65, 0x7A, 0x69, 0x5F, 0x7A, 0xE4, 0x6D, 0xE4 };
+    static final int[] SWISS_GERMAN_STUFF_UNICODE = { 0x47, 0x72, 0xFC, 0x65, 0x7A, 0x69, 0x5F, 0x7A, 0xE4, 0x6D, 0xE4 };
 
-    static final int RUSSIAN_STUFF_UNICODE[] = { 0x412, 0x441, 0x435, 0x43C, 0x5F, 0x43F, 0x440, 0x438, 0x432, 0x435, 0x442 };
+    static final int[] RUSSIAN_STUFF_UNICODE = { 0x412, 0x441, 0x435, 0x43C, 0x5F, 0x43F, 0x440, 0x438, 0x432, 0x435, 0x442 };
 
     private String constructString(final int[] unicodeChars) {
         final StringBuilder buffer = new StringBuilder();
@@ -50,7 +50,7 @@ public class QCodecTest {
     }
 
     @Test
-    public void testBasicEncodeDecode() throws Exception {
+    void testBasicEncodeDecode() throws Exception {
         final QCodec qcodec = new QCodec();
         final String plain = "= Hello there =\r\n";
         final String encoded = qcodec.encode(plain);
@@ -59,7 +59,7 @@ public class QCodecTest {
     }
 
     @Test
-    public void testDecodeObjects() throws Exception {
+    void testDecodeObjects() throws Exception {
         final QCodec qcodec = new QCodec();
         final String decoded = "=?UTF-8?Q?1+1 =3D 2?=";
         final String plain = (String) qcodec.decode((Object) decoded);
@@ -71,7 +71,7 @@ public class QCodecTest {
     }
 
     @Test
-    public void testDecodeStringWithNull() throws Exception {
+    void testDecodeStringWithNull() throws Exception {
         final QCodec qcodec = new QCodec();
         final String test = null;
         final String result = qcodec.decode(test);
@@ -79,7 +79,7 @@ public class QCodecTest {
     }
 
     @Test
-    public void testEncodeDecodeBlanks() throws Exception {
+    void testEncodeDecodeBlanks() throws Exception {
         final String plain = "Mind those pesky blanks";
         final String encoded1 = "=?UTF-8?Q?Mind those pesky blanks?=";
         final String encoded2 = "=?UTF-8?Q?Mind_those_pesky_blanks?=";
@@ -97,14 +97,14 @@ public class QCodecTest {
     }
 
     @Test
-    public void testEncodeDecodeNull() throws Exception {
+    void testEncodeDecodeNull() throws Exception {
         final QCodec qcodec = new QCodec();
         assertNull(qcodec.encode((String) null), "Null string Q encoding test");
         assertNull(qcodec.decode((String) null), "Null string Q decoding test");
     }
 
     @Test
-    public void testEncodeObjects() throws Exception {
+    void testEncodeObjects() throws Exception {
         final QCodec qcodec = new QCodec();
         final String plain = "1+1 = 2";
         final String encoded = (String) qcodec.encode((Object) plain);
@@ -116,7 +116,7 @@ public class QCodecTest {
     }
 
     @Test
-    public void testEncodeStringWithNull() throws Exception {
+    void testEncodeStringWithNull() throws Exception {
         final QCodec qcodec = new QCodec();
         final String test = null;
         final String result = qcodec.encode(test, "charset");
@@ -124,12 +124,12 @@ public class QCodecTest {
     }
 
     @Test
-    public void testInvalidEncoding() {
+    void testInvalidEncoding() {
         assertThrows(UnsupportedCharsetException.class, () -> new QCodec("NONSENSE"));
     }
 
     @Test
-    public void testLetUsMakeCloverHappy() throws Exception {
+    void testLetUsMakeCloverHappy() throws Exception {
         final QCodec qcodec = new QCodec();
         qcodec.setEncodeBlanks(true);
         assertTrue(qcodec.isEncodeBlanks());
@@ -138,14 +138,14 @@ public class QCodecTest {
     }
 
     @Test
-    public void testNullInput() throws Exception {
+    void testNullInput() throws Exception {
         final QCodec qcodec = new QCodec();
         assertNull(qcodec.doDecoding(null));
         assertNull(qcodec.doEncoding(null));
     }
 
     @Test
-    public void testUnsafeEncodeDecode() throws Exception {
+    void testUnsafeEncodeDecode() throws Exception {
         final QCodec qcodec = new QCodec();
         final String plain = "?_=\r\n";
         final String encoded = qcodec.encode(plain);
@@ -154,7 +154,7 @@ public class QCodecTest {
     }
 
     @Test
-    public void testUTF8RoundTrip() throws Exception {
+    void testUTF8RoundTrip() throws Exception {
 
         final String ru_msg = constructString(RUSSIAN_STUFF_UNICODE);
         final String ch_msg = constructString(SWISS_GERMAN_STUFF_UNICODE);

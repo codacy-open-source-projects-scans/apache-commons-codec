@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -59,38 +59,6 @@ public final class MurmurHash2 {
     private static final int R64 = 47;
 
     /**
-     * Gets the little-endian int from 4 bytes starting at the specified index.
-     *
-     * @param data The data
-     * @param index The index
-     * @return The little-endian int
-     */
-    private static int getLittleEndianInt(final byte[] data, final int index) {
-        return data[index    ] & 0xff |
-               (data[index + 1] & 0xff) <<  8 |
-               (data[index + 2] & 0xff) << 16 |
-               (data[index + 3] & 0xff) << 24;
-    }
-
-    /**
-     * Gets the little-endian long from 8 bytes starting at the specified index.
-     *
-     * @param data The data
-     * @param index The index
-     * @return The little-endian long
-     */
-    private static long getLittleEndianLong(final byte[] data, final int index) {
-        return (long) data[index    ] & 0xff |
-               ((long) data[index + 1] & 0xff) <<  8 |
-               ((long) data[index + 2] & 0xff) << 16 |
-               ((long) data[index + 3] & 0xff) << 24 |
-               ((long) data[index + 4] & 0xff) << 32 |
-               ((long) data[index + 5] & 0xff) << 40 |
-               ((long) data[index + 6] & 0xff) << 48 |
-               ((long) data[index + 7] & 0xff) << 56;
-    }
-
-    /**
      * Generates a 32-bit hash from byte array with the given length and a default seed value.
      * This is a helper method that will produce the same result as:
      *
@@ -119,39 +87,36 @@ public final class MurmurHash2 {
     public static int hash32(final byte[] data, final int length, final int seed) {
         // Initialize the hash to a random value
         int h = seed ^ length;
-
         // Mix 4 bytes at a time into the hash
         final int nblocks = length >> 2;
-
         // body
         for (int i = 0; i < nblocks; i++) {
             final int index = i << 2;
-            int k = getLittleEndianInt(data, index);
+            int k = MurmurHash.getLittleEndianInt(data, index);
             k *= M32;
             k ^= k >>> R32;
             k *= M32;
             h *= M32;
             h ^= k;
         }
-
         // Handle the last few bytes of the input array
         final int index = nblocks << 2;
         switch (length - index) {
         case 3:
             h ^= (data[index + 2] & 0xff) << 16;
+            // falls-through
         case 2:
             h ^= (data[index + 1] & 0xff) << 8;
+            // falls-through
         case 1:
             h ^= data[index] & 0xff;
             h *= M32;
         }
-
         // Do a few final mixes of the hash to ensure the last few
         // bytes are well-incorporated.
         h ^= h >>> 13;
         h *= M32;
         h ^= h >>> 15;
-
         return h;
     }
 
@@ -227,13 +192,11 @@ public final class MurmurHash2 {
      */
     public static long hash64(final byte[] data, final int length, final int seed) {
         long h = seed & 0xffffffffL ^ length * M64;
-
         final int nblocks = length >> 3;
-
         // body
         for (int i = 0; i < nblocks; i++) {
             final int index = i << 3;
-            long k = getLittleEndianLong(data, index);
+            long k = MurmurHash.getLittleEndianLong(data, index);
 
             k *= M64;
             k ^= k >>> R64;
@@ -242,30 +205,33 @@ public final class MurmurHash2 {
             h ^= k;
             h *= M64;
         }
-
         final int index = nblocks << 3;
         switch (length - index) {
         case 7:
             h ^= ((long) data[index + 6] & 0xff) << 48;
+            // falls-through
         case 6:
             h ^= ((long) data[index + 5] & 0xff) << 40;
+            // falls-through
         case 5:
             h ^= ((long) data[index + 4] & 0xff) << 32;
+            // falls-through
         case 4:
             h ^= ((long) data[index + 3] & 0xff) << 24;
+            // falls-through
         case 3:
             h ^= ((long) data[index + 2] & 0xff) << 16;
+            // falls-through
         case 2:
             h ^= ((long) data[index + 1] & 0xff) << 8;
+            // falls-through
         case 1:
             h ^= (long) data[index] & 0xff;
             h *= M64;
         }
-
         h ^= h >>> R64;
         h *= M64;
         h ^= h >>> R64;
-
         return h;
     }
 

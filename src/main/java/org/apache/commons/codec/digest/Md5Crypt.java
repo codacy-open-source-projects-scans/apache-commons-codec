@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -29,7 +29,7 @@ import java.util.regex.Pattern;
  * The libc crypt() "$1$" and Apache "$apr1$" MD5-based hash algorithm.
  * <p>
  * Based on the public domain ("beer-ware") C implementation from Poul-Henning Kamp which was found at: <a
- * href="http://www.freebsd.org/cgi/cvsweb.cgi/src/lib/libcrypt/crypt-md5.c?rev=1.1;content-type=text%2Fplain">
+ * href="https://www.freebsd.org/cgi/cvsweb.cgi/src/lib/libcrypt/crypt-md5.c?rev=1.1;content-type=text%2Fplain">
  * crypt-md5.c @ freebsd.org</a>
  * </p>
  * <p>
@@ -120,7 +120,7 @@ public class Md5Crypt {
         if (salt != null && !salt.startsWith(APR1_PREFIX)) {
             salt = APR1_PREFIX + salt;
         }
-        return Md5Crypt.md5Crypt(keyBytes, salt, APR1_PREFIX);
+        return md5Crypt(keyBytes, salt, APR1_PREFIX);
     }
 
     /**

@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -27,13 +27,16 @@ import java.io.InputStream;
 public class Resources {
 
     /**
-     * Opens the given named resource from the given class.
+     * Gets an InputStream on the contents of the resource specified by {@code name}. The mapping between the resource name and the stream is managed by this
+     * class's class loader.
      *
      * @param name The resource name.
      * @return An input stream.
+     * @see ClassLoader#getResourceAsStream(String)
      */
     public static InputStream getInputStream(final String name) {
-        final InputStream inputStream = Resources.class.getClassLoader().getResourceAsStream(name);
+        // Use java.lang.Class.getResourceAsStream(String) to make JPMS happy
+        final InputStream inputStream = Resources.class.getResourceAsStream(name);
         if (inputStream == null) {
             throw new IllegalArgumentException("Unable to resolve required resource: " + name);
         }

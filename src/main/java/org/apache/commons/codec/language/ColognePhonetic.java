@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -31,7 +31,7 @@ import org.apache.commons.codec.StringEncoder;
  * </p>
  * <p>
  * The <em>K&ouml;lner Phonetik</em> is a phonetic algorithm which is optimized for the German language. It is related to
- * the well-known soundex algorithm.
+ * the well-known Soundex algorithm.
  * </p>
  *
  * <h2>Algorithm</h2>
@@ -193,12 +193,12 @@ public class ColognePhonetic implements StringEncoder {
 
         protected int length;
 
-        public CologneBuffer(final char[] data) {
+        CologneBuffer(final char[] data) {
             this.data = data;
             this.length = data.length;
         }
 
-        public CologneBuffer(final int buffSize) {
+        CologneBuffer(final int buffSize) {
             this.data = new char[buffSize];
             this.length = 0;
         }
@@ -218,9 +218,10 @@ public class ColognePhonetic implements StringEncoder {
             return new String(copyData(0, length));
         }
     }
+
     private final class CologneInputBuffer extends CologneBuffer {
 
-        public CologneInputBuffer(final char[] data) {
+        CologneInputBuffer(final char[] data) {
             super(data);
         }
 
@@ -245,11 +246,12 @@ public class ColognePhonetic implements StringEncoder {
             return ch;
         }
     }
+
     private final class CologneOutputBuffer extends CologneBuffer {
 
         private char lastCode;
 
-        public CologneOutputBuffer(final int buffSize) {
+        CologneOutputBuffer(final int buffSize) {
             super(buffSize);
             lastCode = '/'; // impossible value
         }
@@ -304,6 +306,13 @@ public class ColognePhonetic implements StringEncoder {
     }
 
     /**
+     * Constructs a new instance.
+     */
+    public ColognePhonetic() {
+        // empty
+    }
+
+    /**
      * <p>
      * Implements the <em>K&ouml;lner Phonetik</em> algorithm.
      * </p>
@@ -311,8 +320,8 @@ public class ColognePhonetic implements StringEncoder {
      * In contrast to the initial description of the algorithm, this implementation does the encoding in one pass.
      * </p>
      *
-     * @param text The source text to encode
-     * @return the corresponding encoding according to the <em>K&ouml;lner Phonetik</em> algorithm
+     * @param text The source text to encode.
+     * @return the corresponding encoding according to the <em>K&ouml;lner Phonetik</em> algorithm.
      */
     public String colognePhonetic(final String text) {
         if (text == null) {
@@ -417,7 +426,7 @@ public class ColognePhonetic implements StringEncoder {
      * @param text1 source text to encode before testing for equality.
      * @param text2 source text to encode before testing for equality.
      * @return {@code true} if the encoding the first string equals the encoding of the second string, {@code false}
-     *         otherwise
+     *         otherwise.
      */
     public boolean isEncodeEqual(final String text1, final String text2) {
         return colognePhonetic(text1).equals(colognePhonetic(text2));

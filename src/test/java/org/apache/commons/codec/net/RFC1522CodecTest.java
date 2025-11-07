@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -29,7 +29,7 @@ import org.junit.jupiter.api.Test;
 /**
  * RFC 1522 compliant codec test cases
  */
-public class RFC1522CodecTest {
+class RFC1522CodecTest {
 
     static class RFC1522TestCodec extends RFC1522Codec {
 
@@ -59,7 +59,7 @@ public class RFC1522CodecTest {
     }
 
     @Test
-    public void testDecodeInvalid() throws Exception {
+    void testDecodeInvalid() throws Exception {
         assertExpectedDecoderException("whatever");
         assertExpectedDecoderException("=?");
         assertExpectedDecoderException("?=");
@@ -75,7 +75,7 @@ public class RFC1522CodecTest {
     }
 
     @Test
-    public void testNullInput() throws Exception {
+    void testNullInput() throws Exception {
         final RFC1522TestCodec testCodec = new RFC1522TestCodec();
         assertNull(testCodec.decodeText(null));
         assertNull(testCodec.encodeText(null, CharEncoding.UTF_8));

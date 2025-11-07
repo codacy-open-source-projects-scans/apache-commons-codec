@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.apache.commons.codec.language.bm.Languages.LanguageSet;
@@ -169,7 +170,7 @@ public class PhoneticEngine {
         private final int maxPhonemes;
         private boolean found;
 
-        public RulesApplication(final Map<String, List<Rule>> finalRules, final CharSequence input, final PhonemeBuilder phonemeBuilder, final int i,
+        RulesApplication(final Map<String, List<Rule>> finalRules, final CharSequence input, final PhonemeBuilder phonemeBuilder, final int i,
                 final int maxPhonemes) {
             Objects.requireNonNull(finalRules, "finalRules");
             this.finalRules = finalRules;
@@ -226,6 +227,8 @@ public class PhoneticEngine {
     private static final int DEFAULT_MAX_PHONEMES = 20;
 
     private static final Map<NameType, Set<String>> NAME_PREFIXES = new EnumMap<>(NameType.class);
+
+    private static final Pattern QUOTE = Pattern.compile("'");
 
     static {
         NAME_PREFIXES.put(NameType.ASHKENAZI,
@@ -319,7 +322,7 @@ public class PhoneticEngine {
 
         phonemeBuilder.getPhonemes().forEach(phoneme -> {
             PhonemeBuilder subBuilder = PhonemeBuilder.empty(phoneme.getLanguages());
-            final String phonemeText = phoneme.getPhonemeText().toString();
+            final CharSequence phonemeText = phoneme.getPhonemeText();
 
             for (int i = 0; i < phonemeText.length();) {
                 final RulesApplication rulesApplication = new RulesApplication(finalRules, phonemeText, subBuilder, i, maxPhonemes).invoke();
@@ -401,14 +404,14 @@ public class PhoneticEngine {
             }
         }
 
-        final List<String> words = Arrays.asList(input.split("\\s+"));
+        final List<String> words = Arrays.asList(ResourceConstants.SPACES.split(input));
         final List<String> words2 = new ArrayList<>();
 
         // special-case handling of word prefixes based upon the name type
         switch (this.nameType) {
         case SEPHARDIC:
             words.forEach(aWord -> {
-                final String[] parts = aWord.split("'", -1);
+                final String[] parts = QUOTE.split(aWord, -1);
                 words2.add(parts[parts.length - 1]);
             });
             words2.removeAll(NAME_PREFIXES.get(this.nameType));

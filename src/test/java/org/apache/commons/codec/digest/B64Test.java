@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -21,10 +21,10 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import org.junit.jupiter.api.Test;
 
-public class B64Test {
+class B64Test {
 
     @Test
-    public void testB64from24bit() {
+    void testB64from24bit() {
         final StringBuilder buffer = new StringBuilder("");
         B64.b64from24bit((byte) 8, (byte) 16, (byte) 64, 2, buffer);
         B64.b64from24bit((byte) 7, (byte) 77, (byte) 120, 4, buffer);
@@ -32,7 +32,7 @@ public class B64Test {
     }
 
     @Test
-    public void testB64T() {
+    void testB64T() {
         assertNotNull(new B64()); // for the 100% code coverage :)
         assertEquals(64, B64.B64T_ARRAY.length);
     }

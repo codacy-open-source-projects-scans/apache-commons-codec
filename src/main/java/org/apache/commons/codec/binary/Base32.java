@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,12 +17,12 @@
 
 package org.apache.commons.codec.binary;
 
-import java.util.Objects;
+import java.util.Arrays;
 
 import org.apache.commons.codec.CodecPolicy;
 
 /**
- * Provides Base32 encoding and decoding as defined by <a href="http://www.ietf.org/rfc/rfc4648.txt">RFC 4648</a>.
+ * Provides Base32 encoding and decoding as defined by <a href="https://www.ietf.org/rfc/rfc4648.txt">RFC 4648</a>.
  *
  * <p>
  * The class can be parameterized in the following manner with various constructors:
@@ -39,19 +39,21 @@ import org.apache.commons.codec.CodecPolicy;
  * This class is thread-safe.
  * </p>
  * <p>
- * You can configure instances with the {@link Builder}.
+ * To configure a new instance, use a {@link Builder}. For example:
  * </p>
  * <pre>
  * Base32 base32 = Base32.builder()
  *   .setDecodingPolicy(DecodingPolicy.LENIENT) // default is lenient
- *   .setEncodeTable(customEncodeTable)
  *   .setLineLength(0)                          // default is none
  *   .setLineSeparator('\r', '\n')              // default is CR LF
- *   .setPadding('=')                           // default is =
+ *   .setPadding('=')                           // default is '='
+ *   .setEncodeTable(customEncodeTable)         // default is RFC 4648 Section 6, Table 3: The Base 32 Alphabet
  *   .get()
  * </pre>
  *
- * @see <a href="http://www.ietf.org/rfc/rfc4648.txt">RFC 4648</a>
+ * @see Base32InputStream
+ * @see Base32OutputStream
+ * @see <a href="https://www.ietf.org/rfc/rfc4648.txt">RFC 4648</a>
  * @since 1.5
  */
 public class Base32 extends BaseNCodec {
@@ -59,22 +61,80 @@ public class Base32 extends BaseNCodec {
     /**
      * Builds {@link Base32} instances.
      *
+     * <p>
+     * To configure a new instance, use a {@link Builder}. For example:
+     * </p>
+     *
+     * <pre>
+     * Base32 base32 = Base32.builder()
+     *   .setDecodingPolicy(DecodingPolicy.LENIENT) // default is lenient
+     *   .setLineLength(0)                          // default is none
+     *   .setLineSeparator('\r', '\n')              // default is CR LF
+     *   .setPadding('=')                           // default is '='
+     *   .setEncodeTable(customEncodeTable)         // default is RFC 4648 Section 6, Table 3: The Base 32 Alphabet
+     *   .get()
+     * </pre>
+     *
      * @since 1.17.0
      */
     public static class Builder extends AbstractBuilder<Base32, Builder> {
 
         /**
-         * Constructs a new instance.
+         * Constructs a new instance using <a href="https://datatracker.ietf.org/doc/html/rfc4648#section-6">RFC 4648 Section 6, Table 3: The Base 32
+         * Alphabet</a>.
          */
         public Builder() {
             super(ENCODE_TABLE);
+            setDecodeTableRaw(DECODE_TABLE);
+            setEncodeTableRaw(ENCODE_TABLE);
+            setEncodedBlockSize(BYTES_PER_ENCODED_BLOCK);
+            setUnencodedBlockSize(BYTES_PER_UNENCODED_BLOCK);
         }
 
         @Override
         public Base32 get() {
-            return new Base32(getLineLength(), getLineSeparator(), getEncodeTable(), getPadding(), getDecodingPolicy());
+            return new Base32(this);
         }
 
+        @Override
+        public Builder setEncodeTable(final byte... encodeTable) {
+            super.setDecodeTableRaw(Arrays.equals(encodeTable, HEX_ENCODE_TABLE) ? HEX_DECODE_TABLE : DECODE_TABLE);
+            return super.setEncodeTable(encodeTable);
+        }
+
+        /**
+         * Sets the decode table to use Base32 hexadecimal if {@code true}, otherwise use the Base32 alphabet.
+         * <p>
+         * This overrides a value previously set with {@link #setEncodeTable(byte...)}.
+         * </p>
+         *
+         * @param useHex use Base32 hexadecimal if {@code true}, otherwise use the Base32 alphabet.
+         * @return {@code this} instance.
+         * @since 1.18.0
+         */
+        public Builder setHexDecodeTable(final boolean useHex) {
+            return setEncodeTable(decodeTable(useHex));
+        }
+
+        /**
+         * Sets the encode table to use Base32 hexadecimal if {@code true}, otherwise use the Base32 alphabet.
+         * <p>
+         * This overrides a value previously set with {@link #setEncodeTable(byte...)}.
+         * </p>
+         *
+         * @param useHex
+         *               <ul>
+         *               <li>If true, then use <a href="https://datatracker.ietf.org/doc/html/rfc4648#section-7">RFC 4648 Section 7, Table 4: Base 32 Encoding
+         *               with Extended Hex Alphabet</a></li>
+         *               <li>If false, then use <a href="https://datatracker.ietf.org/doc/html/rfc4648#section-6">RFC 4648 Section 6, Table 3: The Base 32
+         *               Alphabet</a></li>
+         *               </ul>
+         * @return {@code this} instance.
+         * @since 1.18.0
+         */
+        public Builder setHexEncodeTable(final boolean useHex) {
+            return setEncodeTable(encodeTable(useHex));
+        }
     }
 
     /**
@@ -85,6 +145,7 @@ public class Base32 extends BaseNCodec {
 
     private static final int BYTES_PER_ENCODED_BLOCK = 8;
     private static final int BYTES_PER_UNENCODED_BLOCK = 5;
+
     /**
      * This array is a lookup table that translates Unicode characters drawn from the "Base32 Alphabet" (as specified in Table 3 of RFC 4648) into their 5-bit
      * positive integer equivalents. Characters that are not in the Base32 alphabet but fall within the bounds of the array are translated to -1.
@@ -105,8 +166,10 @@ public class Base32 extends BaseNCodec {
     // @formatter:on
 
     /**
-     * This array is a lookup table that translates 5-bit positive integer index values into their "Base32 Alphabet" equivalents as specified in Table 3 of RFC
-     * 4648.
+     * This array is a lookup table that translates 5-bit positive integer index values into their "Base32 Alphabet" equivalents as specified in
+     * <a href="https://datatracker.ietf.org/doc/html/rfc4648#section-6">RFC 4648 Section 6, Table 3: The Base 32 Alphabet</a>.
+     *
+     * @see <a href="https://datatracker.ietf.org/doc/html/rfc4648#section-6">RFC 4648 Section 6, Table 3: The Base 32 Alphabet</a>
      */
     // @formatter:off
     private static final byte[] ENCODE_TABLE = {
@@ -136,8 +199,11 @@ public class Base32 extends BaseNCodec {
     // @formatter:on
 
     /**
-     * This array is a lookup table that translates 5-bit positive integer index values into their "Base32 Hex Alphabet" equivalents as specified in Table 4 of
-     * RFC 4648.
+     * This array is a lookup table that translates 5-bit positive integer index values into their "Base 32 Encoding with Extended Hex Alphabet" equivalents as
+     * specified in <a href="https://datatracker.ietf.org/doc/html/rfc4648#section-7">RFC 4648 Section 7, Table 4: Base 32 Encoding with Extended Hex
+     * Alphabet</a>.
+     *
+     * @see <a href="https://datatracker.ietf.org/doc/html/rfc4648#section-7">RFC 4648 Section 7, Table 4: Base 32 Encoding with Extended Hex Alphabet</a>
      */
     // @formatter:off
     private static final byte[] HEX_ENCODE_TABLE = {
@@ -148,22 +214,40 @@ public class Base32 extends BaseNCodec {
     // @formatter:on
 
     /** Mask used to extract 5 bits, used when encoding Base32 bytes */
-    private static final int MASK_5BITS = 0x1f;
+    private static final int MASK_5_BITS = 0x1f;
 
     /** Mask used to extract 4 bits, used when decoding final trailing character. */
-    private static final long MASK_4BITS = 0x0fL;
+    private static final long MASK_4_BITS = 0x0fL;
 
     /** Mask used to extract 3 bits, used when decoding final trailing character. */
-    private static final long MASK_3BITS = 0x07L;
+    private static final long MASK_3_BITS = 0x07L;
 
     /** Mask used to extract 2 bits, used when decoding final trailing character. */
-    private static final long MASK_2BITS = 0x03L;
+    private static final long MASK_2_BITS = 0x03L;
 
     /** Mask used to extract 1 bits, used when decoding final trailing character. */
-    private static final long MASK_1BITS = 0x01L;
+    private static final long MASK_1_BITS = 0x01L;
+
+    // The static final fields above are used for the original static byte[] methods on Base32.
+    // The private member fields below are used with the new streaming approach, which requires
+    // some state be preserved between calls of encode() and decode().
 
     /**
      * Creates a new Builder.
+     *
+     * <p>
+     * To configure a new instance, use a {@link Builder}. For example:
+     * </p>
+     *
+     * <pre>
+     * Base32 base32 = Base32.builder()
+     *   .setDecodingPolicy(DecodingPolicy.LENIENT) // default is lenient
+     *   .setLineLength(0)                          // default is none
+     *   .setLineSeparator('\r', '\n')              // default is CR LF
+     *   .setPadding('=')                           // default is '='
+     *   .setEncodeTable(customEncodeTable)         // default is RFC 4648 Section 6, Table 3: The Base 32 Alphabet
+     *   .get()
+     * </pre>
      *
      * @return a new Builder.
      * @since 1.17.0
@@ -172,25 +256,31 @@ public class Base32 extends BaseNCodec {
         return new Builder();
     }
 
-    // The static final fields above are used for the original static byte[] methods on Base32.
-    // The private member fields below are used with the new streaming approach, which requires
-    // some state be preserved between calls of encode() and decode().
+    private static byte[] decodeTable(final boolean useHex) {
+        return useHex ? HEX_DECODE_TABLE : DECODE_TABLE;
+    }
 
     /**
-     * Decode table to use.
+     * Gets the encoding table that matches {@code useHex}.
+     *
+     * @param useHex
+     *               <ul>
+     *               <li>If true, then use <a href="https://datatracker.ietf.org/doc/html/rfc4648#section-7">RFC 4648 Section 7, Table 4: Base 32 Encoding with
+     *               Extended Hex Alphabet</a></li>
+     *               <li>If false, then use <a href="https://datatracker.ietf.org/doc/html/rfc4648#section-6">RFC 4648 Section 6, Table 3: The Base 32
+     *               Alphabet</a></li>
+     *               </ul>
+     * @return the encoding table that matches {@code useHex}.
      */
-    private final byte[] decodeTable;
+    private static byte[] encodeTable(final boolean useHex) {
+        return useHex ? HEX_ENCODE_TABLE : ENCODE_TABLE;
+    }
 
     /**
      * Convenience variable to help us determine when our buffer is going to run out of room and needs resizing. {@code encodeSize = {@link
      * #BYTES_PER_ENCODED_BLOCK} + lineSeparator.length;}
      */
     private final int encodeSize;
-
-    /**
-     * Encode table to use.
-     */
-    private final byte[] encodeTable;
 
     /**
      * Line separator for encoding. Not used when decoding. Only used if lineLength &gt; 0.
@@ -213,8 +303,16 @@ public class Base32 extends BaseNCodec {
      * When encoding the line length is 0 (no chunking).
      * </p>
      *
-     * @param useHex if {@code true} then use Base32 Hex alphabet
+     * @param useHex
+     *               <ul>
+     *               <li>If true, then use <a href="https://datatracker.ietf.org/doc/html/rfc4648#section-7">RFC 4648 Section 7, Table 4: Base 32 Encoding with
+     *               Extended Hex Alphabet</a></li>
+     *               <li>If false, then use <a href="https://datatracker.ietf.org/doc/html/rfc4648#section-6">RFC 4648 Section 6, Table 3: The Base 32
+     *               Alphabet</a></li>
+     *               </ul>
+     * @deprecated Use {@link #builder()} and {@link Builder}.
      */
+    @Deprecated
     public Base32(final boolean useHex) {
         this(0, null, useHex, PAD_DEFAULT);
     }
@@ -225,11 +323,39 @@ public class Base32 extends BaseNCodec {
      * When encoding the line length is 0 (no chunking).
      * </p>
      *
-     * @param useHex  if {@code true} then use Base32 Hex alphabet
+     * @param useHex
+     *               <ul>
+     *               <li>If true, then use <a href="https://datatracker.ietf.org/doc/html/rfc4648#section-7">RFC 4648 Section 7, Table 4: Base 32 Encoding with
+     *               Extended Hex Alphabet</a></li>
+     *               <li>If false, then use <a href="https://datatracker.ietf.org/doc/html/rfc4648#section-6">RFC 4648 Section 6, Table 3: The Base 32
+     *               Alphabet</a></li>
+     *               </ul>
      * @param padding byte used as padding byte.
+     * @deprecated Use {@link #builder()} and {@link Builder}.
      */
+    @Deprecated
     public Base32(final boolean useHex, final byte padding) {
         this(0, null, useHex, padding);
+    }
+
+    private Base32(final Builder builder) {
+        super(builder);
+        if (builder.getLineLength() > 0) {
+            final byte[] lineSeparator = builder.getLineSeparator();
+            // Must be done after initializing the tables
+            if (containsAlphabetOrPad(lineSeparator)) {
+                final String sep = StringUtils.newStringUtf8(lineSeparator);
+                throw new IllegalArgumentException("lineSeparator must not contain Base32 characters: [" + sep + "]");
+            }
+            this.encodeSize = BYTES_PER_ENCODED_BLOCK + lineSeparator.length;
+            this.lineSeparator = lineSeparator;
+        } else {
+            this.encodeSize = BYTES_PER_ENCODED_BLOCK;
+            this.lineSeparator = null;
+        }
+        if (isInAlphabet(builder.getPadding()) || Character.isWhitespace(builder.getPadding())) {
+            throw new IllegalArgumentException("pad must not be in alphabet or whitespace");
+        }
     }
 
     /**
@@ -239,7 +365,9 @@ public class Base32 extends BaseNCodec {
      * </p>
      *
      * @param pad byte used as padding byte.
+     * @deprecated Use {@link #builder()} and {@link Builder}.
      */
+    @Deprecated
     public Base32(final byte pad) {
         this(false, pad);
     }
@@ -252,7 +380,9 @@ public class Base32 extends BaseNCodec {
      *
      * @param lineLength Each line of encoded data will be at most of the given length (rounded down to the nearest multiple of 8). If lineLength &lt;= 0, then
      *                   the output will not be divided into lines (chunks). Ignored when decoding.
+     * @deprecated Use {@link #builder()} and {@link Builder}.
      */
+    @Deprecated
     public Base32(final int lineLength) {
         this(lineLength, CHUNK_SEPARATOR);
     }
@@ -270,7 +400,9 @@ public class Base32 extends BaseNCodec {
      *                      then the output will not be divided into lines (chunks). Ignored when decoding.
      * @param lineSeparator Each line of encoded data will end with this sequence of bytes.
      * @throws IllegalArgumentException Thrown when the {@code lineSeparator} contains Base32 characters.
+     * @deprecated Use {@link #builder()} and {@link Builder}.
      */
+    @Deprecated
     public Base32(final int lineLength, final byte[] lineSeparator) {
         this(lineLength, lineSeparator, false, PAD_DEFAULT);
     }
@@ -287,9 +419,17 @@ public class Base32 extends BaseNCodec {
      * @param lineLength    Each line of encoded data will be at most of the given length (rounded down to the nearest multiple of 8). If lineLength &lt;= 0,
      *                      then the output will not be divided into lines (chunks). Ignored when decoding.
      * @param lineSeparator Each line of encoded data will end with this sequence of bytes.
-     * @param useHex        if {@code true}, then use Base32 Hex alphabet, otherwise use Base32 alphabet
+     * @param useHex
+     *               <ul>
+     *               <li>If true, then use <a href="https://datatracker.ietf.org/doc/html/rfc4648#section-7">RFC 4648 Section 7, Table 4: Base 32 Encoding with
+     *               Extended Hex Alphabet</a></li>
+     *               <li>If false, then use <a href="https://datatracker.ietf.org/doc/html/rfc4648#section-6">RFC 4648 Section 6, Table 3: The Base 32
+     *               Alphabet</a></li>
+     *               </ul>
      * @throws IllegalArgumentException Thrown when the {@code lineSeparator} contains Base32 characters. Or the lineLength &gt; 0 and lineSeparator is null.
+     * @deprecated Use {@link #builder()} and {@link Builder}.
      */
+    @Deprecated
     public Base32(final int lineLength, final byte[] lineSeparator, final boolean useHex) {
         this(lineLength, lineSeparator, useHex, PAD_DEFAULT);
     }
@@ -306,10 +446,18 @@ public class Base32 extends BaseNCodec {
      * @param lineLength    Each line of encoded data will be at most of the given length (rounded down to the nearest multiple of 8). If lineLength &lt;= 0,
      *                      then the output will not be divided into lines (chunks). Ignored when decoding.
      * @param lineSeparator Each line of encoded data will end with this sequence of bytes.
-     * @param useHex        if {@code true}, then use Base32 Hex alphabet, otherwise use Base32 alphabet
+     * @param useHex
+     *               <ul>
+     *               <li>If true, then use <a href="https://datatracker.ietf.org/doc/html/rfc4648#section-7">RFC 4648 Section 7, Table 4: Base 32 Encoding with
+     *               Extended Hex Alphabet</a></li>
+     *               <li>If false, then use <a href="https://datatracker.ietf.org/doc/html/rfc4648#section-6">RFC 4648 Section 6, Table 3: The Base 32
+     *               Alphabet</a></li>
+     *               </ul>
      * @param padding       padding byte.
      * @throws IllegalArgumentException Thrown when the {@code lineSeparator} contains Base32 characters. Or the lineLength &gt; 0 and lineSeparator is null.
+     * @deprecated Use {@link #builder()} and {@link Builder}.
      */
+    @Deprecated
     public Base32(final int lineLength, final byte[] lineSeparator, final boolean useHex, final byte padding) {
         this(lineLength, lineSeparator, useHex, padding, DECODING_POLICY_DEFAULT);
     }
@@ -326,57 +474,30 @@ public class Base32 extends BaseNCodec {
      * @param lineLength     Each line of encoded data will be at most of the given length (rounded down to the nearest multiple of 8). If lineLength &lt;= 0,
      *                       then the output will not be divided into lines (chunks). Ignored when decoding.
      * @param lineSeparator  Each line of encoded data will end with this sequence of bytes.
-     * @param useHex         if {@code true}, then use Base32 Hex alphabet, otherwise use Base32 alphabet
+     * @param useHex
+     *               <ul>
+     *               <li>If true, then use <a href="https://datatracker.ietf.org/doc/html/rfc4648#section-7">RFC 4648 Section 7, Table 4: Base 32 Encoding with
+     *               Extended Hex Alphabet</a></li>
+     *               <li>If false, then use <a href="https://datatracker.ietf.org/doc/html/rfc4648#section-6">RFC 4648 Section 6, Table 3: The Base 32
+     *               Alphabet</a></li>
+     *               </ul>
      * @param padding        padding byte.
      * @param decodingPolicy The decoding policy.
      * @throws IllegalArgumentException Thrown when the {@code lineSeparator} contains Base32 characters. Or the lineLength &gt; 0 and lineSeparator is null.
      * @since 1.15
+     * @deprecated Use {@link #builder()} and {@link Builder}.
      */
+    @Deprecated
     public Base32(final int lineLength, final byte[] lineSeparator, final boolean useHex, final byte padding, final CodecPolicy decodingPolicy) {
-        this(lineLength, lineSeparator, useHex ? HEX_ENCODE_TABLE : ENCODE_TABLE, padding, decodingPolicy);
-    }
-
-    /**
-     * Constructs a Base32 / Base32 Hex codec used for decoding and encoding.
-     * <p>
-     * When encoding the line length and line separator are given in the constructor.
-     * </p>
-     * <p>
-     * Line lengths that aren't multiples of 8 will still essentially end up being multiples of 8 in the encoded data.
-     * </p>
-     *
-     * @param lineLength     Each line of encoded data will be at most of the given length (rounded down to the nearest multiple of 8). If lineLength &lt;= 0,
-     *                       then the output will not be divided into lines (chunks). Ignored when decoding.
-     * @param lineSeparator  Each line of encoded data will end with this sequence of bytes.
-     * @param encodeTable    A Base32 alphabet.
-     * @param padding        padding byte.
-     * @param decodingPolicy The decoding policy.
-     * @throws IllegalArgumentException Thrown when the {@code lineSeparator} contains Base32 characters. Or the lineLength &gt; 0 and lineSeparator is null.
-     */
-    private Base32(final int lineLength, final byte[] lineSeparator, final byte[] encodeTable, final byte padding, final CodecPolicy decodingPolicy) {
-        super(BYTES_PER_UNENCODED_BLOCK, BYTES_PER_ENCODED_BLOCK, lineLength, toLength(lineSeparator), padding, decodingPolicy);
-        Objects.requireNonNull(encodeTable, "encodeTable");
-        this.encodeTable = encodeTable;
-        this.decodeTable = encodeTable == HEX_ENCODE_TABLE ? HEX_DECODE_TABLE : DECODE_TABLE;
-        if (lineLength > 0) {
-            if (lineSeparator == null) {
-                throw new IllegalArgumentException("lineLength " + lineLength + " > 0, but lineSeparator is null");
-            }
-            final byte[] lineSeparatorCopy = lineSeparator.clone();
-            // Must be done after initializing the tables
-            if (containsAlphabetOrPad(lineSeparatorCopy)) {
-                final String sep = StringUtils.newStringUtf8(lineSeparatorCopy);
-                throw new IllegalArgumentException("lineSeparator must not contain Base32 characters: [" + sep + "]");
-            }
-            this.encodeSize = BYTES_PER_ENCODED_BLOCK + lineSeparatorCopy.length;
-            this.lineSeparator = lineSeparatorCopy;
-        } else {
-            this.encodeSize = BYTES_PER_ENCODED_BLOCK;
-            this.lineSeparator = null;
-        }
-        if (isInAlphabet(padding) || Character.isWhitespace(padding)) {
-            throw new IllegalArgumentException("pad must not be in alphabet or whitespace");
-        }
+        // @formatter:off
+        this(builder()
+                .setLineLength(lineLength)
+                .setLineSeparator(lineSeparator != null ? lineSeparator : EMPTY_BYTE_ARRAY)
+                .setDecodeTable(decodeTable(useHex))
+                .setEncodeTableRaw(encodeTable(useHex))
+                .setPadding(padding)
+                .setDecodingPolicy(decodingPolicy));
+        // @formatter:on
     }
 
     /**
@@ -385,7 +506,7 @@ public class Base32 extends BaseNCodec {
      * inAvail set to "-1" to alert decoder that EOF has been reached. The "-1" call is not necessary when decoding, but it doesn't hurt, either.
      * </p>
      * <p>
-     * Ignores all non-Base32 characters. This is how chunked (e.g. 76 character) data is handled, since CR and LF are silently ignored, but has implications
+     * Ignores all non-Base32 characters. This is how chunked (for example 76 character) data is handled, since CR and LF are silently ignored, but has implications
      * for other bytes, too. This method subscribes to the garbage-in, garbage-out philosophy: it will not check the provided data for validity.
      * </p>
      * <p>
@@ -447,8 +568,9 @@ public class Base32 extends BaseNCodec {
 //              case 0 : // impossible, as excluded above
             case 1: // 5 bits - either ignore entirely, or raise an exception
                 validateTrailingCharacters();
+                // falls-through
             case 2: // 10 bits, drop 2 and output one byte
-                validateCharacter(MASK_2BITS, context);
+                validateCharacter(MASK_2_BITS, context);
                 buffer[context.pos++] = (byte) (context.lbitWorkArea >> 2 & MASK_8BITS);
                 break;
             case 3: // 15 bits, drop 7 and output 1 byte, or raise an exception
@@ -457,13 +579,13 @@ public class Base32 extends BaseNCodec {
                 buffer[context.pos++] = (byte) (context.lbitWorkArea >> 7 & MASK_8BITS);
                 break;
             case 4: // 20 bits = 2*8 + 4
-                validateCharacter(MASK_4BITS, context);
+                validateCharacter(MASK_4_BITS, context);
                 context.lbitWorkArea = context.lbitWorkArea >> 4; // drop 4 bits
                 buffer[context.pos++] = (byte) (context.lbitWorkArea >> 8 & MASK_8BITS);
                 buffer[context.pos++] = (byte) (context.lbitWorkArea & MASK_8BITS);
                 break;
             case 5: // 25 bits = 3*8 + 1
-                validateCharacter(MASK_1BITS, context);
+                validateCharacter(MASK_1_BITS, context);
                 context.lbitWorkArea = context.lbitWorkArea >> 1;
                 buffer[context.pos++] = (byte) (context.lbitWorkArea >> 16 & MASK_8BITS);
                 buffer[context.pos++] = (byte) (context.lbitWorkArea >> 8 & MASK_8BITS);
@@ -478,7 +600,7 @@ public class Base32 extends BaseNCodec {
                 buffer[context.pos++] = (byte) (context.lbitWorkArea & MASK_8BITS);
                 break;
             case 7: // 35 bits = 4*8 +3
-                validateCharacter(MASK_3BITS, context);
+                validateCharacter(MASK_3_BITS, context);
                 context.lbitWorkArea = context.lbitWorkArea >> 3;
                 buffer[context.pos++] = (byte) (context.lbitWorkArea >> 24 & MASK_8BITS);
                 buffer[context.pos++] = (byte) (context.lbitWorkArea >> 16 & MASK_8BITS);
@@ -522,8 +644,8 @@ public class Base32 extends BaseNCodec {
             case 0:
                 break;
             case 1: // Only 1 octet; take top 5 bits then remainder
-                buffer[context.pos++] = encodeTable[(int) (context.lbitWorkArea >> 3) & MASK_5BITS]; // 8-1*5 = 3
-                buffer[context.pos++] = encodeTable[(int) (context.lbitWorkArea << 2) & MASK_5BITS]; // 5-3=2
+                buffer[context.pos++] = encodeTable[(int) (context.lbitWorkArea >> 3) & MASK_5_BITS]; // 8-1*5 = 3
+                buffer[context.pos++] = encodeTable[(int) (context.lbitWorkArea << 2) & MASK_5_BITS]; // 5-3=2
                 buffer[context.pos++] = pad;
                 buffer[context.pos++] = pad;
                 buffer[context.pos++] = pad;
@@ -532,33 +654,33 @@ public class Base32 extends BaseNCodec {
                 buffer[context.pos++] = pad;
                 break;
             case 2: // 2 octets = 16 bits to use
-                buffer[context.pos++] = encodeTable[(int) (context.lbitWorkArea >> 11) & MASK_5BITS]; // 16-1*5 = 11
-                buffer[context.pos++] = encodeTable[(int) (context.lbitWorkArea >> 6) & MASK_5BITS]; // 16-2*5 = 6
-                buffer[context.pos++] = encodeTable[(int) (context.lbitWorkArea >> 1) & MASK_5BITS]; // 16-3*5 = 1
-                buffer[context.pos++] = encodeTable[(int) (context.lbitWorkArea << 4) & MASK_5BITS]; // 5-1 = 4
+                buffer[context.pos++] = encodeTable[(int) (context.lbitWorkArea >> 11) & MASK_5_BITS]; // 16-1*5 = 11
+                buffer[context.pos++] = encodeTable[(int) (context.lbitWorkArea >> 6) & MASK_5_BITS]; // 16-2*5 = 6
+                buffer[context.pos++] = encodeTable[(int) (context.lbitWorkArea >> 1) & MASK_5_BITS]; // 16-3*5 = 1
+                buffer[context.pos++] = encodeTable[(int) (context.lbitWorkArea << 4) & MASK_5_BITS]; // 5-1 = 4
                 buffer[context.pos++] = pad;
                 buffer[context.pos++] = pad;
                 buffer[context.pos++] = pad;
                 buffer[context.pos++] = pad;
                 break;
             case 3: // 3 octets = 24 bits to use
-                buffer[context.pos++] = encodeTable[(int) (context.lbitWorkArea >> 19) & MASK_5BITS]; // 24-1*5 = 19
-                buffer[context.pos++] = encodeTable[(int) (context.lbitWorkArea >> 14) & MASK_5BITS]; // 24-2*5 = 14
-                buffer[context.pos++] = encodeTable[(int) (context.lbitWorkArea >> 9) & MASK_5BITS]; // 24-3*5 = 9
-                buffer[context.pos++] = encodeTable[(int) (context.lbitWorkArea >> 4) & MASK_5BITS]; // 24-4*5 = 4
-                buffer[context.pos++] = encodeTable[(int) (context.lbitWorkArea << 1) & MASK_5BITS]; // 5-4 = 1
+                buffer[context.pos++] = encodeTable[(int) (context.lbitWorkArea >> 19) & MASK_5_BITS]; // 24-1*5 = 19
+                buffer[context.pos++] = encodeTable[(int) (context.lbitWorkArea >> 14) & MASK_5_BITS]; // 24-2*5 = 14
+                buffer[context.pos++] = encodeTable[(int) (context.lbitWorkArea >> 9) & MASK_5_BITS]; // 24-3*5 = 9
+                buffer[context.pos++] = encodeTable[(int) (context.lbitWorkArea >> 4) & MASK_5_BITS]; // 24-4*5 = 4
+                buffer[context.pos++] = encodeTable[(int) (context.lbitWorkArea << 1) & MASK_5_BITS]; // 5-4 = 1
                 buffer[context.pos++] = pad;
                 buffer[context.pos++] = pad;
                 buffer[context.pos++] = pad;
                 break;
             case 4: // 4 octets = 32 bits to use
-                buffer[context.pos++] = encodeTable[(int) (context.lbitWorkArea >> 27) & MASK_5BITS]; // 32-1*5 = 27
-                buffer[context.pos++] = encodeTable[(int) (context.lbitWorkArea >> 22) & MASK_5BITS]; // 32-2*5 = 22
-                buffer[context.pos++] = encodeTable[(int) (context.lbitWorkArea >> 17) & MASK_5BITS]; // 32-3*5 = 17
-                buffer[context.pos++] = encodeTable[(int) (context.lbitWorkArea >> 12) & MASK_5BITS]; // 32-4*5 = 12
-                buffer[context.pos++] = encodeTable[(int) (context.lbitWorkArea >> 7) & MASK_5BITS]; // 32-5*5 = 7
-                buffer[context.pos++] = encodeTable[(int) (context.lbitWorkArea >> 2) & MASK_5BITS]; // 32-6*5 = 2
-                buffer[context.pos++] = encodeTable[(int) (context.lbitWorkArea << 3) & MASK_5BITS]; // 5-2 = 3
+                buffer[context.pos++] = encodeTable[(int) (context.lbitWorkArea >> 27) & MASK_5_BITS]; // 32-1*5 = 27
+                buffer[context.pos++] = encodeTable[(int) (context.lbitWorkArea >> 22) & MASK_5_BITS]; // 32-2*5 = 22
+                buffer[context.pos++] = encodeTable[(int) (context.lbitWorkArea >> 17) & MASK_5_BITS]; // 32-3*5 = 17
+                buffer[context.pos++] = encodeTable[(int) (context.lbitWorkArea >> 12) & MASK_5_BITS]; // 32-4*5 = 12
+                buffer[context.pos++] = encodeTable[(int) (context.lbitWorkArea >> 7) & MASK_5_BITS]; // 32-5*5 = 7
+                buffer[context.pos++] = encodeTable[(int) (context.lbitWorkArea >> 2) & MASK_5_BITS]; // 32-6*5 = 2
+                buffer[context.pos++] = encodeTable[(int) (context.lbitWorkArea << 3) & MASK_5_BITS]; // 5-2 = 3
                 buffer[context.pos++] = pad;
                 break;
             default:
@@ -580,14 +702,14 @@ public class Base32 extends BaseNCodec {
                 }
                 context.lbitWorkArea = (context.lbitWorkArea << 8) + b; // BITS_PER_BYTE
                 if (0 == context.modulus) { // we have enough bytes to create our output
-                    buffer[context.pos++] = encodeTable[(int) (context.lbitWorkArea >> 35) & MASK_5BITS];
-                    buffer[context.pos++] = encodeTable[(int) (context.lbitWorkArea >> 30) & MASK_5BITS];
-                    buffer[context.pos++] = encodeTable[(int) (context.lbitWorkArea >> 25) & MASK_5BITS];
-                    buffer[context.pos++] = encodeTable[(int) (context.lbitWorkArea >> 20) & MASK_5BITS];
-                    buffer[context.pos++] = encodeTable[(int) (context.lbitWorkArea >> 15) & MASK_5BITS];
-                    buffer[context.pos++] = encodeTable[(int) (context.lbitWorkArea >> 10) & MASK_5BITS];
-                    buffer[context.pos++] = encodeTable[(int) (context.lbitWorkArea >> 5) & MASK_5BITS];
-                    buffer[context.pos++] = encodeTable[(int) context.lbitWorkArea & MASK_5BITS];
+                    buffer[context.pos++] = encodeTable[(int) (context.lbitWorkArea >> 35) & MASK_5_BITS];
+                    buffer[context.pos++] = encodeTable[(int) (context.lbitWorkArea >> 30) & MASK_5_BITS];
+                    buffer[context.pos++] = encodeTable[(int) (context.lbitWorkArea >> 25) & MASK_5_BITS];
+                    buffer[context.pos++] = encodeTable[(int) (context.lbitWorkArea >> 20) & MASK_5_BITS];
+                    buffer[context.pos++] = encodeTable[(int) (context.lbitWorkArea >> 15) & MASK_5_BITS];
+                    buffer[context.pos++] = encodeTable[(int) (context.lbitWorkArea >> 10) & MASK_5_BITS];
+                    buffer[context.pos++] = encodeTable[(int) (context.lbitWorkArea >> 5) & MASK_5_BITS];
+                    buffer[context.pos++] = encodeTable[(int) context.lbitWorkArea & MASK_5_BITS];
                     context.currentLinePos += BYTES_PER_ENCODED_BLOCK;
                     if (lineLength > 0 && lineLength <= context.currentLinePos) {
                         System.arraycopy(lineSeparator, 0, buffer, context.pos, lineSeparator.length);

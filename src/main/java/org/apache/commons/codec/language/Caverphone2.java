@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,6 +16,8 @@
  */
 
 package org.apache.commons.codec.language;
+
+import java.util.Locale;
 
 /**
  * Encodes a string into a Caverphone 2.0 value.
@@ -34,11 +36,18 @@ public class Caverphone2 extends AbstractCaverphone {
     private static final String TEN_1 = "1111111111";
 
     /**
+     * Constructs a new instance.
+     */
+    public Caverphone2() {
+        // empty
+    }
+
+    /**
      * Encodes the given String into a Caverphone 2.0 value.
      *
      * @param source
-     *            String the source string
-     * @return A caverphone code for the given String
+     *            String the source string.
+     * @return A Caverphone code for the given String.
      */
     @Override
     public String encode(final String source) {
@@ -48,7 +57,7 @@ public class Caverphone2 extends AbstractCaverphone {
         }
 
         // 1. Convert to lowercase
-        txt = txt.toLowerCase(java.util.Locale.ENGLISH);
+        txt = txt.toLowerCase(Locale.ENGLISH);
 
         // 2. Remove anything not A-Z
         txt = txt.replaceAll("[^a-z]", "");

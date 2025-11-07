@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -118,12 +118,12 @@ import org.junit.jupiter.api.Test;
  * Patch applied, committed revision 1541234.
  * </p>
  */
-public class PhoneticEnginePerformanceTest {
+class PhoneticEnginePerformanceTest {
 
     private static final int LOOP = 80000;
 
     @Test
-    public void test() {
+    void test() {
         final PhoneticEngine engine = new PhoneticEngine(NameType.GENERIC, RuleType.APPROX, true);
         final String input = "Angelo";
         final long startMillis = System.currentTimeMillis();

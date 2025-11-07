@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -22,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 import org.junit.jupiter.api.Test;
 
-public class MurmurHash2Test {
+class MurmurHash2Test {
 
     /** Random input data with various length. */
     static final byte[][] input = {
@@ -81,7 +81,7 @@ public class MurmurHash2Test {
     static final String text = "Lorem ipsum dolor sit amet, consectetur adipisicing elit";
 
     @Test
-    public void testHash32ByteArrayInt() {
+    void testHash32ByteArrayInt() {
         for (int i = 0; i < input.length; i++) {
             final int hash = MurmurHash2.hash32(input[i], input[i].length);
             if (hash != results32_standard[i]) {
@@ -92,7 +92,7 @@ public class MurmurHash2Test {
     }
 
     @Test
-    public void testHash32ByteArrayIntInt() {
+    void testHash32ByteArrayIntInt() {
         for (int i = 0; i < input.length; i++) {
             final int hash = MurmurHash2.hash32(input[i], input[i].length, 0x71b4954d);
             if (hash != results32_seed[i]) {
@@ -103,19 +103,19 @@ public class MurmurHash2Test {
     }
 
     @Test
-    public void testHash32String() {
+    void testHash32String() {
         final int hash = MurmurHash2.hash32(text);
         assertEquals(0xb3bf597e, hash);
     }
 
     @Test
-    public void testHash32StringIntInt() {
+    void testHash32StringIntInt() {
         final int hash = MurmurHash2.hash32(text, 2, text.length() - 4);
         assertEquals(0x4d666d90, hash);
     }
 
     @Test
-    public void testHash64ByteArrayInt() {
+    void testHash64ByteArrayInt() {
         for (int i = 0; i < input.length; i++) {
             final long hash = MurmurHash2.hash64(input[i], input[i].length);
             if (hash != results64_standard[i]) {
@@ -126,7 +126,7 @@ public class MurmurHash2Test {
     }
 
     @Test
-    public void testHash64ByteArrayIntInt() {
+    void testHash64ByteArrayIntInt() {
         for (int i = 0; i < input.length; i++) {
             final long hash = MurmurHash2.hash64(input[i], input[i].length, 0x344d1f5c);
             if (hash != results64_seed[i]) {
@@ -137,13 +137,13 @@ public class MurmurHash2Test {
     }
 
     @Test
-    public void testHash64String() {
+    void testHash64String() {
         final long hash = MurmurHash2.hash64(text);
         assertEquals(0x0920e0c1b7eeb261L, hash);
     }
 
     @Test
-    public void testHash64StringIntInt() {
+    void testHash64StringIntInt() {
         final long hash = MurmurHash2.hash64(text, 2, text.length() - 4);
         assertEquals(0xa8b33145194985a2L, hash);
     }

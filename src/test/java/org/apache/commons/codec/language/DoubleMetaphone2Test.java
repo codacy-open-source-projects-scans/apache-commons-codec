@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -30,7 +30,7 @@ import org.junit.jupiter.api.Test;
  *
  * @see <a href="https://swoodbridge.com/DoubleMetaPhone/surnames.txt">PHP test program</a>
  */
-public class DoubleMetaphone2Test extends AbstractStringEncoderTest<DoubleMetaphone> {
+class DoubleMetaphone2Test extends AbstractStringEncoderTest<DoubleMetaphone> {
 
     private static final int ALTERNATE_INDEX = 2;
 
@@ -1276,7 +1276,7 @@ public class DoubleMetaphone2Test extends AbstractStringEncoderTest<DoubleMetaph
      * Test alternative encoding.
      */
     @Test
-    public void testDoubleMetaphoneAlternate() {
+    void testDoubleMetaphoneAlternate() {
         checkDoubleMetaphone(ALTERNATE_INDEX, true);
     }
 
@@ -1284,7 +1284,7 @@ public class DoubleMetaphone2Test extends AbstractStringEncoderTest<DoubleMetaph
      * Test primary encoding.
      */
     @Test
-    public void testDoubleMetaphonePrimary() {
+    void testDoubleMetaphonePrimary() {
         checkDoubleMetaphone(PRIMARY_INDEX, false);
     }
 }

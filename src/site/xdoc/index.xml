@@ -7,7 +7,7 @@ The ASF licenses this file to You under the Apache License, Version 2.0
 (the "License"); you may not use this file except in compliance with
 the License.  You may obtain a copy of the License at
 
-     http://www.apache.org/licenses/LICENSE-2.0
+     https://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,10 +15,12 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 -->
-<document>
+<document xmlns="http://maven.apache.org/XDOC/2.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/XDOC/2.0 http://maven.apache.org/xsd/xdoc-2.0.xsd">
  <properties>
   <title>Home</title>
-  <author email="dev@commons.apache.org">Commons Documentation Team</author>
+  <author email="dev@commons.apache.org">Apache Commons Team</author>
  </properties>
 <body>
 <!-- ================================================== -->
@@ -49,7 +51,7 @@ forked versions of Base64 had significantly diverged from one
 another.  XML-RPC had applied numerous fixes and patches which
 were not applied to the Commons HttpClient Base64.  Different
 subprojects had differing implementations at various levels
-of compliance with the <a href="http://www.ietf.org/rfc/rfc2045.txt">
+of compliance with the <a href="https://www.ietf.org/rfc/rfc2045.txt">
 RFC 2045</a>.
 </p>
 <p>
@@ -75,7 +77,7 @@ The Javadoc API documents are available online:
   <li><a href="https://javadoc.io/doc/commons-codec/commons-codec">Javadoc archive</a></li>
 </ul>
 <p>
-The <a href="scm.html">subversion repository</a> can be
+The <a href="scm.html">Git repository</a> can be
 <a href="https://gitbox.apache.org/repos/asf?p=commons-codec.git">browsed</a>.
 </p>
 </section>
@@ -88,10 +90,10 @@ The <a href="scm.html">subversion repository</a> can be
 <p>
 See the
 <a href="https://commons.apache.org/codec/download_codec.cgi">Download Page</a>
-for the latest releases.<br />
+for the latest releases.
 </p>
 <p>
-<a href="changes-report.html">Change reports</a> are also available.
+<a href="changes.html">Change reports</a> are also available.
 </p>
 <p>
 For previous releases, see the <a href="https://archive.apache.org/dist/commons/codec/">Apache Archive</a>

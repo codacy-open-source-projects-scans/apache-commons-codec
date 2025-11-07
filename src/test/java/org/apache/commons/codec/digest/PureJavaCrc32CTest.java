@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -25,7 +25,7 @@ import org.junit.jupiter.api.Test;
 /**
  * Tests {@link PureJavaCrc32C}. Test data was derived from https://tools.ietf.org/html/rfc3720#appendix-B.4
  */
-public class PureJavaCrc32CTest {
+class PureJavaCrc32CTest {
 
     private final PureJavaCrc32C crc = new PureJavaCrc32C();
 
@@ -40,7 +40,7 @@ public class PureJavaCrc32CTest {
     }
 
     @Test
-    public void testDecreasing() {
+    void testDecreasing() {
         for (int i = 0; i < data.length; i++) {
             data[i] = (byte) (31 - i);
         }
@@ -48,7 +48,7 @@ public class PureJavaCrc32CTest {
     }
 
     @Test
-    public void testIncreasing() {
+    void testIncreasing() {
         for (int i = 0; i < data.length; i++) {
             data[i] = (byte) i;
         }
@@ -56,13 +56,13 @@ public class PureJavaCrc32CTest {
     }
 
     @Test
-    public void testOnes() {
+    void testOnes() {
         Arrays.fill(data, (byte) 0xFF);
         check(0x62a8ab43); // 43 ab a8 62
     }
 
     @Test
-    public void testZeros() {
+    void testZeros() {
         Arrays.fill(data, (byte) 0);
         check(0x8a9136aa); // aa 36 91 8a
     }

@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -31,11 +31,11 @@ import org.junit.jupiter.api.Test;
 /**
  * URL codec test cases
  */
-public class URLCodecTest {
+class URLCodecTest {
 
-    static final int SWISS_GERMAN_STUFF_UNICODE[] = { 0x47, 0x72, 0xFC, 0x65, 0x7A, 0x69, 0x5F, 0x7A, 0xE4, 0x6D, 0xE4 };
+    static final int[] SWISS_GERMAN_STUFF_UNICODE = { 0x47, 0x72, 0xFC, 0x65, 0x7A, 0x69, 0x5F, 0x7A, 0xE4, 0x6D, 0xE4 };
 
-    static final int RUSSIAN_STUFF_UNICODE[] = { 0x412, 0x441, 0x435, 0x43C, 0x5F, 0x43F, 0x440, 0x438, 0x432, 0x435, 0x442 };
+    static final int[] RUSSIAN_STUFF_UNICODE = { 0x412, 0x441, 0x435, 0x43C, 0x5F, 0x43F, 0x440, 0x438, 0x432, 0x435, 0x442 };
 
     private String constructString(final int[] unicodeChars) {
         final StringBuilder buffer = new StringBuilder();
@@ -48,7 +48,7 @@ public class URLCodecTest {
     }
 
     @Test
-    public void testBasicEncodeDecode() throws Exception {
+    void testBasicEncodeDecode() throws Exception {
         final URLCodec urlCodec = new URLCodec();
         final String plain = "Hello there!";
         final String encoded = urlCodec.encode(plain);
@@ -58,7 +58,7 @@ public class URLCodecTest {
     }
 
     @Test
-    public void testDecodeInvalid() throws Exception {
+    void testDecodeInvalid() throws Exception {
         final URLCodec urlCodec = new URLCodec();
         assertThrows(DecoderException.class, () -> urlCodec.decode("%"));
         assertThrows(DecoderException.class, () -> urlCodec.decode("%A"));
@@ -70,7 +70,7 @@ public class URLCodecTest {
     }
 
     @Test
-    public void testDecodeInvalidContent() throws DecoderException {
+    void testDecodeInvalidContent() throws DecoderException {
         final String ch_msg = constructString(SWISS_GERMAN_STUFF_UNICODE);
         final URLCodec urlCodec = new URLCodec();
         final byte[] input = ch_msg.getBytes(StandardCharsets.ISO_8859_1);
@@ -83,7 +83,7 @@ public class URLCodecTest {
     }
 
     @Test
-    public void testDecodeObjects() throws Exception {
+    void testDecodeObjects() throws Exception {
         final URLCodec urlCodec = new URLCodec();
         final String plain = "Hello+there%21";
         String decoded = (String) urlCodec.decode((Object) plain);
@@ -101,7 +101,7 @@ public class URLCodecTest {
     }
 
     @Test
-    public void testDecodeStringWithNull() throws Exception {
+    void testDecodeStringWithNull() throws Exception {
         final URLCodec urlCodec = new URLCodec();
         final String test = null;
         final String result = urlCodec.decode(test, "charset");
@@ -109,14 +109,14 @@ public class URLCodecTest {
     }
 
     @Test
-    public void testDecodeWithNullArray() throws Exception {
+    void testDecodeWithNullArray() throws Exception {
         final byte[] plain = null;
         final byte[] result = URLCodec.decodeUrl(plain);
         assertNull(result, "Result should be null");
     }
 
     @Test
-    public void testDefaultEncoding() throws Exception {
+    void testDefaultEncoding() throws Exception {
         final String plain = "Hello there!";
         final URLCodec urlCodec = new URLCodec("UnicodeBig");
         urlCodec.encode(plain); // To work around a weird quirk in Java 1.2.2
@@ -127,7 +127,7 @@ public class URLCodecTest {
     }
 
     @Test
-    public void testEncodeDecodeNull() throws Exception {
+    void testEncodeDecodeNull() throws Exception {
         final URLCodec urlCodec = new URLCodec();
         assertNull(urlCodec.encode((String) null), "Null string URL encoding test");
         assertNull(urlCodec.decode((String) null), "Null string URL decoding test");
@@ -135,7 +135,7 @@ public class URLCodecTest {
     }
 
     @Test
-    public void testEncodeNull() throws Exception {
+    void testEncodeNull() throws Exception {
         final URLCodec urlCodec = new URLCodec();
         final byte[] plain = null;
         final byte[] encoded = urlCodec.encode(plain);
@@ -144,7 +144,7 @@ public class URLCodecTest {
     }
 
     @Test
-    public void testEncodeObjects() throws Exception {
+    void testEncodeObjects() throws Exception {
         final URLCodec urlCodec = new URLCodec();
         final String plain = "Hello there!";
         String encoded = (String) urlCodec.encode((Object) plain);
@@ -163,7 +163,7 @@ public class URLCodecTest {
     }
 
     @Test
-    public void testEncodeStringWithNull() throws Exception {
+    void testEncodeStringWithNull() throws Exception {
         final URLCodec urlCodec = new URLCodec();
         final String test = null;
         final String result = urlCodec.encode(test, "charset");
@@ -171,7 +171,7 @@ public class URLCodecTest {
     }
 
     @Test
-    public void testEncodeUrlWithNullBitSet() throws Exception {
+    void testEncodeUrlWithNullBitSet() throws Exception {
         final URLCodec urlCodec = new URLCodec();
         final String plain = "Hello there!";
         final String encoded = new String(URLCodec.encodeUrl(null, plain.getBytes(StandardCharsets.UTF_8)));
@@ -181,7 +181,7 @@ public class URLCodecTest {
     }
 
     @Test
-    public void testInvalidEncoding() {
+    void testInvalidEncoding() {
         final URLCodec urlCodec = new URLCodec("NONSENSE");
         final String plain = "Hello there!";
         assertThrows(EncoderException.class, () -> urlCodec.encode(plain), "We set the encoding to a bogus NONSENSE value");
@@ -190,7 +190,7 @@ public class URLCodecTest {
     }
 
     @Test
-    public void testSafeCharEncodeDecode() throws Exception {
+    void testSafeCharEncodeDecode() throws Exception {
         final URLCodec urlCodec = new URLCodec();
         final String plain = "abc123_-.*";
         final String encoded = urlCodec.encode(plain);
@@ -200,7 +200,7 @@ public class URLCodecTest {
     }
 
     @Test
-    public void testUnsafeEncodeDecode() throws Exception {
+    void testUnsafeEncodeDecode() throws Exception {
         final URLCodec urlCodec = new URLCodec();
         final String plain = "~!@#$%^&()+{}\"\\;:`,/[]";
         final String encoded = urlCodec.encode(plain);
@@ -210,7 +210,7 @@ public class URLCodecTest {
     }
 
     @Test
-    public void testUTF8RoundTrip() throws Exception {
+    void testUTF8RoundTrip() throws Exception {
 
         final String ru_msg = constructString(RUSSIAN_STUFF_UNICODE);
         final String ch_msg = constructString(SWISS_GERMAN_STUFF_UNICODE);

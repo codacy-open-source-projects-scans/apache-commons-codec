@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -32,7 +32,7 @@ import org.junit.jupiter.api.Test;
  *
  * <p>Keep this file in UTF-8 encoding for proper Javadoc processing.</p>
  */
-public class SoundexTest extends AbstractStringEncoderTest<Soundex> {
+class SoundexTest extends AbstractStringEncoderTest<Soundex> {
 
     @Override
     protected Soundex createStringEncoder() {
@@ -40,7 +40,7 @@ public class SoundexTest extends AbstractStringEncoderTest<Soundex> {
     }
 
     @Test
-    public void testB650() throws EncoderException {
+    void testB650() throws EncoderException {
         checkEncodingVariations("B650", new String[]{
             "BARHAM",
             "BARONE",
@@ -85,13 +85,13 @@ public class SoundexTest extends AbstractStringEncoderTest<Soundex> {
     }
 
     @Test
-    public void testBadCharacters() {
+    void testBadCharacters() {
         assertEquals("H452", getStringEncoder().encode("HOL>MES"));
 
     }
 
     @Test
-    public void testDifference() throws EncoderException {
+    void testDifference() throws EncoderException {
         // Edge cases
         assertEquals(0, getStringEncoder().difference(null, null));
         assertEquals(0, getStringEncoder().difference("", ""));
@@ -111,7 +111,7 @@ public class SoundexTest extends AbstractStringEncoderTest<Soundex> {
     }
 
     @Test
-    public void testEncodeBasic() {
+    void testEncodeBasic() {
         assertEquals("T235", getStringEncoder().encode("testing"));
         assertEquals("T000", getStringEncoder().encode("The"));
         assertEquals("Q200", getStringEncoder().encode("quick"));
@@ -128,7 +128,7 @@ public class SoundexTest extends AbstractStringEncoderTest<Soundex> {
      * Examples from http://www.bradandkathy.com/genealogy/overviewofsoundex.html
      */
     @Test
-    public void testEncodeBatch2() {
+    void testEncodeBatch2() {
         assertEquals("A462", getStringEncoder().encode("Allricht"));
         assertEquals("E166", getStringEncoder().encode("Eberhard"));
         assertEquals("E521", getStringEncoder().encode("Engebrethson"));
@@ -151,7 +151,7 @@ public class SoundexTest extends AbstractStringEncoderTest<Soundex> {
      * Examples from http://www.archives.gov/research_room/genealogy/census/soundex.html
      */
     @Test
-    public void testEncodeBatch3() {
+    void testEncodeBatch3() {
         assertEquals("W252", getStringEncoder().encode("Washington"));
         assertEquals("L000", getStringEncoder().encode("Lee"));
         assertEquals("G362", getStringEncoder().encode("Gutierrez"));
@@ -167,7 +167,7 @@ public class SoundexTest extends AbstractStringEncoderTest<Soundex> {
      * Examples from: http://www.myatt.demon.co.uk/sxalg.htm
      */
     @Test
-    public void testEncodeBatch4() {
+    void testEncodeBatch4() {
         assertEquals("H452", getStringEncoder().encode("HOLMES"));
         assertEquals("A355", getStringEncoder().encode("ADOMOMI"));
         assertEquals("V536", getStringEncoder().encode("VONDERLEHR"));
@@ -180,7 +180,7 @@ public class SoundexTest extends AbstractStringEncoderTest<Soundex> {
     }
 
     @Test
-    public void testEncodeIgnoreApostrophes() throws EncoderException {
+    void testEncodeIgnoreApostrophes() throws EncoderException {
         checkEncodingVariations("O165", new String[]{
             "OBrien",
             "'OBrien",
@@ -197,7 +197,7 @@ public class SoundexTest extends AbstractStringEncoderTest<Soundex> {
      *
      * @throws EncoderException for some failure scenarios     */
     @Test
-    public void testEncodeIgnoreHyphens() throws EncoderException {
+    void testEncodeIgnoreHyphens() throws EncoderException {
         checkEncodingVariations("K525", new String[]{
             "KINGSMITH",
             "-KINGSMITH",
@@ -213,13 +213,13 @@ public class SoundexTest extends AbstractStringEncoderTest<Soundex> {
     }
 
     @Test
-    public void testEncodeIgnoreTrimmable() {
+    void testEncodeIgnoreTrimmable() {
         assertEquals("W252", getStringEncoder().encode(" \t\n\r Washington \t\n\r "));
     }
 
     @Test
 // examples and algorithm rules from:  http://www.genealogy.com/articles/research/00000060.html
-    public void testGenealogy() { // treat vowels and HW as silent
+    void testGenealogy() { // treat vowels and HW as silent
         final Soundex s = Soundex.US_ENGLISH_GENEALOGY;
         assertEquals("H251", s.encode("Heggenburger"));
         assertEquals("B425", s.encode("Blackman"));
@@ -235,7 +235,7 @@ public class SoundexTest extends AbstractStringEncoderTest<Soundex> {
      * Consonants from the same code group separated by W or H are treated as one.
      */
     @Test
-    public void testHWRuleEx1() {
+    void testHWRuleEx1() {
         // From
         // http://www.archives.gov/research_room/genealogy/census/soundex.html:
         // Ashcraft is coded A-261 (A, 2 for the S, C ignored, 6 for the R, 1
@@ -252,7 +252,7 @@ public class SoundexTest extends AbstractStringEncoderTest<Soundex> {
      * Test data from http://www.myatt.demon.co.uk/sxalg.htm
      */
     @Test
-    public void testHWRuleEx2() {
+    void testHWRuleEx2() {
         assertEquals("B312", getStringEncoder().encode("BOOTHDAVIS"));
         assertEquals("B312", getStringEncoder().encode("BOOTH-DAVIS"));
     }
@@ -262,7 +262,7 @@ public class SoundexTest extends AbstractStringEncoderTest<Soundex> {
      *
      * @throws EncoderException for some failure scenarios     */
     @Test
-    public void testHWRuleEx3() throws EncoderException {
+    void testHWRuleEx3() throws EncoderException {
         assertEquals("S460", getStringEncoder().encode("Sgler"));
         assertEquals("S460", getStringEncoder().encode("Swhgler"));
         // Also S460:
@@ -290,7 +290,7 @@ public class SoundexTest extends AbstractStringEncoderTest<Soundex> {
      * https://msdn.microsoft.com/library/default.asp?url=/library/en-us/tsqlref/ts_setu-sus_3o6w.asp
      */
     @Test
-    public void testMsSqlServer1() {
+    void testMsSqlServer1() {
         assertEquals("S530", getStringEncoder().encode("Smith"));
         assertEquals("S530", getStringEncoder().encode("Smythe"));
     }
@@ -302,7 +302,7 @@ public class SoundexTest extends AbstractStringEncoderTest<Soundex> {
      *
      * @throws EncoderException for some failure scenarios     */
     @Test
-    public void testMsSqlServer2() throws EncoderException {
+    void testMsSqlServer2() throws EncoderException {
         checkEncodingVariations("E625", new String[]{"Erickson", "Erickson", "Erikson", "Ericson", "Ericksen", "Ericsen"});
     }
 
@@ -310,7 +310,7 @@ public class SoundexTest extends AbstractStringEncoderTest<Soundex> {
      * Examples for MS SQLServer from https://databases.about.com/library/weekly/aa042901a.htm
      */
     @Test
-    public void testMsSqlServer3() {
+    void testMsSqlServer3() {
         assertEquals("A500", getStringEncoder().encode("Ann"));
         assertEquals("A536", getStringEncoder().encode("Andrew"));
         assertEquals("J530", getStringEncoder().encode("Janet"));
@@ -326,23 +326,23 @@ public class SoundexTest extends AbstractStringEncoderTest<Soundex> {
      * https://issues.apache.org/jira/browse/CODEC-54 https://issues.apache.org/jira/browse/CODEC-56
      */
     @Test
-    public void testNewInstance() {
+    void testNewInstance() {
         assertEquals("W452", new Soundex().soundex("Williams"));
     }
 
     @Test
-    public void testNewInstance2() {
+    void testNewInstance2() {
         assertEquals("W452", new Soundex(Soundex.US_ENGLISH_MAPPING_STRING.toCharArray()).soundex("Williams"));
     }
 
     @Test
-    public void testNewInstance3() {
+    void testNewInstance3() {
         assertEquals("W452", new Soundex(Soundex.US_ENGLISH_MAPPING_STRING).soundex("Williams"));
     }
 
     @Test
 // examples and algorithm rules from:  http://west-penwith.org.uk/misc/soundex.htm
-    public void testSimplifiedSoundex() { // treat vowels and HW as separators
+    void testSimplifiedSoundex() { // treat vowels and HW as separators
         final Soundex s = Soundex.US_ENGLISH_SIMPLIFIED;
         assertEquals("W452", s.encode("WILLIAMS"));
         assertEquals("B625", s.encode("BARAGWANATH"));
@@ -356,12 +356,12 @@ public class SoundexTest extends AbstractStringEncoderTest<Soundex> {
     }
 
     @Test
-    public void testSoundexUtilsConstructable() {
+    void testSoundexUtilsConstructable() {
         new SoundexUtils();
     }
 
     @Test
-    public void testSoundexUtilsNullBehaviour() {
+    void testSoundexUtilsNullBehaviour() {
         assertNull(SoundexUtils.clean(null));
         assertEquals("", SoundexUtils.clean(""));
         assertEquals(0, SoundexUtils.differenceEncoded(null, ""));
@@ -372,7 +372,7 @@ public class SoundexTest extends AbstractStringEncoderTest<Soundex> {
      * https://issues.apache.org/jira/browse/CODEC-54 https://issues.apache.org/jira/browse/CODEC-56
      */
     @Test
-    public void testUsEnglishStatic() {
+    void testUsEnglishStatic() {
         assertEquals("W452", Soundex.US_ENGLISH.soundex("Williams"));
     }
 
@@ -382,7 +382,7 @@ public class SoundexTest extends AbstractStringEncoderTest<Soundex> {
      * https://issues.apache.org/jira/browse/CODEC-30
      */
     @Test
-    public void testUsMappingEWithAcute() {
+    void testUsMappingEWithAcute() {
         assertEquals("E000", getStringEncoder().encode("e"));
         if (Character.isLetter('\u00e9')) { // e-acute
             //         uppercase E-acute
@@ -398,7 +398,7 @@ public class SoundexTest extends AbstractStringEncoderTest<Soundex> {
      * https://issues.apache.org/jira/browse/CODEC-30
      */
     @Test
-    public void testUsMappingOWithDiaeresis() {
+    void testUsMappingOWithDiaeresis() {
         assertEquals("O000", getStringEncoder().encode("o"));
         if (Character.isLetter('\u00f6')) { // o-umlaut
             //         uppercase O-umlaut
@@ -412,7 +412,7 @@ public class SoundexTest extends AbstractStringEncoderTest<Soundex> {
      * Tests example from https://en.wikipedia.org/wiki/Soundex#American_Soundex as of 2015-03-22.
      */
     @Test
-    public void testWikipediaAmericanSoundex() {
+    void testWikipediaAmericanSoundex() {
         assertEquals("R163", getStringEncoder().encode("Robert"));
         assertEquals("R163", getStringEncoder().encode("Rupert"));
         assertEquals("A261", getStringEncoder().encode("Ashcraft"));

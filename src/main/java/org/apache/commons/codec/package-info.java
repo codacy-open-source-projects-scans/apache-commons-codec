@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -24,7 +24,7 @@
  * Codec is currently comprised of a modest set of utilities and a simple framework for String encoding and decoding in the following packages:
  * </p>
  * <ul>
- * <li><a href="binary/package-summary.html">Binary codecs.</a></li>
+ * <li><a href="binary/package-summary.html">Binary codecs: Base16, Base32, and Base64.</a></li>
  * <li><a href="cli/package-summary.html">Command line utility.</a></li>
  * <li><a href="digest/package-summary.html">Digests and hashers</a></li>
  * <li><a href="language/package-summary.html">Common language and phonetic encoders.</a></li>

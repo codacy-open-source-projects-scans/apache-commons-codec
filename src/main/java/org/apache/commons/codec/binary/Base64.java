@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -24,7 +24,7 @@ import java.util.Objects;
 import org.apache.commons.codec.CodecPolicy;
 
 /**
- * Provides Base64 encoding and decoding as defined by <a href="http://www.ietf.org/rfc/rfc2045.txt">RFC 2045</a>.
+ * Provides Base64 encoding and decoding as defined by <a href="https://www.ietf.org/rfc/rfc2045.txt">RFC 2045</a>.
  *
  * <p>
  * This class implements section <cite>6.8. Base64 Content-Transfer-Encoding</cite> from RFC 2045 <cite>Multipurpose
@@ -51,7 +51,7 @@ import org.apache.commons.codec.CodecPolicy;
  * This class is thread-safe.
  * </p>
  * <p>
- * You can configure instances with the {@link Builder}.
+ * To configure a new instance, use a {@link Builder}. For example:
  * </p>
  * <pre>
  * Base64 base64 = Base64.builder()
@@ -59,18 +59,35 @@ import org.apache.commons.codec.CodecPolicy;
  *   .setEncodeTable(customEncodeTable)         // default is built in, null resets to default
  *   .setLineLength(0)                          // default is none
  *   .setLineSeparator('\r', '\n')              // default is CR LF, null resets to default
- *   .setPadding('=')                           // default is =
+ *   .setPadding('=')                           // default is '='
  *   .setUrlSafe(false)                         // default is false
  *   .get()
  * </pre>
  *
- * @see <a href="http://www.ietf.org/rfc/rfc2045.txt">RFC 2045</a>
+ * @see Base64InputStream
+ * @see Base64OutputStream
+ * @see <a href="https://www.ietf.org/rfc/rfc2045.txt">RFC 2045</a>
  * @since 1.0
  */
 public class Base64 extends BaseNCodec {
 
     /**
      * Builds {@link Base64} instances.
+     *
+     * <p>
+     * To configure a new instance, use a {@link Builder}. For example:
+     * </p>
+     *
+     * <pre>
+     * Base64 base64 = Base64.builder()
+     *   .setDecodingPolicy(DecodingPolicy.LENIENT) // default is lenient, null resets to default
+     *   .setEncodeTable(customEncodeTable)         // default is built in, null resets to default
+     *   .setLineLength(0)                          // default is none
+     *   .setLineSeparator('\r', '\n')              // default is CR LF, null resets to default
+     *   .setPadding('=')                           // default is '='
+     *   .setUrlSafe(false)                         // default is false
+     *   .get()
+     * </pre>
      *
      * @since 1.17.0
      */
@@ -81,11 +98,23 @@ public class Base64 extends BaseNCodec {
          */
         public Builder() {
             super(STANDARD_ENCODE_TABLE);
+            setDecodeTableRaw(DECODE_TABLE);
+            setEncodeTableRaw(STANDARD_ENCODE_TABLE);
+            setEncodedBlockSize(BYTES_PER_ENCODED_BLOCK);
+            setUnencodedBlockSize(BYTES_PER_UNENCODED_BLOCK);
         }
 
         @Override
         public Base64 get() {
-            return new Base64(getLineLength(), getLineSeparator(), getPadding(), getEncodeTable(), getDecodingPolicy());
+            return new Base64(this);
+        }
+
+        @Override
+        public Builder setEncodeTable(final byte... encodeTable) {
+            final boolean isStandardEncodeTable = Arrays.equals(encodeTable, STANDARD_ENCODE_TABLE);
+            final boolean isUrlSafe = Arrays.equals(encodeTable, URL_SAFE_ENCODE_TABLE);
+            super.setDecodeTableRaw(isStandardEncodeTable || isUrlSafe ? DECODE_TABLE : calculateDecodeTable(encodeTable));
+            return super.setEncodeTable(encodeTable);
         }
 
         /**
@@ -108,17 +137,16 @@ public class Base64 extends BaseNCodec {
     private static final int BITS_PER_ENCODED_BYTE = 6;
     private static final int BYTES_PER_UNENCODED_BLOCK = 3;
     private static final int BYTES_PER_ENCODED_BLOCK = 4;
-    private static final int ALPHABET_LENGTH = 64;
     private static final int DECODING_TABLE_LENGTH = 256;
 
     /**
-     * This array is a lookup table that translates 6-bit positive integer index values into their "Base64 Alphabet"
-     * equivalents as specified in Table 1 of RFC 2045.
+     * This array is a lookup table that translates 6-bit positive integer index values into their "Base64 Alphabet" equivalents as specified in Table 1 of RFC
+     * 2045.
      * <p>
-     * Thanks to "commons" project in ws.apache.org for this code.
-     * https://svn.apache.org/repos/asf/webservices/commons/trunk/modules/util/
+     * Thanks to "commons" project in ws.apache.org for this code. https://svn.apache.org/repos/asf/webservices/commons/trunk/modules/util/
      * </p>
      */
+    // @formatter:off
     private static final byte[] STANDARD_ENCODE_TABLE = {
             'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
             'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
@@ -126,12 +154,11 @@ public class Base64 extends BaseNCodec {
             'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
             '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '/'
     };
-
     /**
-     * This is a copy of the STANDARD_ENCODE_TABLE above, but with + and /
-     * changed to - and _ to make the encoded Base64 results more URL-SAFE.
-     * This table is only used when the Base64's mode is set to URL-SAFE.
+     * This is a copy of the STANDARD_ENCODE_TABLE above, but with + and / changed to - and _ to make the encoded Base64 results more URL-SAFE. This table is
+     * only used when the Base64's mode is set to URL-SAFE.
      */
+    // @formatter:off
     private static final byte[] URL_SAFE_ENCODE_TABLE = {
             'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
             'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
@@ -139,7 +166,7 @@ public class Base64 extends BaseNCodec {
             'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
             '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '-', '_'
     };
-
+    // @formatter:on
     /**
      * This array is a lookup table that translates Unicode characters drawn from the "Base64 Alphabet" (as specified
      * in Table 1 of RFC 2045) into their 6-bit positive integer equivalents. Characters that are not in the Base64
@@ -169,25 +196,55 @@ public class Base64 extends BaseNCodec {
      * Base64 uses 6-bit fields.
      */
     /** Mask used to extract 6 bits, used when encoding */
-    private static final int MASK_6BITS = 0x3f;
+    private static final int MASK_6_BITS = 0x3f;
 
     // The static final fields above are used for the original static byte[] methods on Base64.
     // The private member fields below are used with the new streaming approach, which requires
     // some state be preserved between calls of encode() and decode().
 
     /** Mask used to extract 4 bits, used when decoding final trailing character. */
-    private static final int MASK_4BITS = 0xf;
+    private static final int MASK_4_BITS = 0xf;
     /** Mask used to extract 2 bits, used when decoding final trailing character. */
-    private static final int MASK_2BITS = 0x3;
+    private static final int MASK_2_BITS = 0x3;
 
     /**
      * Creates a new Builder.
+     *
+     * <p>
+     * To configure a new instance, use a {@link Builder}. For example:
+     * </p>
+     *
+     * <pre>
+     * Base64 base64 = Base64.builder()
+     *   .setDecodingPolicy(DecodingPolicy.LENIENT) // default is lenient, null resets to default
+     *   .setEncodeTable(customEncodeTable)         // default is built in, null resets to default
+     *   .setLineLength(0)                          // default is none
+     *   .setLineSeparator('\r', '\n')              // default is CR LF, null resets to default
+     *   .setPadding('=')                           // default is '='
+     *   .setUrlSafe(false)                         // default is false
+     *   .get()
+     * </pre>
      *
      * @return a new Builder.
      * @since 1.17.0
      */
     public static Builder builder() {
         return new Builder();
+    }
+
+    /**
+     * Calculates a decode table for a given encode table.
+     *
+     * @param encodeTable that is used to determine decode lookup table
+     * @return decodeTable
+     */
+    private static byte[] calculateDecodeTable(final byte[] encodeTable) {
+        final byte[] decodeTable = new byte[DECODING_TABLE_LENGTH];
+        Arrays.fill(decodeTable, (byte) -1);
+        for (int i = 0; i < encodeTable.length; i++) {
+            decodeTable[encodeTable[i]] = (byte) i;
+        }
+        return decodeTable;
     }
 
     /**
@@ -222,13 +279,13 @@ public class Base64 extends BaseNCodec {
     /**
      * Decodes a byte64-encoded integer according to crypto standards such as W3C's XML-Signature.
      *
-     * @param pArray
+     * @param array
      *            a byte array containing base64 character data
      * @return A BigInteger
      * @since 1.4
      */
-    public static BigInteger decodeInteger(final byte[] pArray) {
-        return new BigInteger(1, decodeBase64(pArray));
+    public static BigInteger decodeInteger(final byte[] array) {
+        return new BigInteger(1, decodeBase64(array));
     }
 
     /**
@@ -469,22 +526,9 @@ public class Base64 extends BaseNCodec {
         return resizedBytes;
     }
 
-    private static byte[] toUrlSafeEncodeTable(final boolean urlSafe) {
+    static byte[] toUrlSafeEncodeTable(final boolean urlSafe) {
         return urlSafe ? URL_SAFE_ENCODE_TABLE : STANDARD_ENCODE_TABLE;
     }
-
-    /**
-     * Encode table to use: either STANDARD or URL_SAFE or custom.
-     * Note: the DECODE_TABLE above remains static because it is able
-     * to decode both STANDARD and URL_SAFE streams, but the encodeTable must be a member variable so we can switch
-     * between the two modes.
-     */
-    private final byte[] encodeTable;
-
-    /**
-     * Decode table to use.
-     */
-    private final byte[] decodeTable;
 
     /**
      * Line separator for encoding. Not used when decoding. Only used if lineLength &gt; 0.
@@ -498,6 +542,9 @@ public class Base64 extends BaseNCodec {
     private final int encodeSize;
 
     private final boolean isUrlSafe;
+
+
+    private final boolean isStandardEncodeTable;
 
     /**
      * Constructs a Base64 codec used for decoding (all modes) and encoding in URL-unsafe mode.
@@ -525,11 +572,41 @@ public class Base64 extends BaseNCodec {
      *            if {@code true}, URL-safe encoding is used. In most cases this should be set to
      *            {@code false}.
      * @since 1.4
+     * @deprecated Use {@link #builder()} and {@link Builder}.
      */
+    @Deprecated
     public Base64(final boolean urlSafe) {
         this(MIME_CHUNK_SIZE, CHUNK_SEPARATOR, urlSafe);
     }
 
+    private Base64(final Builder builder) {
+        super(builder);
+        final byte[] encTable = builder.getEncodeTable();
+        if (encTable.length != STANDARD_ENCODE_TABLE.length) {
+            throw new IllegalArgumentException("encodeTable must have exactly 64 entries.");
+        }
+        this.isStandardEncodeTable = Arrays.equals(encTable, STANDARD_ENCODE_TABLE);
+        this.isUrlSafe = Arrays.equals(encTable, URL_SAFE_ENCODE_TABLE);
+        // TODO could be simplified if there is no requirement to reject invalid line sep when length <=0
+        // @see test case Base64Test.testConstructors()
+        if (builder.getLineSeparator().length > 0) {
+            final byte[] lineSeparatorB = builder.getLineSeparator();
+            if (containsAlphabetOrPad(lineSeparatorB)) {
+                final String sep = StringUtils.newStringUtf8(lineSeparatorB);
+                throw new IllegalArgumentException("lineSeparator must not contain base64 characters: [" + sep + "]");
+            }
+            if (builder.getLineLength() > 0) { // null line-sep forces no chunking rather than throwing IAE
+                this.encodeSize = BYTES_PER_ENCODED_BLOCK + lineSeparatorB.length;
+                this.lineSeparator = lineSeparatorB;
+            } else {
+                this.encodeSize = BYTES_PER_ENCODED_BLOCK;
+                this.lineSeparator = null;
+            }
+        } else {
+            this.encodeSize = BYTES_PER_ENCODED_BLOCK;
+            this.lineSeparator = null;
+        }
+    }
 
     /**
      * Constructs a Base64 codec used for decoding (all modes) and encoding in URL-unsafe mode.
@@ -549,7 +626,9 @@ public class Base64 extends BaseNCodec {
      *            4). If lineLength &lt;= 0, then the output will not be divided into lines (chunks). Ignored when
      *            decoding.
      * @since 1.4
+     * @deprecated Use {@link #builder()} and {@link Builder}.
      */
+    @Deprecated
     public Base64(final int lineLength) {
         this(lineLength, CHUNK_SEPARATOR);
     }
@@ -576,7 +655,9 @@ public class Base64 extends BaseNCodec {
      * @throws IllegalArgumentException
      *             Thrown when the provided lineSeparator included some base64 characters.
      * @since 1.4
+     * @deprecated Use {@link #builder()} and {@link Builder}.
      */
+    @Deprecated
     public Base64(final int lineLength, final byte[] lineSeparator) {
         this(lineLength, lineSeparator, false);
     }
@@ -607,9 +688,12 @@ public class Base64 extends BaseNCodec {
      * @throws IllegalArgumentException
      *             Thrown when the {@code lineSeparator} contains Base64 characters.
      * @since 1.4
+     * @deprecated Use {@link #builder()} and {@link Builder}.
      */
+    @Deprecated
     public Base64(final int lineLength, final byte[] lineSeparator, final boolean urlSafe) {
-        this(lineLength, lineSeparator, PAD_DEFAULT, toUrlSafeEncodeTable(urlSafe), DECODING_POLICY_DEFAULT);
+        this(builder().setLineLength(lineLength).setLineSeparator(lineSeparator != null ? lineSeparator : EMPTY_BYTE_ARRAY).setPadding(PAD_DEFAULT)
+                .setEncodeTableRaw(toUrlSafeEncodeTable(urlSafe)).setDecodingPolicy(DECODING_POLICY_DEFAULT));
     }
 
     /**
@@ -639,80 +723,12 @@ public class Base64 extends BaseNCodec {
      * @throws IllegalArgumentException
      *             Thrown when the {@code lineSeparator} contains Base64 characters.
      * @since 1.15
+     * @deprecated Use {@link #builder()} and {@link Builder}.
      */
+    @Deprecated
     public Base64(final int lineLength, final byte[] lineSeparator, final boolean urlSafe, final CodecPolicy decodingPolicy) {
-        this(lineLength, lineSeparator, PAD_DEFAULT, toUrlSafeEncodeTable(urlSafe), decodingPolicy);
-    }
-
-    /**
-     * Constructs a Base64 codec used for decoding (all modes) and encoding in URL-unsafe mode.
-     * <p>
-     * When encoding the line length and line separator are given in the constructor, and the encoding table is STANDARD_ENCODE_TABLE.
-     * </p>
-     * <p>
-     * Line lengths that aren't multiples of 4 will still essentially end up being multiples of 4 in the encoded data.
-     * </p>
-     * <p>
-     * When decoding all variants are supported.
-     * </p>
-     *
-     * @param lineLength     Each line of encoded data will be at most of the given length (rounded down to the nearest multiple of 4). If lineLength &lt;= 0,
-     *                       then the output will not be divided into lines (chunks). Ignored when decoding.
-     * @param lineSeparator  Each line of encoded data will end with this sequence of bytes; the constructor makes a defensive copy. May be null.
-     * @param padding        padding byte.
-     * @param encodeTable    The manual encodeTable - a byte array of 64 chars.
-     * @param decodingPolicy The decoding policy.
-     * @throws IllegalArgumentException Thrown when the {@code lineSeparator} contains Base64 characters.
-     */
-    private Base64(final int lineLength, final byte[] lineSeparator, final byte padding, final byte[] encodeTable, final CodecPolicy decodingPolicy) {
-        super(BYTES_PER_UNENCODED_BLOCK, BYTES_PER_ENCODED_BLOCK, lineLength, toLength(lineSeparator), padding, decodingPolicy);
-        Objects.requireNonNull(encodeTable, "encodeTable");
-        if (encodeTable.length != ALPHABET_LENGTH) {
-            throw new IllegalArgumentException("encodeTable must have exactly 64 entries.");
-        }
-        this.isUrlSafe = encodeTable == URL_SAFE_ENCODE_TABLE;
-        if (encodeTable == STANDARD_ENCODE_TABLE || this.isUrlSafe) {
-            decodeTable = DECODE_TABLE;
-            // No need of a defensive copy of an internal table.
-            this.encodeTable = encodeTable;
-        } else {
-            this.encodeTable = encodeTable.clone();
-            this.decodeTable = calculateDecodeTable(this.encodeTable);
-        }
-        // TODO could be simplified if there is no requirement to reject invalid line sep when length <=0
-        // @see test case Base64Test.testConstructors()
-        if (lineSeparator != null) {
-            final byte[] lineSeparatorCopy = lineSeparator.clone();
-            if (containsAlphabetOrPad(lineSeparatorCopy)) {
-                final String sep = StringUtils.newStringUtf8(lineSeparatorCopy);
-                throw new IllegalArgumentException("lineSeparator must not contain base64 characters: [" + sep + "]");
-            }
-            if (lineLength > 0) { // null line-sep forces no chunking rather than throwing IAE
-                this.encodeSize = BYTES_PER_ENCODED_BLOCK + lineSeparatorCopy.length;
-                this.lineSeparator = lineSeparatorCopy;
-            } else {
-                this.encodeSize = BYTES_PER_ENCODED_BLOCK;
-                this.lineSeparator = null;
-            }
-        } else {
-            this.encodeSize = BYTES_PER_ENCODED_BLOCK;
-            this.lineSeparator = null;
-        }
-    }
-
-    /**
-     * Calculates a decode table for a given encode table.
-     *
-     * @param encodeTable that is used to determine decode lookup table
-     * @return decodeTable
-     */
-    private byte[] calculateDecodeTable(final byte[] encodeTable) {
-        final byte[] decodeTable = new byte[DECODING_TABLE_LENGTH];
-        Arrays.fill(decodeTable, (byte) -1);
-        for (int i = 0; i < encodeTable.length; i++) {
-            decodeTable[encodeTable[i]] = (byte) i;
-        }
-        return decodeTable;
+        this(builder().setLineLength(lineLength).setLineSeparator(lineSeparator).setPadding(PAD_DEFAULT).setEncodeTableRaw(toUrlSafeEncodeTable(urlSafe))
+                .setDecodingPolicy(decodingPolicy));
     }
 
     /**
@@ -722,7 +738,7 @@ public class Base64 extends BaseNCodec {
      * call is not necessary when decoding, but it doesn't hurt, either.
      * </p>
      * <p>
-     * Ignores all non-base64 characters. This is how chunked (e.g. 76 character) data is handled, since CR and LF are
+     * Ignores all non-base64 characters. This is how chunked (for example 76 character) data is handled, since CR and LF are
      * silently ignored, but has implications for other bytes, too. This method subscribes to the garbage-in,
      * garbage-out philosophy: it will not check the provided data for validity.
      * </p>
@@ -785,12 +801,12 @@ public class Base64 extends BaseNCodec {
                     validateTrailingCharacter();
                     break;
                 case 2 : // 12 bits = 8 + 4
-                    validateCharacter(MASK_4BITS, context);
+                    validateCharacter(MASK_4_BITS, context);
                     context.ibitWorkArea = context.ibitWorkArea >> 4; // dump the extra 4 bits
                     buffer[context.pos++] = (byte) (context.ibitWorkArea & MASK_8BITS);
                     break;
                 case 3 : // 18 bits = 8 + 8 + 2
-                    validateCharacter(MASK_2BITS, context);
+                    validateCharacter(MASK_2_BITS, context);
                     context.ibitWorkArea = context.ibitWorkArea >> 2; // dump 2 bits
                     buffer[context.pos++] = (byte) (context.ibitWorkArea >> 8 & MASK_8BITS);
                     buffer[context.pos++] = (byte) (context.ibitWorkArea & MASK_8BITS);
@@ -841,22 +857,22 @@ public class Base64 extends BaseNCodec {
                     break;
                 case 1 : // 8 bits = 6 + 2
                     // top 6 bits:
-                    buffer[context.pos++] = encodeTable[context.ibitWorkArea >> 2 & MASK_6BITS];
+                    buffer[context.pos++] = encodeTable[context.ibitWorkArea >> 2 & MASK_6_BITS];
                     // remaining 2:
-                    buffer[context.pos++] = encodeTable[context.ibitWorkArea << 4 & MASK_6BITS];
+                    buffer[context.pos++] = encodeTable[context.ibitWorkArea << 4 & MASK_6_BITS];
                     // URL-SAFE skips the padding to further reduce size.
-                    if (encodeTable == STANDARD_ENCODE_TABLE) {
+                    if (isStandardEncodeTable) {
                         buffer[context.pos++] = pad;
                         buffer[context.pos++] = pad;
                     }
                     break;
 
                 case 2 : // 16 bits = 6 + 6 + 4
-                    buffer[context.pos++] = encodeTable[context.ibitWorkArea >> 10 & MASK_6BITS];
-                    buffer[context.pos++] = encodeTable[context.ibitWorkArea >> 4 & MASK_6BITS];
-                    buffer[context.pos++] = encodeTable[context.ibitWorkArea << 2 & MASK_6BITS];
+                    buffer[context.pos++] = encodeTable[context.ibitWorkArea >> 10 & MASK_6_BITS];
+                    buffer[context.pos++] = encodeTable[context.ibitWorkArea >> 4 & MASK_6_BITS];
+                    buffer[context.pos++] = encodeTable[context.ibitWorkArea << 2 & MASK_6_BITS];
                     // URL-SAFE skips the padding to further reduce size.
-                    if (encodeTable == STANDARD_ENCODE_TABLE) {
+                    if (isStandardEncodeTable) {
                         buffer[context.pos++] = pad;
                     }
                     break;
@@ -879,10 +895,10 @@ public class Base64 extends BaseNCodec {
                 }
                 context.ibitWorkArea = (context.ibitWorkArea << 8) + b; // BITS_PER_BYTE
                 if (0 == context.modulus) { // 3 bytes = 24 bits = 4 * 6 bits to extract
-                    buffer[context.pos++] = encodeTable[context.ibitWorkArea >> 18 & MASK_6BITS];
-                    buffer[context.pos++] = encodeTable[context.ibitWorkArea >> 12 & MASK_6BITS];
-                    buffer[context.pos++] = encodeTable[context.ibitWorkArea >> 6 & MASK_6BITS];
-                    buffer[context.pos++] = encodeTable[context.ibitWorkArea & MASK_6BITS];
+                    buffer[context.pos++] = encodeTable[context.ibitWorkArea >> 18 & MASK_6_BITS];
+                    buffer[context.pos++] = encodeTable[context.ibitWorkArea >> 12 & MASK_6_BITS];
+                    buffer[context.pos++] = encodeTable[context.ibitWorkArea >> 6 & MASK_6_BITS];
+                    buffer[context.pos++] = encodeTable[context.ibitWorkArea & MASK_6_BITS];
                     context.currentLinePos += BYTES_PER_ENCODED_BLOCK;
                     if (lineLength > 0 && lineLength <= context.currentLinePos) {
                         System.arraycopy(lineSeparator, 0, buffer, context.pos, lineSeparator.length);

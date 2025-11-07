@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -20,6 +20,7 @@ package org.apache.commons.codec.language.bm;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.params.ParameterizedTest;
@@ -29,9 +30,12 @@ import org.junit.jupiter.params.provider.MethodSource;
 /**
  * Tests PhoneticEngine.
  */
-public class PhoneticEngineTest {
+class PhoneticEngineTest {
 
     private static final Integer TEN = Integer.valueOf(10);
+
+    private static final Pattern PIPE_PATTERN = Pattern.compile("\\|");
+    private static final Pattern MINUS_PATTERN = Pattern.compile("-");
 
     public static Stream<Arguments> data() {
         // @formatter:off
@@ -64,7 +68,7 @@ public class PhoneticEngineTest {
     // TODO Identify if there is a need to an assertTimeout(Duration.ofMillis(10000L) in some point, since this method was marked as @Test(timeout = 10000L)
     @ParameterizedTest
     @MethodSource("data")
-    public void testEncode(final String name, final String phoneticExpected, final NameType nameType,
+    void testEncode(final String name, final String phoneticExpected, final NameType nameType,
                            final RuleType ruleType, final boolean concat, final int maxPhonemes) {
         final PhoneticEngine engine = new PhoneticEngine(nameType, ruleType, concat, maxPhonemes);
 
@@ -73,12 +77,12 @@ public class PhoneticEngineTest {
         assertEquals(phoneticExpected, phoneticActual, "phoneme incorrect");
 
         if (concat) {
-            final String[] split = phoneticActual.split("\\|");
+            final String[] split = PIPE_PATTERN.split(phoneticActual);
             assertTrue(split.length <= maxPhonemes);
         } else {
-            final String[] words = phoneticActual.split("-");
+            final String[] words = MINUS_PATTERN.split(phoneticActual);
             for (final String word : words) {
-                final String[] split = word.split("\\|");
+                final String[] split = PIPE_PATTERN.split(word);
                 assertTrue(split.length <= maxPhonemes);
             }
         }
@@ -86,7 +90,7 @@ public class PhoneticEngineTest {
 
     @ParameterizedTest
     @MethodSource("invalidData")
-    public void testInvalidEncode(final String input, final String phoneticExpected, final NameType nameType,
+    void testInvalidEncode(final String input, final String phoneticExpected, final NameType nameType,
                                   final RuleType ruleType, final boolean concat, final int maxPhonemes) {
         final PhoneticEngine engine = new PhoneticEngine(nameType, ruleType, concat, maxPhonemes);
 

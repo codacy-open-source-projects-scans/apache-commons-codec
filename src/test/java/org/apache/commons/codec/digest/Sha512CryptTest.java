@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -28,10 +28,10 @@ import java.util.concurrent.ThreadLocalRandom;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
-public class Sha512CryptTest {
+class Sha512CryptTest {
 
     @Test
-    public void testSha256LargetThanBlocksize() {
+    void testSha256LargetThanBlocksize() {
         final byte[] buffer = new byte[200];
         Arrays.fill(buffer, 0, 200, (byte) 'A');
         assertEquals("$6$abc$oP/h8PRhCKIA66KSTjGwNsQMSLLZnuFOTjOhrqNrDkKgjTlpePSqibB0qtmDapMbP/zN1cUEYSeHFrpgqZ.GG1", Sha2Crypt.sha512Crypt(buffer, "$6$abc"));
@@ -40,7 +40,7 @@ public class Sha512CryptTest {
     }
 
     @Test
-    public void testSha2CryptRounds() {
+    void testSha2CryptRounds() {
         // minimum rounds?
         assertEquals("$5$rounds=1000$abcd$b8MCU4GEeZIekOy5ahQ8EWfT330hvYGVeDYkBxXBva.", Sha2Crypt.sha256Crypt("secret".getBytes(StandardCharsets.UTF_8), "$5$rounds=50$abcd$"));
         assertEquals("$5$rounds=1001$abcd$SQsJZs7KXKdd2DtklI3TY3tkD7UYA99RD0FBLm4Sk48", Sha2Crypt.sha256Crypt("secret".getBytes(StandardCharsets.UTF_8), "$5$rounds=1001$abcd$"));
@@ -48,12 +48,12 @@ public class Sha512CryptTest {
     }
 
     @Test
-    public void testSha2CryptWrongSalt() {
+    void testSha2CryptWrongSalt() {
         assertThrows(IllegalArgumentException.class, () -> Sha2Crypt.sha512Crypt("secret".getBytes(StandardCharsets.UTF_8), "xx"));
     }
 
     @Test
-    public void testSha512CryptBytes() {
+    void testSha512CryptBytes() {
         // An empty Bytearray equals an empty String
         assertEquals("$6$foo$Nywkte7LPWjaJhWjNeGJN.dFdY3pN1wYlGifyRLYOVlGS9EMSiZaDDe/BGSOYQ327q9.32I4UqQ5odsqvsBLX/", Crypt.crypt(new byte[0], "$6$foo"));
         // UTF-8 stores \u00e4 "a with dieresis" as two bytes 0xc3 0xa4.
@@ -63,30 +63,30 @@ public class Sha512CryptTest {
     }
 
     @Test
-    public void testSha512CryptExplicitCall() {
+    void testSha512CryptExplicitCall() {
         assertTrue(Sha2Crypt.sha512Crypt("secret".getBytes()).matches("^\\$6\\$[a-zA-Z0-9./]{0,16}\\$.{1,}$"));
         assertTrue(Sha2Crypt.sha512Crypt("secret".getBytes(), null).matches("^\\$6\\$[a-zA-Z0-9./]{0,16}\\$.{1,}$"));
     }
 
     @Test
-    public void testSha512CryptExplicitCallThreadLocalRandom() {
+    void testSha512CryptExplicitCallThreadLocalRandom() {
         final ThreadLocalRandom threadLocalRandom = ThreadLocalRandom.current();
         assertTrue(Sha2Crypt.sha512Crypt("secret".getBytes(), null, threadLocalRandom).matches("^\\$6\\$[a-zA-Z0-9./]{0,16}\\$.{1,}$"));
     }
 
     @Test
-    public void testSha512CryptNullData() {
+    void testSha512CryptNullData() {
         assertThrows(NullPointerException.class, () -> Sha2Crypt.sha512Crypt((byte[]) null));
     }
 
     @Disabled
-    public void testSha512CryptNullSalt() {
+    void testSha512CryptNullSalt() {
         // cannot be tested as sha512Crypt() with all params is private and
         // all public methods check for salt==null.
     }
 
     @Test
-    public void testSha512CryptStrings() {
+    void testSha512CryptStrings() {
         // empty data
         assertEquals("$6$foo$Nywkte7LPWjaJhWjNeGJN.dFdY3pN1wYlGifyRLYOVlGS9EMSiZaDDe/BGSOYQ327q9.32I4UqQ5odsqvsBLX/", Crypt.crypt("", "$6$foo"));
         // salt gets cut at dollar sign
@@ -99,12 +99,12 @@ public class Sha512CryptTest {
     }
 
     @Test
-    public void testSha512CryptWithEmptySalt() {
+    void testSha512CryptWithEmptySalt() {
         assertThrows(IllegalArgumentException.class, () -> Sha2Crypt.sha512Crypt("secret".getBytes(), ""));
     }
 
     @Test
-    public void testZeroOutInput() {
+    void testZeroOutInput() {
         final byte[] buffer = new byte[200];
         Arrays.fill(buffer, (byte) 'A');
         Sha2Crypt.sha512Crypt(buffer);

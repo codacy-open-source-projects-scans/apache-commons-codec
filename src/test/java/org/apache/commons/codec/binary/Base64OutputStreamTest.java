@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -20,6 +20,7 @@ package org.apache.commons.codec.binary;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -30,12 +31,13 @@ import org.apache.commons.codec.CodecPolicy;
 import org.junit.jupiter.api.Test;
 
 /**
+ * Tests {@link Base64OutputStream}.
  */
-public class Base64OutputStreamTest {
+class Base64OutputStreamTest {
 
-    private final static byte[] CR_LF = {(byte) '\r', (byte) '\n'};
+    private static final byte[] CR_LF = {(byte) '\r', (byte) '\n'};
 
-    private final static byte[] LF = {(byte) '\n'};
+    private static final byte[] LF = {(byte) '\n'};
 
     private static final String STRING_FIXTURE = "Hello World";
 
@@ -53,7 +55,7 @@ public class Base64OutputStreamTest {
      *             for some failure scenarios.
      */
     @Test
-    public void testBase64EmptyOutputStreamMimeChunkSize() throws Exception {
+    void testBase64EmptyOutputStreamMimeChunkSize() throws Exception {
         testBase64EmptyOutputStream(BaseNCodec.MIME_CHUNK_SIZE);
     }
 
@@ -64,7 +66,7 @@ public class Base64OutputStreamTest {
      *             for some failure scenarios.
      */
     @Test
-    public void testBase64EmptyOutputStreamPemChunkSize() throws Exception {
+    void testBase64EmptyOutputStreamPemChunkSize() throws Exception {
         testBase64EmptyOutputStream(BaseNCodec.PEM_CHUNK_SIZE);
     }
 
@@ -75,7 +77,7 @@ public class Base64OutputStreamTest {
      *             for some failure scenarios.
      */
     @Test
-    public void testBase64OutputStreamByChunk() throws Exception {
+    void testBase64OutputStreamByChunk() throws Exception {
         // Hello World test.
         byte[] encoded = StringUtils.getBytesUtf8("SGVsbG8gV29ybGQ=\r\n");
         byte[] decoded = StringUtils.getBytesUtf8(STRING_FIXTURE);
@@ -114,7 +116,7 @@ public class Base64OutputStreamTest {
      *             for some failure scenarios.
      */
     @Test
-    public void testBase64OutputStreamByteByByte() throws Exception {
+    void testBase64OutputStreamByteByByte() throws Exception {
         // Hello World test.
         byte[] encoded = StringUtils.getBytesUtf8("SGVsbG8gV29ybGQ=\r\n");
         byte[] decoded = StringUtils.getBytesUtf8(STRING_FIXTURE);
@@ -144,6 +146,11 @@ public class Base64OutputStreamTest {
             decoded = randomData[0];
             testByteByByte(encoded, decoded, 0, LF);
         }
+    }
+
+    @Test
+    void testBuilder() {
+        assertNotNull(Base64OutputStream.builder().getBaseNCodec());
     }
 
     /**
@@ -270,12 +277,12 @@ public class Base64OutputStreamTest {
      * @throws Exception for some failure scenarios.
      */
     @Test
-    public void testCodec98NPE() throws Exception {
+    void testCodec98NPE() throws Exception {
         final byte[] codec98 = StringUtils.getBytesUtf8(Base64TestData.CODEC_98_NPE);
         final byte[] codec98_1024 = new byte[1024];
         System.arraycopy(codec98, 0, codec98_1024, 0, codec98.length);
         final ByteArrayOutputStream data = new ByteArrayOutputStream(1024);
-        try (final Base64OutputStream stream = new Base64OutputStream(data, false)) {
+        try (Base64OutputStream stream = new Base64OutputStream(data, false)) {
             stream.write(codec98_1024, 0, 1024);
         }
 
@@ -291,7 +298,7 @@ public class Base64OutputStreamTest {
      *             for some failure scenarios.
      */
     @Test
-    public void testStrictDecoding() throws Exception {
+    void testStrictDecoding() throws Exception {
         for (final String impossibleStr : Base64Test.BASE64_IMPOSSIBLE_CASES) {
             final byte[] impossibleEncoded = StringUtils.getBytesUtf8(impossibleStr);
             ByteArrayOutputStream bout = new ByteArrayOutputStream();
@@ -301,16 +308,37 @@ public class Base64OutputStreamTest {
                 out.write(impossibleEncoded);
             }
             assertTrue(bout.size() > 0);
-
             // Strict decoding should throw
             bout = new ByteArrayOutputStream();
-            final Base64OutputStream out = new Base64OutputStream(bout, false, 0, null, CodecPolicy.STRICT);
-            // May throw on write or on close depending on the position of the
-            // impossible last character in the output block size
-            assertThrows(IllegalArgumentException.class, () -> {
-                out.write(impossibleEncoded);
-                out.close();
-            });
+            try (Base64OutputStream out = new Base64OutputStream(bout, false, 0, null, CodecPolicy.STRICT)) {
+                // May throw on write or on close depending on the position of the
+                // impossible last character in the output block size
+                assertThrows(IllegalArgumentException.class, () -> {
+                    out.write(impossibleEncoded);
+                    out.close();
+                });
+            }
+            try (Base64OutputStream out = Base64OutputStream.builder()
+                    .setOutputStream(bout).setEncode(false)
+                    .setBaseNCodec(Base64.builder().setLineLength(0).setLineSeparator(null).setDecodingPolicy(CodecPolicy.STRICT).get())
+                    .get()) {
+                assertTrue(out.isStrictDecoding());
+                assertThrows(IllegalArgumentException.class, () -> {
+                    out.write(impossibleEncoded);
+                    out.close();
+                });
+            }
+            try (Base64OutputStream out = Base64OutputStream.builder()
+                    .setOutputStream(bout).setEncode(false)
+                    .setBaseNCodec(Base64.builder().setDecodingPolicy(CodecPolicy.STRICT).get())
+                    .get()) {
+                // May throw on write or on close depending on the position of the
+                // impossible last character in the output block size
+                assertThrows(IllegalArgumentException.class, () -> {
+                    out.write(impossibleEncoded);
+                    out.close();
+                });
+            }
         }
     }
 
@@ -321,10 +349,10 @@ public class Base64OutputStreamTest {
      *             for some failure scenarios.
      */
     @Test
-    public void testWriteOutOfBounds() throws Exception {
+    void testWriteOutOfBounds() throws Exception {
         final byte[] buf = new byte[1024];
         final ByteArrayOutputStream bout = new ByteArrayOutputStream();
-        try (final Base64OutputStream out = new Base64OutputStream(bout)) {
+        try (Base64OutputStream out = new Base64OutputStream(bout)) {
             assertThrows(IndexOutOfBoundsException.class, () -> out.write(buf, -1, 1), "Base64OutputStream.write(buf, -1, 1)");
             assertThrows(IndexOutOfBoundsException.class, () -> out.write(buf, 1, -1), "Base64OutputStream.write(buf, 1, -1)");
             assertThrows(IndexOutOfBoundsException.class, () -> out.write(buf, buf.length + 1, 0), "Base64OutputStream.write(buf, buf.length + 1, 0)");
@@ -339,9 +367,9 @@ public class Base64OutputStreamTest {
      *             for some failure scenarios.
      */
     @Test
-    public void testWriteToNullCoverage() throws Exception {
+    void testWriteToNullCoverage() throws Exception {
         final ByteArrayOutputStream bout = new ByteArrayOutputStream();
-        try (final Base64OutputStream out = new Base64OutputStream(bout)) {
+        try (Base64OutputStream out = new Base64OutputStream(bout)) {
             assertThrows(NullPointerException.class, () -> out.write(null, 0, 0));
         }
     }

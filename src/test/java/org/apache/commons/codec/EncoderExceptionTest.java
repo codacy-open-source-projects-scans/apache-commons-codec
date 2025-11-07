@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -25,35 +25,35 @@ import org.junit.jupiter.api.Test;
 /**
  * Tests {@link EncoderException}.
  */
-public class EncoderExceptionTest {
+class EncoderExceptionTest {
 
     private static final String MSG = "TEST";
 
     private static final Throwable t = new Exception();
 
     @Test
-    public void testConstructor0() {
+    void testConstructor0() {
         final EncoderException e = new EncoderException();
         assertNull(e.getMessage());
         assertNull(e.getCause());
     }
 
     @Test
-    public void testConstructorString() {
+    void testConstructorString() {
         final EncoderException e = new EncoderException(MSG);
         assertEquals(MSG, e.getMessage());
         assertNull(e.getCause());
     }
 
     @Test
-    public void testConstructorStringThrowable() {
+    void testConstructorStringThrowable() {
         final EncoderException e = new EncoderException(MSG, t);
         assertEquals(MSG, e.getMessage());
         assertEquals(t, e.getCause());
     }
 
     @Test
-    public void testConstructorThrowable() {
+    void testConstructorThrowable() {
         final EncoderException e = new EncoderException(t);
         assertEquals(t.getClass().getName(), e.getMessage());
         assertEquals(t, e.getCause());

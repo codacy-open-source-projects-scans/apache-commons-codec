@@ -7,7 +7,7 @@ The ASF licenses this file to You under the Apache License, Version 2.0
 (the "License"); you may not use this file except in compliance with
 the License.  You may obtain a copy of the License at
 
-     http://www.apache.org/licenses/LICENSE-2.0
+     https://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -19,16 +19,16 @@ limitations under the License.
  To produce reports, use the reporting profile, for example: mvn -Preporting clean site
  You may need to use the -U option to update your environment if you get an error.
  -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>org.apache.commons</groupId>
     <artifactId>commons-parent</artifactId>
-    <version>78</version>
+    <version>91</version>
   </parent>
   <groupId>commons-codec</groupId>
   <artifactId>commons-codec</artifactId>
-  <version>1.17.2-SNAPSHOT</version>
+  <version>1.20.1-SNAPSHOT</version>
   <name>Apache Commons Codec</name>
   <inceptionYear>2002</inceptionYear>
   <description>
@@ -46,7 +46,7 @@ limitations under the License.
     <connection>scm:git:https://gitbox.apache.org/repos/asf/commons-codec</connection>
     <developerConnection>scm:git:https://gitbox.apache.org/repos/asf/commons-codec</developerConnection>
     <url>https://github.com/apache/commons-codec</url>
-    <tag>HEAD</tag>
+    <tag>rel/commons-io-2.20.0</tag>
   </scm>
   <distributionManagement>
     <site>
@@ -55,17 +55,21 @@ limitations under the License.
       <url>scm:svn:https://svn.apache.org/repos/infra/websites/production/commons/content/proper/commons-codec/</url>
     </site>
   </distributionManagement>
+  <ciManagement>
+    <system>GitHub</system>
+    <url>https://github.com/apache/commons-cli/actions</url>
+  </ciManagement>
   <dependencies>
     <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-lang3</artifactId>
-      <version>3.17.0</version>
+      <version>3.19.0</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>commons-io</groupId>
       <artifactId>commons-io</artifactId>
-      <version>2.18.0</version>
+      <version>2.21.0</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -93,16 +97,14 @@ limitations under the License.
     <checkstyle.header.file>${basedir}/src/conf/checkstyle-header.txt</checkstyle.header.file>
     <checkstyle.config.file>${basedir}/src/conf/checkstyle.xml</checkstyle.config.file>
     <!-- Commons Release Plugin -->
-    <commons.release.version>1.17.1</commons.release.version>
-    <commons.bc.version>1.17.0</commons.bc.version>
-    <commons.bc.next>1.17.2</commons.bc.next>
+    <commons.release.version>1.20.1</commons.release.version>
+    <commons.bc.version>1.20.0</commons.bc.version>
+    <commons.release.next>1.20.2</commons.release.next>
     <commons.rc.version>RC1</commons.rc.version>
     <commons.release.isDistModule>true</commons.release.isDistModule>
     <commons.distSvnStagingUrl>scm:svn:https://dist.apache.org/repos/dist/dev/commons/${commons.componentid}</commons.distSvnStagingUrl>
-    <project.build.outputTimestamp>2024-07-15T22:27:42Z</project.build.outputTimestamp>
-    <commons.jacoco.version>0.8.12</commons.jacoco.version>
-    <!-- Temp for SUREFIRE-2253 -->
-    <commons.surefire.version>3.2.5</commons.surefire.version>
+    <!-- project.build.outputTimestamp is managed by Maven plugins, see https://maven.apache.org/guides/mini/guide-reproducible-builds.html -->
+    <project.build.outputTimestamp>2025-11-05T20:28:14Z</project.build.outputTimestamp>
     <!-- JaCoCo: Don't make code coverage worse than: -->
     <jacoco.skip>false</jacoco.skip>
     <commons.jacoco.haltOnFailure>true</commons.jacoco.haltOnFailure>
@@ -114,7 +116,7 @@ limitations under the License.
     <commons.jacoco.complexityRatio>0.84</commons.jacoco.complexityRatio>
   </properties>
   <build>
-    <defaultGoal>clean verify apache-rat:check japicmp:cmp checkstyle:check javadoc:javadoc</defaultGoal>
+    <defaultGoal>clean verify apache-rat:check japicmp:cmp pmd:check checkstyle:check spotbugs:check javadoc:javadoc</defaultGoal>
     <pluginManagement>
       <plugins>
         <plugin>
@@ -137,10 +139,16 @@ limitations under the License.
             <resourceExcludes>NOTICE.txt,LICENSE.txt,**/pom.properties,**/sha512.properties</resourceExcludes>
           </configuration>
         </plugin>        
+        <plugin>
+          <groupId>com.github.spotbugs</groupId>
+          <artifactId>spotbugs-maven-plugin</artifactId>
+          <configuration>
+            <excludeFilterFile>${basedir}/src/conf/spotbugs-exclude-filter.xml</excludeFilterFile>
+          </configuration>
+        </plugin>
       </plugins>
     </pluginManagement>
     <plugins>
-
       <plugin>
         <groupId>org.apache.rat</groupId>
         <artifactId>apache-rat-plugin</artifactId>
@@ -153,7 +161,6 @@ limitations under the License.
           </excludes>
         </configuration>
       </plugin>
-
       <!-- Add Java 9 Automatic-Module-Name -->
       <plugin>
         <artifactId>maven-jar-plugin</artifactId>
@@ -171,7 +178,6 @@ limitations under the License.
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
           <excludes>
-            <exclude>**/*AbstractTest.java</exclude>
             <exclude>**/*PerformanceTest.java</exclude>
           </excludes>
         </configuration>
@@ -204,7 +210,7 @@ limitations under the License.
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>animal-sniffer-maven-plugin</artifactId>
-        <version>1.24</version>
+        <version>${commons.animal-sniffer.version}</version>
         <configuration>
           <ignores>
             <!-- JDK9 breaks compatibility by returning ByteBuffer not Buffer -->
@@ -246,7 +252,6 @@ limitations under the License.
         <version>${commons.pmd.version}</version>
         <configuration>
           <targetJdk>${maven.compiler.target}</targetJdk>
-          <linkXref>true</linkXref>
           <rulesets>
             <ruleset>${basedir}/src/conf/pmd.xml</ruleset>
           </rulesets>
@@ -293,10 +298,27 @@ limitations under the License.
       </properties>
     </profile>
     <profile>
-	  <!-- Java 9 and up -->
-      <id>java-9-up</id>
+	  <!-- Java 9 through 24 -->
+      <id>java-9-24</id>
       <activation>
-		<jdk>[9,)</jdk>
+		<jdk>[9,24]</jdk>
+	  </activation>
+      <properties>
+        <!-- JaCoCo: Don't make code coverage worse than: -->
+        <commons.jacoco.haltOnFailure>true</commons.jacoco.haltOnFailure>
+        <commons.jacoco.classRatio>0.96</commons.jacoco.classRatio>
+        <commons.jacoco.instructionRatio>0.97</commons.jacoco.instructionRatio>
+        <commons.jacoco.methodRatio>0.92</commons.jacoco.methodRatio>
+        <commons.jacoco.branchRatio>0.92</commons.jacoco.branchRatio>
+        <commons.jacoco.complexityRatio>0.89</commons.jacoco.complexityRatio>
+        <commons.jacoco.lineRatio>0.95</commons.jacoco.lineRatio>    
+      </properties>
+    </profile>
+    <profile>
+	  <!-- Java 25 and up -->
+      <id>java-25-up</id>
+      <activation>
+		<jdk>[25,)</jdk>
 	  </activation>
       <properties>
         <!-- JaCoCo: Don't make code coverage worse than: -->
@@ -348,7 +370,7 @@ limitations under the License.
       <email>ggregory at apache.org</email>
       <url>https://www.garygregory.com</url>
       <organization>The Apache Software Foundation</organization>
-      <organizationUrl>https://www.apache.org/</organizationUrl>      
+      <organizationUrl>https://www.apache.org/</organizationUrl>
       <roles>
         <role>PMC Member</role>
       </roles>
@@ -366,7 +388,7 @@ limitations under the License.
       <name>Julius Davies</name>
       <id>julius</id>
       <email>julius@apache.org</email>
-      <organizationUrl>http://juliusdavies.ca/</organizationUrl>
+      <organizationUrl>https://juliusdavies.ca/</organizationUrl>
       <timezone>-8</timezone>
     </developer>
     <developer>

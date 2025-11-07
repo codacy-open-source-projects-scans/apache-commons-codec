@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -28,7 +28,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 /**
  * Tests guessLanguages API.
  */
-public class LanguageGuessingTest {
+class LanguageGuessingTest {
 
     public static Stream<Arguments> data() {
         return Stream.of(
@@ -57,7 +57,7 @@ public class LanguageGuessingTest {
 
     @ParameterizedTest
     @MethodSource("data")
-    public void testLanguageGuessing(final String name, final String language) {
+    void testLanguageGuessing(final String name, final String language) {
         final Languages.LanguageSet guesses = this.lang.guessLanguages(name);
 
         assertTrue(guesses.contains(language),

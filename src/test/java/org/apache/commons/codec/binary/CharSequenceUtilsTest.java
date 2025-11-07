@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -31,7 +31,7 @@ import org.junit.jupiter.api.Test;
  * the method is package private. The failing tests have been commented out and the
  * implementation left unchanged.
  */
-public class CharSequenceUtilsTest {
+class CharSequenceUtilsTest {
 
     private abstract static class RunTest {
 
@@ -132,12 +132,12 @@ public class CharSequenceUtilsTest {
      */
     @SuppressWarnings("unused")
     @Test
-    public void testConstructor() {
+    void testConstructor() {
         new CharSequenceUtils();
     }
 
     @Test
-    public void testRegionMatches() {
+    void testRegionMatches() {
         for (final TestData data : TEST_DATA) {
             new RunTest() {
                 @Override

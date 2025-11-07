@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -29,59 +29,56 @@ import org.junit.jupiter.api.Test;
  */
 public abstract class AbstractStringEncoderTest<T extends StringEncoder> {
 
-    protected T stringEncoder = this.createStringEncoder();
+    protected T stringEncoder = createStringEncoder();
 
     public void checkEncoding(final String expected, final String source) throws EncoderException {
-        assertEquals(expected, this.getStringEncoder().encode(source), "Source: " + source);
+        assertEquals(expected, getStringEncoder().encode(source), "Source: " + source);
     }
 
     protected void checkEncodings(final String[][] data) throws EncoderException {
         for (final String[] element : data) {
-            this.checkEncoding(element[1], element[0]);
+            checkEncoding(element[1], element[0]);
         }
     }
 
-    protected void checkEncodingVariations(final String expected, final String data[]) throws EncoderException {
+    protected void checkEncodingVariations(final String expected, final String... data) throws EncoderException {
         for (final String element : data) {
-            this.checkEncoding(expected, element);
+            checkEncoding(expected, element);
         }
     }
 
     protected abstract T createStringEncoder();
 
     public T getStringEncoder() {
-        return this.stringEncoder;
+        return stringEncoder;
     }
 
     @Test
-    public void testEncodeEmpty() throws Exception {
-        final Encoder encoder = this.getStringEncoder();
+    void testEncodeEmpty() throws Exception {
+        final Encoder encoder = getStringEncoder();
         encoder.encode("");
         encoder.encode(" ");
         encoder.encode("\t");
     }
 
     @Test
-    public void testEncodeNull() throws EncoderException {
-        final StringEncoder encoder = this.getStringEncoder();
+    void testEncodeNull() throws EncoderException {
+        final StringEncoder encoder = getStringEncoder();
         encoder.encode(null);
     }
 
     @Test
-    public void testEncodeWithInvalidObject() throws Exception {
-        final StringEncoder encoder = this.getStringEncoder();
-        assertThrows(EncoderException.class, () -> encoder.encode(Float.valueOf(3.4f)),
-                "An exception was not thrown when we tried to encode a Float object");
+    void testEncodeWithInvalidObject() throws Exception {
+        final StringEncoder encoder = getStringEncoder();
+        assertThrows(EncoderException.class, () -> encoder.encode(Float.valueOf(3.4f)), "An exception was not thrown when we tried to encode a Float object");
     }
+
     @Test
-    public void testLocaleIndependence() throws Exception {
-        final StringEncoder encoder = this.getStringEncoder();
-
+    void testLocaleIndependence() throws Exception {
+        final StringEncoder encoder = getStringEncoder();
         final String[] data = { "I", "i" };
-
         final Locale orig = Locale.getDefault();
         final Locale[] locales = { Locale.ENGLISH, new Locale("tr"), Locale.getDefault() };
-
         try {
             for (final String element : data) {
                 String ref = null;
@@ -104,5 +101,4 @@ public abstract class AbstractStringEncoderTest<T extends StringEncoder> {
             Locale.setDefault(orig);
         }
     }
-
 }

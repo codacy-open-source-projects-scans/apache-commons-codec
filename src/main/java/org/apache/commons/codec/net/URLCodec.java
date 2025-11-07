@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -41,8 +41,8 @@ import org.apache.commons.codec.binary.StringUtils;
  * This class is thread-safe as of 1.11
  * </p>
  *
- * @see <a href="http://www.w3.org/TR/html4/interact/forms.html#h-17.13.4.1">Chapter 17.13.4 Form content types</a>
- *           of the <a href="http://www.w3.org/TR/html4/">HTML 4.01 Specification</a>
+ * @see <a href="https://www.w3.org/TR/html4/interact/forms.html#h-17.13.4.1">Chapter 17.13.4 Form content types</a>
+ *           of the <a href="https://www.w3.org/TR/html4/">HTML 4.01 Specification</a>
  *
  * @since 1.2
  */
@@ -153,8 +153,8 @@ public class URLCodec implements BinaryEncoder, BinaryDecoder, StringEncoder, St
                 buffer.write(b);
             } else {
                 buffer.write(ESCAPE_CHAR);
-                final char hex1 = Utils.hexDigit(b >> 4);
-                final char hex2 = Utils.hexDigit(b);
+                final char hex1 = Utils.hexChar(b >> 4);
+                final char hex2 = Utils.hexChar(b);
                 buffer.write(hex1);
                 buffer.write(hex2);
             }
@@ -359,7 +359,7 @@ public class URLCodec implements BinaryEncoder, BinaryDecoder, StringEncoder, St
     /**
      * The {@code String} encoding used for decoding and encoding.
      *
-     * @return Returns the encoding.
+     * @return the encoding.
      * @deprecated Use {@link #getDefaultCharset()}, will be removed in 2.0.
      */
     @Deprecated

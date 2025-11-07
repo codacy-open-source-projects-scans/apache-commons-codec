@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -68,22 +68,62 @@ public class Languages {
     /**
      * A set of languages.
      */
-    public static abstract class LanguageSet {
+    public abstract static class LanguageSet {
 
-        public static LanguageSet from(final Set<String> langs) {
-            return langs.isEmpty() ? NO_LANGUAGES : new SomeLanguages(langs);
+        /**
+         * Gets a language set for the given languages.
+         *
+         * @param languages a language set.
+         * @return a LanguageSet.
+         */
+        public static LanguageSet from(final Set<String> languages) {
+            return languages.isEmpty() ? NO_LANGUAGES : new SomeLanguages(languages);
         }
 
+        /**
+         * Constructs a new instance for subclasses.
+         */
+        public LanguageSet() {
+            // empty
+        }
+
+        /**
+         * Tests whether this instance contains the given value.
+         *
+         * @param language the value to test.
+         * @return whether this instance contains the given value.
+         */
         public abstract boolean contains(String language);
 
+        /**
+         * Gets any of this instance's element.
+         *
+         * @return any of this instance's element.
+         */
         public abstract String getAny();
 
+        /**
+         * Tests whether this instance is empty.
+         *
+         * @return whether this instance is empty.
+         */
         public abstract boolean isEmpty();
 
+        /**
+         * Tests whether this instance contains a single element.
+         *
+         * @return whether this instance contains a single element.
+         */
         public abstract boolean isSingleton();
 
         abstract LanguageSet merge(LanguageSet other);
 
+        /**
+         * Returns an instance restricted to this instances and the given values'.
+         *
+         * @param other The other instance.
+         * @return an instance restricted to this instances and the given values'.
+         */
         public abstract LanguageSet restrictTo(LanguageSet other);
     }
 
@@ -107,6 +147,11 @@ public class Languages {
             return this.languages.iterator().next();
         }
 
+        /**
+         * Gets the language strings
+         *
+         * @return the languages strings.
+         */
         public Set<String> getLanguages() {
             return this.languages;
         }
@@ -154,6 +199,9 @@ public class Languages {
 
     }
 
+    /**
+     * Marker for any language.
+     */
     public static final String ANY = "any";
 
     private static final Map<NameType, Languages> LANGUAGES = new EnumMap<>(NameType.class);
@@ -162,6 +210,7 @@ public class Languages {
      * No languages at all.
      */
     public static final LanguageSet NO_LANGUAGES = new LanguageSet() {
+
         @Override
         public boolean contains(final String language) {
             return false;
@@ -202,6 +251,7 @@ public class Languages {
      * Any/all languages.
      */
     public static final LanguageSet ANY_LANGUAGE = new LanguageSet() {
+
         @Override
         public boolean contains(final String language) {
             return true;
@@ -244,14 +294,26 @@ public class Languages {
         }
     }
 
+    /**
+     * Gets an instance for the given name type.
+     *
+     * @param nameType The name type to lookup.
+     * @return an instance for the given name type.
+     */
     public static Languages getInstance(final NameType nameType) {
         return LANGUAGES.get(nameType);
     }
 
+    /**
+     * Gets a new instance for the given resource name.
+     *
+     * @param languagesResourceName the resource name to lookup.
+     * @return a new instance.
+     */
     public static Languages getInstance(final String languagesResourceName) {
         // read languages list
         final Set<String> ls = new HashSet<>();
-        try (final Scanner lsScanner = new Scanner(Resources.getInputStream(languagesResourceName),
+        try (Scanner lsScanner = new Scanner(Resources.getInputStream(languagesResourceName),
                 ResourceConstants.ENCODING)) {
             boolean inExtendedComment = false;
             while (lsScanner.hasNextLine()) {
@@ -271,7 +333,7 @@ public class Languages {
     }
 
     private static String langResourceName(final NameType nameType) {
-        return String.format("org/apache/commons/codec/language/bm/%s_languages.txt", nameType.getName());
+        return String.format("/org/apache/commons/codec/language/bm/%s_languages.txt", nameType.getName());
     }
 
     private final Set<String> languages;
@@ -280,6 +342,11 @@ public class Languages {
         this.languages = languages;
     }
 
+    /**
+     * Gets the language set.
+     *
+     * @return the language set.
+     */
     public Set<String> getLanguages() {
         return this.languages;
     }

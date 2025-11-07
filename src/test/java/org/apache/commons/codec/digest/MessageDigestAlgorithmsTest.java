@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -45,33 +45,37 @@ import org.junit.jupiter.params.provider.MethodSource;
 /**
  * Tests {@link MessageDigestAlgorithms}.
  */
-public class MessageDigestAlgorithmsTest {
+class MessageDigestAlgorithmsTest {
 
     @BeforeAll
     public static void checkValues() throws Exception {
         final Field[] fields = MessageDigestAlgorithms.class.getDeclaredFields();
         boolean ok = true;
         int psf = 0;
-        for (final Field f : fields) {
-            // Ignore cobertura instrumentation fields
-            if (f.getName().contains("cobertura")) {
+        for (final Field field : fields) {
+            // Ignore Cobertura instrumentation fields
+            final String name = field.getName();
+            if (name.contains("cobertura")) {
                 continue;
             }
-
             // Only interested in public fields
-            final int modifiers = f.getModifiers();
+            final int modifiers = field.getModifiers();
             if (Modifier.isPublic(modifiers) && Modifier.isStatic(modifiers) && Modifier.isFinal(modifiers)) {
                 psf++;
-                if (!contains((String) f.get(null))) {
-                    System.out.println("Not found in MessageDigestAlgorithms.values(): " + f.getName());
+                // SHAKE128_256 and SHAKE128_512 are only in Java 25 and up.
+                if (!contains((String) field.get(null))) {
+                    System.out.printf(
+                            "Not found in MessageDigestAlgorithms.values(): %s; note that SHAKE128_256 and SHAKE128_512 are only on Java 25 and up.%n", name);
                     ok = false;
                 }
             }
         }
         if (!ok) {
+            // SHAKE128_256 and SHAKE128_512 are only in Java 25 and up.
             fail("One or more entries are missing from the MessageDigestAlgorithms.values() array");
         }
         if (psf != MessageDigestAlgorithms.values().length) {
+            // SHAKE128_256 and SHAKE128_512 are only in Java 25 and up.
             fail("One or more unexpected entries found in the MessageDigestAlgorithms.values() array");
         }
     }
@@ -125,7 +129,7 @@ public class MessageDigestAlgorithmsTest {
 
     @ParameterizedTest
     @MethodSource("data")
-    public void testAlgorithm(final String messageDigestAlgorithm) throws NoSuchAlgorithmException {
+    void testAlgorithm(final String messageDigestAlgorithm) throws NoSuchAlgorithmException {
         final String algorithm = messageDigestAlgorithm;
         assertNotNull(algorithm);
         assertFalse(algorithm.isEmpty());
@@ -135,7 +139,7 @@ public class MessageDigestAlgorithmsTest {
 
     @ParameterizedTest
     @MethodSource("data")
-    public void testDigestByteArray(final String messageDigestAlgorithm) {
+    void testDigestByteArray(final String messageDigestAlgorithm) {
         assumeTrue(DigestUtils.isAvailable(messageDigestAlgorithm));
         assertArrayEquals(digestTestData(messageDigestAlgorithm), DigestUtils.digest(DigestUtils.getDigest(messageDigestAlgorithm), getTestData()));
         assertArrayEquals(digestTestData(messageDigestAlgorithm), DigestUtils.digest(DigestUtils.getDigest(messageDigestAlgorithm), getTestData()));
@@ -143,7 +147,7 @@ public class MessageDigestAlgorithmsTest {
 
     @ParameterizedTest
     @MethodSource("data")
-    public void testDigestByteBuffer(final String messageDigestAlgorithm) {
+    void testDigestByteBuffer(final String messageDigestAlgorithm) {
         assumeTrue(DigestUtils.isAvailable(messageDigestAlgorithm));
         assertArrayEquals(digestTestData(messageDigestAlgorithm),
                 DigestUtils.digest(DigestUtils.getDigest(messageDigestAlgorithm), ByteBuffer.wrap(getTestData())));
@@ -153,7 +157,7 @@ public class MessageDigestAlgorithmsTest {
 
     @ParameterizedTest
     @MethodSource("data")
-    public void testDigestFile(final String messageDigestAlgorithm) throws IOException {
+    void testDigestFile(final String messageDigestAlgorithm) throws IOException {
         assumeTrue(DigestUtils.isAvailable(messageDigestAlgorithm));
         assertArrayEquals(digestTestData(messageDigestAlgorithm), DigestUtils.digest(DigestUtils.getDigest(messageDigestAlgorithm), getTestFile()));
         assertArrayEquals(digestTestData(messageDigestAlgorithm), DigestUtils.digest(DigestUtils.getDigest(messageDigestAlgorithm), getTestFile()));
@@ -161,7 +165,7 @@ public class MessageDigestAlgorithmsTest {
 
     @ParameterizedTest
     @MethodSource("data")
-    public void testDigestInputStream(final String messageDigestAlgorithm) throws IOException {
+    void testDigestInputStream(final String messageDigestAlgorithm) throws IOException {
         assumeTrue(DigestUtils.isAvailable(messageDigestAlgorithm));
         assertArrayEquals(digestTestData(messageDigestAlgorithm),
                 DigestUtils.digest(DigestUtils.getDigest(messageDigestAlgorithm), new ByteArrayInputStream(getTestData())));
@@ -169,8 +173,6 @@ public class MessageDigestAlgorithmsTest {
                 DigestUtils.digest(DigestUtils.getDigest(messageDigestAlgorithm), new ByteArrayInputStream(getTestData())));
     }
 
-    @ParameterizedTest
-    @MethodSource("data")
     private void testDigestPath(final String messageDigestAlgorithm, final OpenOption... options) throws IOException {
         assumeTrue(DigestUtils.isAvailable(messageDigestAlgorithm));
         assertArrayEquals(digestTestData(messageDigestAlgorithm), DigestUtils.digest(DigestUtils.getDigest(messageDigestAlgorithm), getTestPath(), options));
@@ -179,19 +181,19 @@ public class MessageDigestAlgorithmsTest {
 
     @ParameterizedTest
     @MethodSource("data")
-    public void testDigestPathOpenOptionsEmpty(final String messageDigestAlgorithm) throws IOException {
+    void testDigestPathOpenOptionsEmpty(final String messageDigestAlgorithm) throws IOException {
         testDigestPath(messageDigestAlgorithm);
     }
 
     @ParameterizedTest
     @MethodSource("data")
-    public void testDigestPathStandardOpenOptionRead(final String messageDigestAlgorithm) throws IOException {
+    void testDigestPathStandardOpenOptionRead(final String messageDigestAlgorithm) throws IOException {
         testDigestPath(messageDigestAlgorithm, StandardOpenOption.READ);
     }
 
     @ParameterizedTest
     @MethodSource("data")
-    public void testGetMessageDigest(final String messageDigestAlgorithm) {
+    void testGetMessageDigest(final String messageDigestAlgorithm) {
         assumeTrue(DigestUtils.isAvailable(messageDigestAlgorithm));
         final MessageDigest messageDigest = DigestUtils.getDigest(messageDigestAlgorithm);
         assertEquals(messageDigestAlgorithm, messageDigest.getAlgorithm());
@@ -199,7 +201,7 @@ public class MessageDigestAlgorithmsTest {
 
     @ParameterizedTest
     @MethodSource("data")
-    public void testNonBlockingDigestRandomAccessFile(final String messageDigestAlgorithm) throws IOException {
+    void testNonBlockingDigestRandomAccessFile(final String messageDigestAlgorithm) throws IOException {
         assumeTrue(DigestUtils.isAvailable(messageDigestAlgorithm));
 
         final byte[] expected = digestTestData(messageDigestAlgorithm);

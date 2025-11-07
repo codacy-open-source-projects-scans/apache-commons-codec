@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -95,13 +95,15 @@ public class Lang {
         }
 
         public boolean matches(final String txt) {
-            return this.pattern.matcher(txt).find();
+            return pattern.matcher(txt).find();
         }
     }
 
     private static final Map<NameType, Lang> LANGS = new EnumMap<>(NameType.class);
 
-    private static final String LANGUAGE_RULES_RN = "org/apache/commons/codec/language/bm/%s_lang.txt";
+    private static final String LANGUAGE_RULES_RN = "/org/apache/commons/codec/language/bm/%s_lang.txt";
+
+    private static final Pattern PLUS = Pattern.compile("\\+");
 
     static {
         for (final NameType s : NameType.values()) {
@@ -135,7 +137,7 @@ public class Lang {
      */
     public static Lang loadFromResource(final String languageRulesResourceName, final Languages languages) {
         final List<LangRule> rules = new ArrayList<>();
-        try (final Scanner scanner = new Scanner(Resources.getInputStream(languageRulesResourceName),
+        try (Scanner scanner = new Scanner(Resources.getInputStream(languageRulesResourceName),
                 ResourceConstants.ENCODING)) {
             boolean inExtendedComment = false;
             while (scanner.hasNextLine()) {
@@ -163,7 +165,7 @@ public class Lang {
                     }
 
                     // split it up
-                    final String[] parts = line.split("\\s+");
+                    final String[] parts = ResourceConstants.SPACES.split(line);
 
                     if (parts.length != 3) {
                         throw new IllegalArgumentException("Malformed line '" + rawLine +
@@ -171,7 +173,7 @@ public class Lang {
                     }
 
                     final Pattern pattern = Pattern.compile(parts[0]);
-                    final String[] langs = parts[1].split("\\+");
+                    final String[] langs = PLUS.split(parts[1]);
                     final boolean accept = parts[2].equals("true");
 
                     rules.add(new LangRule(pattern, new HashSet<>(Arrays.asList(langs)), accept));
@@ -211,7 +213,7 @@ public class Lang {
      */
     public Languages.LanguageSet guessLanguages(final String input) {
         final String text = input.toLowerCase(Locale.ENGLISH);
-        final Set<String> langs = new HashSet<>(this.languages.getLanguages());
+        final Set<String> langs = new HashSet<>(languages.getLanguages());
         rules.forEach(rule -> {
             if (rule.matches(text)) {
                 if (rule.acceptOnMatch) {

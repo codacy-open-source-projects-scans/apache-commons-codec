@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -21,11 +21,13 @@ import org.apache.commons.codec.EncoderException;
 import org.apache.commons.codec.StringEncoder;
 
 /**
- * Encodes a string into a Refined Soundex value. A refined soundex code is
+ * Encodes a string into a Refined Soundex value. A refined Soundex code is
  * optimized for spell checking words. Soundex method originally developed by
  * <CITE>Margaret Odell</CITE> and <CITE>Robert Russell</CITE>.
  *
- * <p>This class is immutable and thread-safe.</p>
+ * <p>
+ * This class is immutable and thread-safe.
+ * </p>
  */
 public class RefinedSoundex implements StringEncoder {
 
@@ -64,7 +66,7 @@ public class RefinedSoundex implements StringEncoder {
     /**
      * Every letter of the alphabet is "mapped" to a numerical value. This char
      * array holds the values to which each letter is mapped. This
-     * implementation contains a default map for US_ENGLISH
+     * implementation contains a default map for US_ENGLISH.
      */
     private final char[] soundexMapping;
 
@@ -77,13 +79,13 @@ public class RefinedSoundex implements StringEncoder {
     }
 
     /**
-     * Creates a refined soundex instance using a custom mapping. This
+     * Creates a refined Soundex instance using a custom mapping. This
      * constructor can be used to customize the mapping, and/or possibly
      * provide an internationalized mapping for a non-Western character set.
      *
      * @param mapping
      *                  Mapping array to use when finding the corresponding code for
-     *                  a given character
+     *                  a given character.
      */
     public RefinedSoundex(final char[] mapping) {
         this.soundexMapping = mapping.clone();
@@ -94,7 +96,7 @@ public class RefinedSoundex implements StringEncoder {
      * and/or possibly provide an internationalized mapping for a non-Western character set.
      *
      * @param mapping
-     *            Mapping string to use when finding the corresponding code for a given character
+     *            Mapping string to use when finding the corresponding code for a given character.
      * @since 1.4
      */
     public RefinedSoundex(final String mapping) {
@@ -120,7 +122,7 @@ public class RefinedSoundex implements StringEncoder {
      *          MS T-SQL DIFFERENCE</a>
      *
      * @throws EncoderException
-     *                  if an error occurs encoding one of the strings
+     *                  if an error occurs encoding one of the strings.
      * @since 1.3
      */
     public int difference(final String s1, final String s2) throws EncoderException {
@@ -128,15 +130,15 @@ public class RefinedSoundex implements StringEncoder {
     }
 
     /**
-     * Encodes an Object using the refined soundex algorithm. This method is
+     * Encodes an Object using the refined Soundex algorithm. This method is
      * provided in order to satisfy the requirements of the Encoder interface,
      * and will throw an EncoderException if the supplied object is not of type
      * {@link String}.
      *
      * @param obj
-     *                  Object to encode
-     * @return An object (or type {@link String}) containing the refined
-     *             soundex code which corresponds to the String supplied.
+     *                  Object to encode.
+     * @return An object (or type {@link String}) containing the refined.
+     *             Soundex code which corresponds to the String supplied.
      * @throws EncoderException
      *                  if the parameter supplied is not of type {@link String}
      */
@@ -149,11 +151,11 @@ public class RefinedSoundex implements StringEncoder {
     }
 
     /**
-     * Encodes a String using the refined soundex algorithm.
+     * Encodes a String using the refined Soundex algorithm.
      *
      * @param str
-     *                  A String object to encode
-     * @return A Soundex code corresponding to the String supplied
+     *                  A String object to encode.
+     * @return A Soundex code corresponding to the String supplied.
      */
     @Override
     public String encode(final String str) {
@@ -166,8 +168,8 @@ public class RefinedSoundex implements StringEncoder {
      * default values of these mappings are US English.
      *
      * @param c
-     *                  char to get mapping for
-     * @return A character (really a numeral) to return for the given char
+     *                  char to get mapping for.
+     * @return A character (really a numeral) to return for the given char.
      */
     char getMappingCode(final char c) {
         if (!Character.isLetter(c)) {
@@ -184,8 +186,8 @@ public class RefinedSoundex implements StringEncoder {
      * Retrieves the Refined Soundex code for a given String object.
      *
      * @param str
-     *                  String to encode using the Refined Soundex algorithm
-     * @return A soundex code for the String supplied
+     *                  String to encode using the Refined Soundex algorithm.
+     * @return A Soundex code for the String supplied.
      */
     public String soundex(String str) {
         if (str == null) {

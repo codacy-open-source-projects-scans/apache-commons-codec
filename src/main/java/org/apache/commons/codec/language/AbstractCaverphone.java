@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -34,12 +34,19 @@ import org.apache.commons.codec.StringEncoder;
 public abstract class AbstractCaverphone implements StringEncoder {
 
     /**
-     * Encodes an Object using the caverphone algorithm. This method is provided in order to satisfy the requirements of
+     * Constructs a new instance for subclasses.
+     */
+    public AbstractCaverphone() {
+        // empty
+    }
+
+    /**
+     * Encodes an Object using the Caverphone algorithm. This method is provided in order to satisfy the requirements of
      * the Encoder interface, and will throw an EncoderException if the supplied object is not of type {@link String}.
      *
      * @param source
-     *            Object to encode
-     * @return An object (or type {@link String}) containing the caverphone code which corresponds to the String
+     *            Object to encode.
+     * @return An object (or type {@link String}) containing the Caverphone code which corresponds to the String
      *         supplied.
      * @throws EncoderException
      *             if the parameter supplied is not of type {@link String}.
@@ -58,9 +65,9 @@ public abstract class AbstractCaverphone implements StringEncoder {
      * This method might be promoted to a new AbstractStringEncoder superclass.
      *
      * @param str1
-     *            First of two strings to compare
+     *            First of two strings to compare.
      * @param str2
-     *            Second of two strings to compare
+     *            Second of two strings to compare.
      * @return {@code true} if the encodings of these strings are identical, {@code false} otherwise.
      * @throws EncoderException
      *             thrown if there is an error condition during the encoding process.

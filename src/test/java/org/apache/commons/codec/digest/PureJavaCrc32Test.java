@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -38,7 +38,7 @@ import org.junit.jupiter.api.Test;
  *
  * Copied from Hadoop 2.6.3 (Renamed TestPureJavaCrc32 to PureJavaCrc32Test).
  */
-public class PureJavaCrc32Test {
+class PureJavaCrc32Test {
 
     /**
      * Performance tests to compare performance of the Pure Java implementation to the built-in java.util.zip implementation. This can be run from the command
@@ -190,7 +190,7 @@ public class PureJavaCrc32Test {
             }
         }
 
-        public static void main(final String args[]) throws Exception {
+        public static void main(final String[] args) throws Exception {
             printSystemProperties(System.out);
             doBench(CRCS, System.out);
         }
@@ -228,7 +228,7 @@ public class PureJavaCrc32Test {
             System.out.println(s);
 
             // print to a file
-            try (final PrintStream out = new PrintStream(new FileOutputStream("table" + i + ".txt"), true)) {
+            try (PrintStream out = new PrintStream(new FileOutputStream("table" + i + ".txt"), true)) {
                 out.println(s);
             }
         }
@@ -350,7 +350,7 @@ public class PureJavaCrc32Test {
     }
 
     @Test
-    public void testCorrectness() throws Exception {
+    void testCorrectness() throws Exception {
         checkSame();
 
         theirs.update(104);

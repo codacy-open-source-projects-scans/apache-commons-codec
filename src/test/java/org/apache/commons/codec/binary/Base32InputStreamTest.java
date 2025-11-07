@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -20,6 +20,7 @@ package org.apache.commons.codec.binary;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -31,13 +32,16 @@ import java.io.InputStream;
 import org.apache.commons.codec.CodecPolicy;
 import org.junit.jupiter.api.Test;
 
-public class Base32InputStreamTest {
+/**
+ * Tests {@link Base32InputStream}.
+ */
+class Base32InputStreamTest {
 
     private static final String ENCODED_FOO = "MZXW6===";
 
-    private final static byte[] CRLF = { (byte) '\r', (byte) '\n' };
+    private static final byte[] CRLF = { (byte) '\r', (byte) '\n' };
 
-    private final static byte[] LF = { (byte) '\n' };
+    private static final byte[] LF = { (byte) '\n' };
 
     private static final String STRING_FIXTURE = "Hello World";
 
@@ -48,9 +52,9 @@ public class Base32InputStreamTest {
      *             for some failure scenarios.
      */
     @Test
-    public void testAvailable() throws Throwable {
+    void testAvailable() throws Throwable {
         final InputStream ins = new ByteArrayInputStream(StringUtils.getBytesIso8859_1(ENCODED_FOO));
-        try (final Base32InputStream b32stream = new Base32InputStream(ins)) {
+        try (Base32InputStream b32stream = new Base32InputStream(ins)) {
             assertEquals(1, b32stream.available());
             assertEquals(3, b32stream.skip(10));
             // End of stream reached
@@ -68,6 +72,17 @@ public class Base32InputStreamTest {
         testByChunk(emptyEncoded, emptyDecoded, chuckSize, CRLF);
     }
 
+    /**
+     * Tests the Base32InputStream implementation against empty input.
+     *
+     * @throws Exception
+     *             for some failure scenarios.
+     */
+    @Test
+    void testBase32EmptyInputStreamMimeChuckSize() throws Exception {
+        testBase32EmptyInputStream(BaseNCodec.MIME_CHUNK_SIZE);
+    }
+
     // /**
     // * Test for the CODEC-101 bug: InputStream.read(byte[]) should never return 0
     // * because Java's builtin InputStreamReader hates that.
@@ -75,7 +90,7 @@ public class Base32InputStreamTest {
     // * @throws Exception for some failure scenarios.
     // */
     // @Test
-    // public void testCodec101() throws Exception {
+    // void testCodec101() throws Exception {
     // byte[] codec101 = StringUtils.getBytesUtf8(Base32TestData.CODEC_101_MULTIPLE_OF_3);
     // ByteArrayInputStream bais = new ByteArrayInputStream(codec101);
     // Base32InputStream in = new Base32InputStream(bais);
@@ -103,7 +118,7 @@ public class Base32InputStreamTest {
      *             for some failure scenarios.
      */
     // @Test
-    // public void testInputStreamReader() throws Exception {
+    // void testInputStreamReader() throws Exception {
     // byte[] codec101 = StringUtils.getBytesUtf8(Base32TestData.CODEC_101_MULTIPLE_OF_3);
     // ByteArrayInputStream bais = new ByteArrayInputStream(codec101);
     // Base32InputStream in = new Base32InputStream(bais);
@@ -120,7 +135,7 @@ public class Base32InputStreamTest {
      *             for some failure scenarios.
      */
     // @Test
-    // public void testCodec98NPE() throws Exception {
+    // void testCodec98NPE() throws Exception {
     // byte[] codec98 = StringUtils.getBytesUtf8(Base32TestData.CODEC_98_NPE);
     // ByteArrayInputStream data = new ByteArrayInputStream(codec98);
     // Base32InputStream stream = new Base32InputStream(data);
@@ -141,18 +156,7 @@ public class Base32InputStreamTest {
      *             for some failure scenarios.
      */
     @Test
-    public void testBase32EmptyInputStreamMimeChuckSize() throws Exception {
-        testBase32EmptyInputStream(BaseNCodec.MIME_CHUNK_SIZE);
-    }
-
-    /**
-     * Tests the Base32InputStream implementation against empty input.
-     *
-     * @throws Exception
-     *             for some failure scenarios.
-     */
-    @Test
-    public void testBase32EmptyInputStreamPemChuckSize() throws Exception {
+    void testBase32EmptyInputStreamPemChuckSize() throws Exception {
         testBase32EmptyInputStream(BaseNCodec.PEM_CHUNK_SIZE);
     }
 
@@ -163,7 +167,7 @@ public class Base32InputStreamTest {
      *             for some failure scenarios.
      */
     @Test
-    public void testBase32InputStreamByChunk() throws Exception {
+    void testBase32InputStreamByChunk() throws Exception {
         // Hello World test.
         byte[] encoded = StringUtils.getBytesUtf8(Base32TestData.BASE32_FIXTURE);
         byte[] decoded = StringUtils.getBytesUtf8(Base32TestData.STRING_FIXTURE);
@@ -202,7 +206,7 @@ public class Base32InputStreamTest {
      *             for some failure scenarios.
      */
     @Test
-    public void testBase32InputStreamByteByByte() throws Exception {
+    void testBase32InputStreamByteByByte() throws Exception {
         // Hello World test.
         byte[] encoded = StringUtils.getBytesUtf8(Base32TestData.BASE32_FIXTURE);
         byte[] decoded = StringUtils.getBytesUtf8(Base32TestData.STRING_FIXTURE);
@@ -227,6 +231,11 @@ public class Base32InputStreamTest {
             decoded = randomData[0];
             testByteByByte(encoded, decoded, 0, LF);
         }
+    }
+
+    @Test
+    void testBuilder() {
+        assertNotNull(Base32InputStream.builder().getBaseNCodec());
     }
 
     /**
@@ -343,8 +352,8 @@ public class Base32InputStreamTest {
      * Tests the bug reported in CODEC-105. Bad interactions with InputStream when reading one byte at a time.
      */
     @Test
-    public void testCodec105() throws IOException {
-        try (final Base32InputStream in = new Base32InputStream(new Codec105ErrorInputStream(), true, 0, null)) {
+    void testCodec105() throws IOException {
+        try (Base32InputStream in = new Base32InputStream(new Codec105ErrorInputStream(), true, 0, null)) {
             for (int i = 0; i < 5; i++) {
                 in.read();
             }
@@ -355,9 +364,9 @@ public class Base32InputStreamTest {
      * Tests the problem reported in CODEC-130. Missing / wrong implementation of skip.
      */
     @Test
-    public void testCodec130() throws IOException {
+    void testCodec130() throws IOException {
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        try (final Base32OutputStream base32os = new Base32OutputStream(bos)) {
+        try (Base32OutputStream base32os = new Base32OutputStream(bos)) {
             base32os.write(StringUtils.getBytesUtf8(STRING_FIXTURE));
         }
 
@@ -365,7 +374,7 @@ public class Base32InputStreamTest {
         final Base32InputStream ins = new Base32InputStream(bis);
 
         // we skip the first character read from the reader
-        ins.skip(1);
+        assertEquals(1, ins.skip(1));
         final byte[] decodedBytes = BaseNTestData.streamToBytes(ins, new byte[64]);
         final String str = StringUtils.newStringUtf8(decodedBytes);
 
@@ -379,10 +388,10 @@ public class Base32InputStreamTest {
      *             for some failure scenarios.
      */
     @Test
-    public void testMarkSupported() throws Exception {
+    void testMarkSupported() throws Exception {
         final byte[] decoded = StringUtils.getBytesUtf8(Base32TestData.STRING_FIXTURE);
         final ByteArrayInputStream bin = new ByteArrayInputStream(decoded);
-        try (final Base32InputStream in = new Base32InputStream(bin, true, 4, new byte[] { 0, 0, 0 })) {
+        try (Base32InputStream in = new Base32InputStream(bin, true, 4, new byte[] { 0, 0, 0 })) {
             // Always returns false for now.
             assertFalse(in.markSupported(), "Base32InputStream.markSupported() is false");
         }
@@ -395,12 +404,12 @@ public class Base32InputStreamTest {
      *             for some failure scenarios.
      */
     @Test
-    public void testRead0() throws Exception {
+    void testRead0() throws Exception {
         final byte[] decoded = StringUtils.getBytesUtf8(Base32TestData.STRING_FIXTURE);
         final byte[] buf = new byte[1024];
         int bytesRead = 0;
         final ByteArrayInputStream bin = new ByteArrayInputStream(decoded);
-        try (final Base32InputStream in = new Base32InputStream(bin, true, 4, new byte[] { 0, 0, 0 })) {
+        try (Base32InputStream in = new Base32InputStream(bin, true, 4, new byte[] { 0, 0, 0 })) {
             bytesRead = in.read(buf, 0, 0);
             assertEquals(0, bytesRead, "Base32InputStream.read(buf, 0, 0) returns 0");
         }
@@ -413,10 +422,10 @@ public class Base32InputStreamTest {
      *             for some failure scenarios.
      */
     @Test
-    public void testReadNull() throws Exception {
+    void testReadNull() throws Exception {
         final byte[] decoded = StringUtils.getBytesUtf8(Base32TestData.STRING_FIXTURE);
         final ByteArrayInputStream bin = new ByteArrayInputStream(decoded);
-        try (final Base32InputStream in = new Base32InputStream(bin, true, 4, new byte[] {0, 0, 0})) {
+        try (Base32InputStream in = new Base32InputStream(bin, true, 4, new byte[] {0, 0, 0})) {
             assertThrows(NullPointerException.class, () -> in.read(null, 0, 0));
         }
     }
@@ -428,11 +437,11 @@ public class Base32InputStreamTest {
      *             for some failure scenarios.
      */
     @Test
-    public void testReadOutOfBounds() throws Exception {
+    void testReadOutOfBounds() throws Exception {
         final byte[] decoded = StringUtils.getBytesUtf8(Base32TestData.STRING_FIXTURE);
         final byte[] buf = new byte[1024];
         final ByteArrayInputStream bin = new ByteArrayInputStream(decoded);
-        try (final Base32InputStream in = new Base32InputStream(bin, true, 4, new byte[] { 0, 0, 0 })) {
+        try (Base32InputStream in = new Base32InputStream(bin, true, 4, new byte[] { 0, 0, 0 })) {
             assertThrows(IndexOutOfBoundsException.class, () -> in.read(buf, -1, 0), "Base32InputStream.read(buf, -1, 0)");
             assertThrows(IndexOutOfBoundsException.class, () -> in.read(buf, 0, -1), "Base32InputStream.read(buf, 0, -1)");
             assertThrows(IndexOutOfBoundsException.class, () -> in.read(buf, buf.length + 1, 0), "Base32InputStream.read(buf, buf.length + 1, 0)");
@@ -447,9 +456,9 @@ public class Base32InputStreamTest {
      *             for some failure scenarios.
      */
     @Test
-    public void testSkipBig() throws Throwable {
+    void testSkipBig() throws Throwable {
         final InputStream ins = new ByteArrayInputStream(StringUtils.getBytesIso8859_1(ENCODED_FOO));
-        try (final Base32InputStream b32stream = new Base32InputStream(ins)) {
+        try (Base32InputStream b32stream = new Base32InputStream(ins)) {
             assertEquals(3, b32stream.skip(1024));
             // End of stream reached
             assertEquals(-1, b32stream.read());
@@ -464,9 +473,9 @@ public class Base32InputStreamTest {
      *             for some failure scenarios.
      */
     @Test
-    public void testSkipNone() throws Throwable {
+    void testSkipNone() throws Throwable {
         final InputStream ins = new ByteArrayInputStream(StringUtils.getBytesIso8859_1(ENCODED_FOO));
-        try (final Base32InputStream b32stream = new Base32InputStream(ins)) {
+        try (Base32InputStream b32stream = new Base32InputStream(ins)) {
             final byte[] actualBytes = new byte[6];
             assertEquals(0, b32stream.skip(0));
             b32stream.read(actualBytes, 0, actualBytes.length);
@@ -483,9 +492,9 @@ public class Base32InputStreamTest {
      *             for some failure scenarios.
      */
     @Test
-    public void testSkipPastEnd() throws Throwable {
+    void testSkipPastEnd() throws Throwable {
         final InputStream ins = new ByteArrayInputStream(StringUtils.getBytesIso8859_1(ENCODED_FOO));
-        try (final Base32InputStream b32stream = new Base32InputStream(ins)) {
+        try (Base32InputStream b32stream = new Base32InputStream(ins)) {
             // due to CODEC-130, skip now skips correctly decoded characters rather than encoded
             assertEquals(3, b32stream.skip(10));
             // End of stream reached
@@ -501,9 +510,9 @@ public class Base32InputStreamTest {
      *             for some failure scenarios.
      */
     @Test
-    public void testSkipToEnd() throws Throwable {
+    void testSkipToEnd() throws Throwable {
         final InputStream ins = new ByteArrayInputStream(StringUtils.getBytesIso8859_1(ENCODED_FOO));
-        try (final Base32InputStream b32stream = new Base32InputStream(ins)) {
+        try (Base32InputStream b32stream = new Base32InputStream(ins)) {
             // due to CODEC-130, skip now skips correctly decoded characters rather than encoded
             assertEquals(3, b32stream.skip(3));
             // End of stream reached
@@ -519,9 +528,9 @@ public class Base32InputStreamTest {
      *             for some failure scenarios.
      */
     @Test
-    public void testSkipWrongArgument() throws Throwable {
+    void testSkipWrongArgument() throws Throwable {
         final InputStream ins = new ByteArrayInputStream(StringUtils.getBytesIso8859_1(ENCODED_FOO));
-        try (final Base32InputStream b32stream = new Base32InputStream(ins)) {
+        try (Base32InputStream b32stream = new Base32InputStream(ins)) {
             assertThrows(IllegalArgumentException.class, () -> b32stream.skip(-10));
         }
     }
@@ -533,18 +542,26 @@ public class Base32InputStreamTest {
      *             for some failure scenarios.
      */
     @Test
-    public void testStrictDecoding() throws Exception {
+    void testStrictDecoding() throws Exception {
         for (final String s : Base32Test.BASE32_IMPOSSIBLE_CASES) {
             final byte[] encoded = StringUtils.getBytesUtf8(s);
             final Base32InputStream in = new Base32InputStream(new ByteArrayInputStream(encoded), false);
             // Default is lenient decoding; it should not throw
             assertFalse(in.isStrictDecoding());
             BaseNTestData.streamToBytes(in);
-
             // Strict decoding should throw
             final Base32InputStream in2 = new Base32InputStream(new ByteArrayInputStream(encoded), false, 0, null, CodecPolicy.STRICT);
             assertTrue(in2.isStrictDecoding());
             assertThrows(IllegalArgumentException.class, () -> BaseNTestData.streamToBytes(in2));
+            // Same with a builder
+            try (Base32InputStream in3 = Base32InputStream.builder()
+                    .setInputStream(new ByteArrayInputStream(encoded))
+                    .setEncode(false)
+                    .setBaseNCodec(Base32.builder().setLineLength(0).setLineSeparator(null).setDecodingPolicy(CodecPolicy.STRICT).get())
+                    .get()) {
+                assertTrue(in3.isStrictDecoding());
+                assertThrows(IllegalArgumentException.class, () -> BaseNTestData.streamToBytes(in3));
+            }
         }
     }
 }

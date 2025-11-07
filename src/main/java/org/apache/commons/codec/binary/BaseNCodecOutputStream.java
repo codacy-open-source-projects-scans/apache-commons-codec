@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -25,27 +25,85 @@ import java.io.OutputStream;
 import java.util.Objects;
 
 import org.apache.commons.codec.binary.BaseNCodec.Context;
+import org.apache.commons.codec.binary.BaseNCodecOutputStream.AbstractBuilder;
 
 /**
  * Abstract superclass for Base-N output streams.
  * <p>
- * To write the EOF marker without closing the stream, call {@link #eof()} or use an <a
- * href="https://commons.apache.org/proper/commons-io/">Apache Commons IO</a> <a href=
- * "https://commons.apache.org/proper/commons-io/apidocs/org/apache/commons/io/output/CloseShieldOutputStream.html"
- * >CloseShieldOutputStream</a>.
+ * To write the EOF marker without closing the stream, call {@link #eof()} or use an <a href="https://commons.apache.org/proper/commons-io/">Apache Commons
+ * IO</a>
+ * <a href= "https://commons.apache.org/proper/commons-io/apidocs/org/apache/commons/io/output/CloseShieldOutputStream.html" >CloseShieldOutputStream</a>.
  * </p>
  *
+ * @param <C> A BaseNCodec subclass.
+ * @param <T> A BaseNCodecInputStream subclass.
+ * @param <B> A subclass.
+ * @see Base16OutputStream
+ * @see Base32OutputStream
+ * @see Base64OutputStream
  * @since 1.5
  */
-public class BaseNCodecOutputStream extends FilterOutputStream {
+public class BaseNCodecOutputStream<C extends BaseNCodec, T extends BaseNCodecOutputStream<C, T, B>, B extends AbstractBuilder<T, C, B>>
+        extends FilterOutputStream {
+
+    /**
+     * Builds output stream instances in {@link BaseNCodec} format.
+     *
+     * @param <T> the output stream type to build.
+     * @param <C> A {@link BaseNCodec} subclass.
+     * @param <B> the builder subclass.
+     * @since 1.20.0
+     */
+    public abstract static class AbstractBuilder<T, C extends BaseNCodec, B extends AbstractBuilder<T, C, B>>
+        extends AbstractBaseNCodecStreamBuilder<T, C, B> {
+
+        private OutputStream outputStream;
+
+        /**
+         * Constructs a new instance.
+         */
+        public AbstractBuilder() {
+            // super
+        }
+
+        /**
+         * Gets the input stream.
+         *
+         * @return the input stream.
+         */
+        protected OutputStream getOutputStream() {
+            return outputStream;
+        }
+
+        /**
+         * Sets the input stream.
+         *
+         * @param outputStream the input stream.
+         * @return {@code this} instance.
+         */
+        public B setOutputStream(final OutputStream outputStream) {
+            this.outputStream = outputStream;
+            return asThis();
+        }
+    }
 
     private final boolean doEncode;
-
-    private final BaseNCodec baseNCodec;
-
+    private final C baseNCodec;
     private final byte[] singleByte = new byte[1];
-
     private final Context context = new Context();
+
+    /**
+     * Constructs a new instance.
+     *
+     * @param builder A builder.
+     * @since 1.20.0
+     */
+    @SuppressWarnings("resource") // Caller closes.
+    protected BaseNCodecOutputStream(final AbstractBuilder<T, C, B> builder) {
+        super(builder.getOutputStream());
+        this.baseNCodec = builder.getBaseNCodec();
+        this.doEncode = builder.getEncode();
+    }
 
     /**
      * Constructs a new instance.
@@ -53,10 +111,10 @@ public class BaseNCodecOutputStream extends FilterOutputStream {
      * TODO should this be protected?
      *
      * @param outputStream the underlying output or null.
-     * @param basedCodec a BaseNCodec.
-     * @param doEncode true to encode, false to decode, TODO should be an enum?
+     * @param basedCodec   a BaseNCodec.
+     * @param doEncode     true to encode, false to decode, TODO should be an enum?
      */
-    public BaseNCodecOutputStream(final OutputStream outputStream, final BaseNCodec basedCodec, final boolean doEncode) {
+    public BaseNCodecOutputStream(final OutputStream outputStream, final C basedCodec, final boolean doEncode) {
         super(outputStream);
         this.baseNCodec = basedCodec;
         this.doEncode = doEncode;
@@ -65,14 +123,12 @@ public class BaseNCodecOutputStream extends FilterOutputStream {
     /**
      * Closes this output stream and releases any system resources associated with the stream.
      * <p>
-     * To write the EOF marker without closing the stream, call {@link #eof()} or use an
-     * <a href="https://commons.apache.org/proper/commons-io/">Apache Commons IO</a> <a href=
-     * "https://commons.apache.org/proper/commons-io/apidocs/org/apache/commons/io/output/CloseShieldOutputStream.html"
-     * >CloseShieldOutputStream</a>.
+     * To write the EOF marker without closing the stream, call {@link #eof()} or use an <a href="https://commons.apache.org/proper/commons-io/">Apache Commons
+     * IO</a>
+     * <a href= "https://commons.apache.org/proper/commons-io/apidocs/org/apache/commons/io/output/CloseShieldOutputStream.html" >CloseShieldOutputStream</a>.
      * </p>
      *
-     * @throws IOException
-     *             if an I/O error occurs.
+     * @throws IOException if an I/O error occurs.
      */
     @Override
     public void close() throws IOException {
@@ -98,8 +154,7 @@ public class BaseNCodecOutputStream extends FilterOutputStream {
     /**
      * Flushes this output stream and forces any buffered output bytes to be written out to the stream.
      *
-     * @throws IOException
-     *             if an I/O error occurs.
+     * @throws IOException if an I/O error occurs.
      */
     @Override
     public void flush() throws IOException {
@@ -107,13 +162,11 @@ public class BaseNCodecOutputStream extends FilterOutputStream {
     }
 
     /**
-     * Flushes this output stream and forces any buffered output bytes to be written out to the stream. If propagate is
-     * true, the wrapped stream will also be flushed.
+     * Flushes this output stream and forces any buffered output bytes to be written out to the stream. If propagate is true, the wrapped stream will also be
+     * flushed.
      *
-     * @param propagate
-     *            boolean flag to indicate whether the wrapped OutputStream should also be flushed.
-     * @throws IOException
-     *             if an I/O error occurs.
+     * @param propagate boolean flag to indicate whether the wrapped OutputStream should also be flushed.
+     * @throws IOException if an I/O error occurs.
      */
     private void flush(final boolean propagate) throws IOException {
         final int avail = baseNCodec.available(context);
@@ -130,15 +183,13 @@ public class BaseNCodecOutputStream extends FilterOutputStream {
     }
 
     /**
-     * Returns true if decoding behavior is strict. Decoding will raise an
-     * {@link IllegalArgumentException} if trailing bits are not part of a valid encoding.
+     * Returns true if decoding behavior is strict. Decoding will raise an {@link IllegalArgumentException} if trailing bits are not part of a valid encoding.
      *
      * <p>
-     * The default is false for lenient encoding. Decoding will compose trailing bits
-     * into 8-bit bytes and discard the remainder.
+     * The default is false for lenient encoding. Decoding will compose trailing bits into 8-bit bytes and discard the remainder.
      * </p>
      *
-     * @return true if using strict decoding
+     * @return true if using strict decoding.
      * @since 1.15
      */
     public boolean isStrictDecoding() {
@@ -146,30 +197,19 @@ public class BaseNCodecOutputStream extends FilterOutputStream {
     }
 
     /**
-     * Writes {@code len} bytes from the specified {@code b} array starting at {@code offset} to this
-     * output stream.
+     * Writes {@code len} bytes from the specified {@code b} array starting at {@code offset} to this output stream.
      *
-     * @param array
-     *            source byte array
-     * @param offset
-     *            where to start reading the bytes
-     * @param len
-     *            maximum number of bytes to write
-     *
-     * @throws IOException
-     *             if an I/O error occurs.
-     * @throws NullPointerException
-     *             if the byte array parameter is null
-     * @throws IndexOutOfBoundsException
-     *             if offset, len or buffer size are invalid
+     * @param array  source byte array.
+     * @param offset where to start reading the bytes.
+     * @param len    maximum number of bytes to write.
+     * @throws IOException               if an I/O error occurs.
+     * @throws NullPointerException      if the byte array parameter is null.
+     * @throws IndexOutOfBoundsException if offset, len or buffer size are invalid.
      */
     @Override
     public void write(final byte[] array, final int offset, final int len) throws IOException {
         Objects.requireNonNull(array, "array");
-        if (offset < 0 || len < 0) {
-            throw new IndexOutOfBoundsException();
-        }
-        if (offset > array.length || offset + len > array.length) {
+        if (offset < 0 || len < 0 || offset > array.length || offset + len > array.length) {
             throw new IndexOutOfBoundsException();
         }
         if (len > 0) {
@@ -185,15 +225,12 @@ public class BaseNCodecOutputStream extends FilterOutputStream {
     /**
      * Writes the specified {@code byte} to this output stream.
      *
-     * @param i
-     *            source byte
-     * @throws IOException
-     *             if an I/O error occurs.
+     * @param i source byte.
+     * @throws IOException if an I/O error occurs.
      */
     @Override
     public void write(final int i) throws IOException {
         singleByte[0] = (byte) i;
         write(singleByte, 0, 1);
     }
-
 }
