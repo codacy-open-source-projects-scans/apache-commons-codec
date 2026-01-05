@@ -71,12 +71,12 @@ import org.apache.commons.codec.StringEncoder;
  * <p>
  * <strong>Note</strong>: this version of the Beider-Morse encoding is equivalent with v3.4 of the reference implementation.
  * </p>
- * @see <a href="https://stevemorse.org/phonetics/bmpm.htm">Beider-Morse Phonetic Matching</a>
- * @see <a href="https://stevemorse.org/phoneticinfo.htm">Reference implementation</a>
- *
  * <p>
  * This class is Not ThreadSafe.
  * </p>
+ *
+ * @see <a href="https://stevemorse.org/phonetics/bmpm.htm">Beider-Morse Phonetic Matching</a>
+ * @see <a href="https://stevemorse.org/phoneticinfo.htm">Reference implementation</a>
  * @since 1.6
  */
 public class BeiderMorseEncoder implements StringEncoder {
@@ -113,7 +113,7 @@ public class BeiderMorseEncoder implements StringEncoder {
     /**
      * Gets the name type currently in operation.
      *
-     * @return the NameType currently being used
+     * @return the NameType currently being used.
      */
     public NameType getNameType() {
         return this.engine.getNameType();
@@ -122,7 +122,7 @@ public class BeiderMorseEncoder implements StringEncoder {
     /**
      * Gets the rule type currently in operation.
      *
-     * @return the RuleType currently being used
+     * @return the RuleType currently being used.
      */
     public RuleType getRuleType() {
         return this.engine.getRuleType();
@@ -131,7 +131,7 @@ public class BeiderMorseEncoder implements StringEncoder {
     /**
      * Discovers if multiple possible encodings are concatenated.
      *
-     * @return true if multiple encodings are concatenated, false if just the first one is returned
+     * @return true if multiple encodings are concatenated, false if just the first one is returned.
      */
     public boolean isConcat() {
         return this.engine.isConcat();
@@ -142,7 +142,7 @@ public class BeiderMorseEncoder implements StringEncoder {
      *
      * @param concat
      *            true if multiple encodings are to be combined with a '|', false if just the first one is
-     *            to be considered
+     *            to be considered.
      */
     public void setConcat(final boolean concat) {
         this.engine = new PhoneticEngine(this.engine.getNameType(),
@@ -155,7 +155,7 @@ public class BeiderMorseEncoder implements StringEncoder {
      * Sets the number of maximum of phonemes that shall be considered by the engine.
      *
      * @param maxPhonemes
-     *            the maximum number of phonemes returned by the engine
+     *            the maximum number of phonemes returned by the engine.
      * @since 1.7
      */
     public void setMaxPhonemes(final int maxPhonemes) {
@@ -170,7 +170,7 @@ public class BeiderMorseEncoder implements StringEncoder {
      * optimized for Ashkenazi or Sephardic Jewish family names.
      *
      * @param nameType
-     *            the NameType in use
+     *            the NameType in use.
      */
     public void setNameType(final NameType nameType) {
         this.engine = new PhoneticEngine(nameType,
@@ -183,7 +183,7 @@ public class BeiderMorseEncoder implements StringEncoder {
      * Sets the rule type to apply. This will widen or narrow the range of phonetic encodings considered.
      *
      * @param ruleType
-     *            {@link RuleType#APPROX} or {@link RuleType#EXACT} for approximate or exact phonetic matches
+     *            {@link RuleType#APPROX} or {@link RuleType#EXACT} for approximate or exact phonetic matches.
      */
     public void setRuleType(final RuleType ruleType) {
         this.engine = new PhoneticEngine(this.engine.getNameType(),

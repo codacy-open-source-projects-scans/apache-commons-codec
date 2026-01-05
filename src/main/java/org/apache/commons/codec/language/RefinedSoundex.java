@@ -45,6 +45,7 @@ public class RefinedSoundex implements StringEncoder {
      * 8: M N
      * 9: R
      * </pre>
+     *
      * @since 1.4
      */
     //                                                      ABCDEFGHIJKLMNOPQRSTUVWXYZ
@@ -140,7 +141,7 @@ public class RefinedSoundex implements StringEncoder {
      * @return An object (or type {@link String}) containing the refined.
      *             Soundex code which corresponds to the String supplied.
      * @throws EncoderException
-     *                  if the parameter supplied is not of type {@link String}
+     *                  if the parameter supplied is not of type {@link String}.
      */
     @Override
     public Object encode(final Object obj) throws EncoderException {
