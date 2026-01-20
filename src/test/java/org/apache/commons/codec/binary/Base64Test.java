@@ -46,7 +46,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 /**
  * Tests {@link Base64}.
  *
- * @see <a href="https://www.ietf.org/rfc/rfc2045.txt">RFC 2045</a>
+ * @see <a href="https://www.ietf.org/rfc/rfc2045">RFC 2045</a>
  */
 class Base64Test {
 
@@ -147,6 +147,20 @@ class Base64Test {
             Arguments.of(new byte[] { 'A', 'Z', 'a' }, true),
             Arguments.of(new byte[] { '/', '=', '+' }, true),
             Arguments.of(new byte[] { '$' }, false));
+        // @formatter:on
+    }
+
+    static Stream<Object> testIsBase64Url() {
+        // @formatter:off
+        return Stream.of(
+            Arguments.of((byte) '=', true),
+            Arguments.of((byte) 32, false),
+            Arguments.of((byte) 0, false),
+            Arguments.of((byte) 1, false),
+            Arguments.of((byte) 2, false),
+            Arguments.of((byte) 999, false),
+            Arguments.of((byte) -1, false)
+            );
         // @formatter:on
     }
 
@@ -519,9 +533,106 @@ class Base64Test {
         assertThrows(IllegalArgumentException.class, () -> Base64.builder().setEncodeTable(encodeTable).get());
     }
 
+    @Test
+    void testDecodeBase64DiffChars() {
+        assertArrayEquals(new byte[] { 102, 111, 111, 98, 97 }, Base64.decodeBase64("Zm9vYmF"));
+        assertArrayEquals(new byte[] { 102, 111, 111, 98, 97, 126 }, Base64.decodeBase64("Zm9vYmF+"));
+        assertArrayEquals(new byte[] { 102, 111, 111, 98, 97, 126 }, Base64.decodeBase64("Zm9vYmF-"));
+        assertArrayEquals(new byte[] { 102, 111, 111, 98, 97 }, Base64.decodeBase64("Zm9vYmF~"));
+    }
+
+    @Test
+    void testDecodeBase64StandardDiffChars() {
+        assertArrayEquals(new byte[] { 102, 111, 111, 98, 97 }, Base64.decodeBase64Standard("Zm9vYmF"));
+        assertArrayEquals(new byte[] { 102, 111, 111, 98, 97, 126 }, Base64.decodeBase64Standard("Zm9vYmF+"));
+        assertArrayEquals(new byte[] { 102, 111, 111, 98, 97 }, Base64.decodeBase64Standard("Zm9vYmF-"));
+        assertArrayEquals(new byte[] { 102, 111, 111, 98, 97 }, Base64.decodeBase64("Zm9vYmF~"));
+    }
+
+    @Test
+    void testDecodeBase64UrlDiffChars() {
+        assertArrayEquals(new byte[] { 102, 111, 111, 98, 97 }, Base64.decodeBase64UrlSafe("Zm9vYmF"));
+        assertArrayEquals(new byte[] { 102, 111, 111, 98, 97 }, Base64.decodeBase64UrlSafe("Zm9vYmF+"));
+        assertArrayEquals(new byte[] { 102, 111, 111, 98, 97, 126 }, Base64.decodeBase64UrlSafe("Zm9vYmF-"));
+        assertArrayEquals(new byte[] { 102, 111, 111, 98, 97 }, Base64.decodeBase64("Zm9vYmF~"));
+    }
+
     private void testDecodeEncode(final String encodedText) {
         final String decodedText = StringUtils.newStringUsAscii(Base64.decodeBase64(encodedText));
         final String encodedText2 = Base64.encodeBase64String(StringUtils.getBytesUtf8(decodedText));
+        assertEquals(encodedText, encodedText2);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "",
+            "Zg==",
+            "Zm8=",
+            "Zm9v",
+            "Zm9vYg==",
+            "Zm9vYmE=",
+            "Zm9vYmFy",
+            "Zm9vYmF+",
+            "Zm9vYmF/"
+    })
+    void testDecodeEncodeStandardByteArray(final String encodedText) {
+        final String decodedText = StringUtils.newStringUsAscii(Base64.decodeBase64Standard(encodedText.getBytes(CHARSET_UTF8)));
+        final String encodedText2 = Base64.encodeBase64String(StringUtils.getBytesUtf8(decodedText));
+        assertEquals(encodedText, encodedText2);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "",
+            "Zg==",
+            "Zm8=",
+            "Zm9v",
+            "Zm9vYg==",
+            "Zm9vYmE=",
+            "Zm9vYmFy",
+            "Zm9vYmF+",
+            "Zm9vYmF/"
+    })
+    void testDecodeEncodeStandardString(final String encodedText) {
+        final String decodedText = StringUtils.newStringUsAscii(Base64.decodeBase64Standard(encodedText));
+        final String encodedText2 = Base64.encodeBase64String(StringUtils.getBytesUtf8(decodedText));
+        assertEquals(encodedText, encodedText2);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "",
+            "Zg",
+            "Zm8",
+            "Zm9v",
+            "Zm9vYg",
+            "Zm9vYmE",
+            "Zm9vYmFy",
+            "Zm9vYmF-",
+            "Zm9vYmF_"
+    })
+    void testDecodeEncodeUrlSafeByteArray(final String encodedText) {
+        final String decodedText = StringUtils.newStringUsAscii(Base64.decodeBase64UrlSafe(encodedText.getBytes(CHARSET_UTF8)));
+        final String encodedText2 = Base64.encodeBase64URLSafeString(StringUtils.getBytesUtf8(decodedText));
+        assertEquals(encodedText, encodedText2);
+    }
+
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "",
+            "Zg",
+            "Zm8",
+            "Zm9v",
+            "Zm9vYg",
+            "Zm9vYmE",
+            "Zm9vYmFy",
+            "Zm9vYmF-",
+            "Zm9vYmF_"
+    })
+    void testDecodeEncodeUrl(final String encodedText) {
+        final String decodedText = StringUtils.newStringUsAscii(Base64.decodeBase64UrlSafe(encodedText));
+        final String encodedText2 = Base64.encodeBase64URLSafeString(StringUtils.getBytesUtf8(decodedText));
         assertEquals(encodedText, encodedText2);
     }
 
@@ -700,6 +811,18 @@ class Base64Test {
     @MethodSource
     void testIsBase64(final byte[] arrayOctet, final boolean match) {
         assertEquals(match, Base64.isBase64(arrayOctet));
+    }
+
+    @ParameterizedTest
+    @MethodSource("testIsBase64Url")
+    void testIsBase64Standard(final byte octet, final boolean match) {
+        assertEquals(match, Base64.isBase64Standard(octet));
+    }
+
+    @ParameterizedTest
+    @MethodSource
+    void testIsBase64Url(final byte octet, final boolean match) {
+        assertEquals(match, Base64.isBase64Url(octet));
     }
 
     /**
@@ -950,66 +1073,6 @@ class Base64Test {
     // @formatter:on
     void testRfc4648Section10DecodeEncode(final String input) {
         testDecodeEncode(input);
-    }
-
-    @ParameterizedTest
-    @ValueSource(strings = {
-            "",
-            "Zg==",
-            "Zm8=",
-            "Zm9v",
-            "Zm9vYg==",
-            "Zm9vYmE=",
-            "Zm9vYmFy",
-            "Zm9vYmF+",
-            "Zm9vYmF/"
-    })
-    void testDecodeEncodeStandard(final String encodedText) {
-        final String decodedText = StringUtils.newStringUsAscii(Base64.decodeBase64Standard(encodedText));
-        final String encodedText2 = Base64.encodeBase64String(StringUtils.getBytesUtf8(decodedText));
-        assertEquals(encodedText, encodedText2);
-    }
-
-    @ParameterizedTest
-    @ValueSource(strings = {
-            "",
-            "Zg",
-            "Zm8",
-            "Zm9v",
-            "Zm9vYg",
-            "Zm9vYmE",
-            "Zm9vYmFy",
-            "Zm9vYmF-",
-            "Zm9vYmF_"
-    })
-    void testDecodeEncodeUrl(final String encodedText) {
-        final String decodedText = StringUtils.newStringUsAscii(Base64.decodeBase64UrlSafe(encodedText));
-        final String encodedText2 = Base64.encodeBase64URLSafeString(StringUtils.getBytesUtf8(decodedText));
-        assertEquals(encodedText, encodedText2);
-    }
-
-    @Test
-    void testDecodeBase64DiffChars() {
-        assertArrayEquals(new byte[] { 102, 111, 111, 98, 97 }, Base64.decodeBase64("Zm9vYmF"));
-        assertArrayEquals(new byte[] { 102, 111, 111, 98, 97, 126 }, Base64.decodeBase64("Zm9vYmF+"));
-        assertArrayEquals(new byte[] { 102, 111, 111, 98, 97, 126 }, Base64.decodeBase64("Zm9vYmF-"));
-        assertArrayEquals(new byte[] { 102, 111, 111, 98, 97 }, Base64.decodeBase64("Zm9vYmF~"));
-    }
-
-    @Test
-    void testDecodeBase64StandardDiffChars() {
-        assertArrayEquals(new byte[] { 102, 111, 111, 98, 97 }, Base64.decodeBase64Standard("Zm9vYmF"));
-        assertArrayEquals(new byte[] { 102, 111, 111, 98, 97, 126 }, Base64.decodeBase64Standard("Zm9vYmF+"));
-        assertArrayEquals(new byte[] { 102, 111, 111, 98, 97 }, Base64.decodeBase64Standard("Zm9vYmF-"));
-        assertArrayEquals(new byte[] { 102, 111, 111, 98, 97 }, Base64.decodeBase64("Zm9vYmF~"));
-    }
-
-    @Test
-    void testDecodeBase64UrlDiffChars() {
-        assertArrayEquals(new byte[] { 102, 111, 111, 98, 97 }, Base64.decodeBase64UrlSafe("Zm9vYmF"));
-        assertArrayEquals(new byte[] { 102, 111, 111, 98, 97 }, Base64.decodeBase64UrlSafe("Zm9vYmF+"));
-        assertArrayEquals(new byte[] { 102, 111, 111, 98, 97, 126 }, Base64.decodeBase64UrlSafe("Zm9vYmF-"));
-        assertArrayEquals(new byte[] { 102, 111, 111, 98, 97 }, Base64.decodeBase64("Zm9vYmF~"));
     }
 
     /**
