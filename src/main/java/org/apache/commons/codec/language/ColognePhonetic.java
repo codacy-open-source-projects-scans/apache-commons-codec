@@ -26,8 +26,8 @@ import org.apache.commons.codec.StringEncoder;
 /**
  * Encodes a string into a Cologne Phonetic value.
  * <p>
- * Implements the <a href="https://de.wikipedia.org/wiki/K%C3%B6lner_Phonetik">K&ouml;lner Phonetik</a> (Cologne
- * Phonetic) algorithm issued by Hans Joachim Postel in 1969.
+ * Implements the <a href="https://de.wikipedia.org/wiki/K%C3%B6lner_Phonetik">K&ouml;lner Phonetik</a>
+ * (<a href="https://en.wikipedia.org/wiki/Cologne_phonetics">Cologne phonetics</a>) algorithm issued by Hans Joachim Postel in 1969.
  * </p>
  * <p>
  * The <em>K&ouml;lner Phonetik</em> is a phonetic algorithm which is optimized for the German language. It is related to
@@ -176,6 +176,7 @@ import org.apache.commons.codec.StringEncoder;
  * This class is thread-safe.
  * </p>
  *
+ * @see <a href="https://en.wikipedia.org/wiki/Cologne_phonetics">Wikipedia: Cologne phonetics</a>
  * @see <a href="https://de.wikipedia.org/wiki/K%C3%B6lner_Phonetik">Wikipedia (de): K&ouml;lner Phonetik (in German)</a>
  * @since 1.5
  */
@@ -269,11 +270,15 @@ public class ColognePhonetic implements StringEncoder {
          * @param code the code to store.
          */
         public void put(final char code) {
-            if (code != CHAR_IGNORE && lastCode != code && (code != '0' || length == 0)) {
+            final boolean accept = code != CHAR_IGNORE;
+            final boolean nonZ = code != '0';
+            if (accept && lastCode != code && (nonZ || length == 0)) {
                 data[length] = code;
                 length++;
             }
-            lastCode = code;
+            if (nonZ && accept) {
+                lastCode = code;
+            }
         }
     }
     // Predefined char arrays for better performance and less GC load
@@ -326,28 +331,21 @@ public class ColognePhonetic implements StringEncoder {
         if (text == null) {
             return null;
         }
-
         final CologneInputBuffer input = new CologneInputBuffer(preprocess(text));
         final CologneOutputBuffer output = new CologneOutputBuffer(input.length() * 2);
-
         char nextChar;
-
         char lastChar = CHAR_IGNORE;
         char chr;
-
         while (!input.isEmpty()) {
             chr = input.removeNext();
-
             if (!input.isEmpty()) {
                 nextChar = input.getNextChar();
             } else {
                 nextChar = CHAR_IGNORE;
             }
-
             if (chr < 'A' || chr > 'Z') {
-                    continue; // ignore unwanted characters
+                continue; // ignore unwanted characters
             }
-
             if (arrayContains(AEIJOUY, chr)) {
                 output.put('0');
             } else if (chr == 'B' || chr == 'P' && nextChar != 'H') {
@@ -396,7 +394,6 @@ public class ColognePhonetic implements StringEncoder {
                     break;
                 }
             }
-
             lastChar = chr;
         }
         return output.toString();
@@ -405,11 +402,8 @@ public class ColognePhonetic implements StringEncoder {
     @Override
     public Object encode(final Object object) throws EncoderException {
         if (!(object instanceof String)) {
-            throw new EncoderException("This method's parameter was expected to be of the type " +
-                String.class.getName() +
-                ". But actually it was of the type " +
-                object.getClass().getName() +
-                ".");
+            throw new EncoderException(String.format("This method's parameter was expected to be of the type %s. But actually it was of the type %s.",
+                    String.class.getName(), object.getClass().getName()));
         }
         return encode((String) object);
     }
@@ -444,20 +438,19 @@ public class ColognePhonetic implements StringEncoder {
     private char[] preprocess(final String text) {
         // This converts German small sharp s (Eszett) to SS
         final char[] chrs = text.toUpperCase(Locale.GERMAN).toCharArray();
-
         for (int index = 0; index < chrs.length; index++) {
             switch (chrs[index]) {
-                case '\u00C4': // capital A, umlaut mark
-                    chrs[index] = 'A';
-                    break;
-                case '\u00DC': // capital U, umlaut mark
-                    chrs[index] = 'U';
-                    break;
-                case '\u00D6': // capital O, umlaut mark
-                    chrs[index] = 'O';
-                    break;
-                default:
-                    break;
+            case '\u00C4': // capital A, umlaut mark
+                chrs[index] = 'A';
+                break;
+            case '\u00DC': // capital U, umlaut mark
+                chrs[index] = 'U';
+                break;
+            case '\u00D6': // capital O, umlaut mark
+                chrs[index] = 'O';
+                break;
+            default:
+                break;
             }
         }
         return chrs;
