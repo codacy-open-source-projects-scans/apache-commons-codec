@@ -183,33 +183,32 @@ import org.apache.commons.codec.StringEncoder;
 public class ColognePhonetic implements StringEncoder {
 
     /**
-     * This class is not thread-safe; the field {@link #length} is mutable.
-     * However, it is not shared between threads, as it is constructed on demand
-     * by the method {@link ColognePhonetic#colognePhonetic(String)}
+     * This class is not thread-safe; the field {@link #length} is mutable. However, it is not shared between threads, as it is constructed on demand by the
+     * method {@link ColognePhonetic#colognePhonetic(String)}.
      */
-    abstract static class CologneBuffer {
+    private abstract static class CologneBuffer {
 
         protected final char[] data;
 
         protected int length;
 
-        CologneBuffer(final char[] data) {
+        protected CologneBuffer(final char[] data) {
             this.data = data;
             this.length = data.length;
         }
 
-        CologneBuffer(final int buffSize) {
+        protected CologneBuffer(final int buffSize) {
             this.data = new char[buffSize];
             this.length = 0;
         }
 
         protected abstract char[] copyData(int start, int length);
 
-        public boolean isEmpty() {
+        boolean isEmpty() {
             return length() == 0;
         }
 
-        public int length() {
+        int length() {
             return length;
         }
 
@@ -232,7 +231,7 @@ public class ColognePhonetic implements StringEncoder {
             return newData;
         }
 
-        public char getNextChar() {
+        char getNextChar() {
             return data[getNextPos()];
         }
 
@@ -240,7 +239,7 @@ public class ColognePhonetic implements StringEncoder {
             return data.length - length;
         }
 
-        public char removeNext() {
+        char removeNext() {
             final char ch = getNextChar();
             length--;
             return ch;
@@ -262,14 +261,12 @@ public class ColognePhonetic implements StringEncoder {
         }
 
         /**
-         * Stores the next code in the output buffer, keeping track of the previous code.
-         * '0' is only stored if it is the first entry.
-         * Ignored chars are never stored.
-         * If the code is the same as the last code (whether stored or not) it is not stored.
+         * Stores the next code in the output buffer, keeping track of the previous code. '0' is only stored if it is the first entry. Ignored chars are never
+         * stored. If the code is the same as the last code (whether stored or not) it is not stored.
          *
          * @param code the code to store.
          */
-        public void put(final char code) {
+        void put(final char code) {
             final boolean accept = code != CHAR_IGNORE;
             final boolean nonZ = code != '0';
             if (accept && lastCode != code && (nonZ || length == 0)) {
@@ -418,16 +415,14 @@ public class ColognePhonetic implements StringEncoder {
      *
      * @param text1 source text to encode before testing for equality.
      * @param text2 source text to encode before testing for equality.
-     * @return {@code true} if the encoding the first string equals the encoding of the second string, {@code false}
-     *         otherwise.
+     * @return {@code true} if the encoding the first string equals the encoding of the second string, {@code false} otherwise.
      */
     public boolean isEncodeEqual(final String text1, final String text2) {
         return colognePhonetic(text1).equals(colognePhonetic(text2));
     }
 
     /**
-     * Converts the string to upper case and replaces Germanic umlaut characters
-     * The following characters are mapped:
+     * Converts the string to upper case and replaces Germanic umlaut characters The following characters are mapped:
      * <ul>
      * <li>capital A, umlaut mark</li>
      * <li>capital U, umlaut mark</li>
