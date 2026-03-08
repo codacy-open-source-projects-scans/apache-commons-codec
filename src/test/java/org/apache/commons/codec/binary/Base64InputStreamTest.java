@@ -32,6 +32,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 
 import org.apache.commons.codec.CodecPolicy;
+import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -203,7 +204,7 @@ class Base64InputStreamTest {
     private void testByChunk(final byte[] encoded, final byte[] decoded, final int chunkSize, final byte[] separator) throws Exception {
         // Start with encode.
         try (InputStream in = new Base64InputStream(new ByteArrayInputStream(decoded), true, chunkSize, separator)) {
-            final byte[] output = BaseNTestData.streamToBytes(in);
+            final byte[] output = IOUtils.toByteArray(in);
             assertEquals(-1, in.read(), "EOF");
             assertEquals(-1, in.read(), "Still EOF");
             assertArrayEquals(encoded, output, "Streaming base64 encode");
@@ -211,7 +212,8 @@ class Base64InputStreamTest {
 
         // Now let's try to decode.
         InputStream in = new Base64InputStream(new ByteArrayInputStream(encoded));
-        byte[] output = BaseNTestData.streamToBytes(in);
+        final InputStream in1 = in;
+        byte[] output = IOUtils.toByteArray(in1);
 
         assertEquals(-1, in.read(), "EOF");
         assertEquals(-1, in.read(), "Still EOF");
@@ -223,7 +225,8 @@ class Base64InputStreamTest {
             in = new Base64InputStream(in, true, chunkSize, separator);
             in = new Base64InputStream(in, false);
         }
-        output = BaseNTestData.streamToBytes(in);
+        final InputStream in2 = in;
+        output = IOUtils.toByteArray(in2);
 
         assertEquals(-1, in.read(), "EOF");
         assertEquals(-1, in.read(), "Still EOF");
@@ -337,7 +340,7 @@ class Base64InputStreamTest {
 
         // we skip the first character read from the reader
         ins.skip(1);
-        final byte[] decodedBytes = BaseNTestData.streamToBytes(ins, new byte[64]);
+        final byte[] decodedBytes = IOUtils.toByteArray(ins);
         final String str = StringUtils.newStringUtf8(decodedBytes);
 
         assertEquals(STRING_FIXTURE.substring(1), str);
@@ -356,7 +359,7 @@ class Base64InputStreamTest {
         final Base64InputStream stream = new Base64InputStream(data);
 
         // This line causes an NPE in commons-codec-1.4.jar:
-        final byte[] decodedBytes = BaseNTestData.streamToBytes(stream, new byte[1024]);
+        final byte[] decodedBytes = IOUtils.toByteArray(stream);
 
         final String decoded = StringUtils.newStringUtf8(decodedBytes);
         assertEquals(Base64TestData.CODEC_98_NPE_DECODED, decoded, "codec-98 NPE Base64InputStream");
@@ -580,11 +583,11 @@ class Base64InputStreamTest {
             final Base64InputStream in = new Base64InputStream(new ByteArrayInputStream(encoded), false);
             // Default is lenient decoding; it should not throw
             assertFalse(in.isStrictDecoding());
-            BaseNTestData.streamToBytes(in);
+            IOUtils.toByteArray(in);
             // Strict decoding should throw
             final Base64InputStream in2 = new Base64InputStream(new ByteArrayInputStream(encoded), false, 0, null, CodecPolicy.STRICT);
             assertTrue(in2.isStrictDecoding());
-            assertThrows(IllegalArgumentException.class, () -> BaseNTestData.streamToBytes(in2));
+            assertThrows(IllegalArgumentException.class, () -> IOUtils.toByteArray(in2));
             // Same with a builder
             try (Base64InputStream in3 = Base64InputStream.builder()
                     .setByteArray(encoded)
@@ -592,7 +595,7 @@ class Base64InputStreamTest {
                     .setBaseNCodec(Base64.builder().setLineLength(0).setLineSeparator(null).setDecodingPolicy(CodecPolicy.STRICT).get())
                     .get()) {
                 assertTrue(in3.isStrictDecoding());
-                assertThrows(IllegalArgumentException.class, () -> BaseNTestData.streamToBytes(in3));
+                assertThrows(IllegalArgumentException.class, () -> IOUtils.toByteArray(in3));
             }
         }
     }
