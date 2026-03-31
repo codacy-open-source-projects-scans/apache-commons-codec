@@ -50,8 +50,10 @@ import org.apache.commons.lang3.JavaVersion;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -242,6 +244,21 @@ class DigestUtilsTest {
             "CA 92 BF 0B E5 61 5E 96 95 9D 76 71 97 A0 BE EB";
     // @formatter:on
 
+    /**
+     * Binary body of the test tree object used in {@link #testGitTreeCollection}.
+     *
+     * <p>Each entry has the format {@code <mode> SP <name> NUL <20-byte-object-id>}.</p>
+     */
+    private static final String TREE_BODY_HEX =
+            // 100644 hello.txt\0 + objectId
+            "3130303634342068656c6c6f2e74787400" + "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0" +
+            // 120000 link.txt\0 + objectId
+            "313230303030206c696e6b2e74787400" + "1234567890abcdef1234567890abcdef12345678" +
+            // 100755 run.sh\0 + objectId
+            "3130303735352072756e2e736800" + "f0e1d2c3b4a5f6e7d8c9b0a1f2e3d4c5b6a7f8e9" +
+            // 40000 src\0 + objectId
+            "34303030302073726300" + "deadbeefdeadbeefdeadbeefdeadbeefdeadbeef";
+
     static Stream<Arguments> gitBlobProvider() {
         return Stream.of(Arguments.of("DigestUtilsTest/hello.txt", "5f4a83288e67f1be2d6fcdad84165a86c6a970d7"),
                 Arguments.of("DigestUtilsTest/greetings.txt", "6cf4f797455661e61d1ee6913fc29344f5897243"),
@@ -369,10 +386,10 @@ class DigestUtilsTest {
                         "1 1 0 0 0 1 0 1 1 1 0 0 0 1 0 1 1 1 0 0 0 1 0 1 1 1 0 0 0 1 0 1", 1_600, SHAKE256_MSG_1600));
         // @formatter:on
     }
-
     private final byte[] testData = new byte[DigestUtils.BUFFER_SIZE * DigestUtils.BUFFER_SIZE];
     private Path testFile;
     private Path testRandomAccessFile;
+
     private RandomAccessFile testRandomAccessFileWrapper;
 
     private String clean(final String input) {
@@ -502,20 +519,23 @@ class DigestUtilsTest {
         assertArrayEquals(Hex.decodeHex(expectedSha1Hex), DigestUtils.gitBlob(DigestUtils.getSha1Digest(), resourcePath(resourceName)));
     }
 
-    /**
-     * Binary body of the test tree object used in {@link #testGitTreeCollection}.
-     *
-     * <p>Each entry has the format {@code <mode> SP <name> NUL <20-byte-object-id>}.</p>
-     */
-    private static final String TREE_BODY_HEX =
-            // 100644 hello.txt\0 + objectId
-            "3130303634342068656c6c6f2e74787400" + "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0" +
-            // 120000 link.txt\0 + objectId
-            "313230303030206c696e6b2e74787400" + "1234567890abcdef1234567890abcdef12345678" +
-            // 100755 run.sh\0 + objectId
-            "3130303735352072756e2e736800" + "f0e1d2c3b4a5f6e7d8c9b0a1f2e3d4c5b6a7f8e9" +
-            // 40000 src\0 + objectId
-            "34303030302073726300" + "deadbeefdeadbeefdeadbeefdeadbeefdeadbeef";
+    @Test
+    void testGitBlobSymlink(@TempDir final Path tempDir) throws Exception {
+        final Path subDir = Files.createDirectory(tempDir.resolve("subdir"));
+        Files.write(subDir.resolve("file.txt"), "hello".getBytes(StandardCharsets.UTF_8));
+        final Path linkToDir;
+        final Path linkToFile;
+        try {
+            linkToDir = Files.createSymbolicLink(tempDir.resolve("link-to-dir"), Paths.get("subdir"));
+            linkToFile = Files.createSymbolicLink(tempDir.resolve("link-to-file"), Paths.get("subdir/file.txt"));
+        } catch (final UnsupportedOperationException e) {
+            Assumptions.assumeTrue(false, "Symbolic links not supported on this filesystem");
+            return;
+        }
+        final MessageDigest sha1 = DigestUtils.getSha1Digest();
+        assertArrayEquals(Hex.decodeHex("8bbe8a53790056316b23b7c270f10ab6bf6bb1b4"), DigestUtils.gitBlob(sha1, linkToDir));
+        assertArrayEquals(Hex.decodeHex("dfe6ef8392ae13a11ff85419b4fd906d997b6cb7"), DigestUtils.gitBlob(sha1, linkToFile));
+    }
 
     @ParameterizedTest
     @ValueSource(strings = {MessageDigestAlgorithms.SHA_1, MessageDigestAlgorithms.SHA_256})
