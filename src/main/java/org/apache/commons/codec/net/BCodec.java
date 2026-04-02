@@ -50,7 +50,7 @@ import org.apache.commons.codec.binary.BaseNCodec;
 public class BCodec extends RFC1522Codec implements StringEncoder, StringDecoder {
 
     /**
-     * The default decoding policy.
+     * The default decoding policy is lenient.
      */
     private static final CodecPolicy DECODING_POLICY_DEFAULT = CodecPolicy.LENIENT;
 
@@ -61,14 +61,14 @@ public class BCodec extends RFC1522Codec implements StringEncoder, StringDecoder
     private final CodecPolicy decodingPolicy;
 
     /**
-     * Default constructor.
+     * Constructs a new instance.
      */
     public BCodec() {
         this(StandardCharsets.UTF_8);
     }
 
     /**
-     * Constructor which allows for the selection of a default Charset
+     * Constructs a new instance for the selection of a default Charset.
      *
      * @param charset
      *            the default string Charset to use.
@@ -81,7 +81,7 @@ public class BCodec extends RFC1522Codec implements StringEncoder, StringDecoder
     }
 
     /**
-     * Constructor which allows for the selection of a default Charset.
+     * Constructs a new instance for the selection of a default Charset.
      *
      * @param charset
      *            the default string Charset to use.
@@ -95,7 +95,7 @@ public class BCodec extends RFC1522Codec implements StringEncoder, StringDecoder
     }
 
     /**
-     * Constructor which allows for the selection of a default Charset
+     * Constructs a new instance for the selection of a default Charset.
      *
      * @param charsetName
      *            the default Charset to use.
@@ -154,7 +154,8 @@ public class BCodec extends RFC1522Codec implements StringEncoder, StringDecoder
         if (bytes == null) {
             return null;
         }
-        return new Base64(0, BaseNCodec.getChunkSeparator(), false, decodingPolicy).decode(bytes);
+        return Base64.builder().setLineLength(0).setLineSeparator(BaseNCodec.getChunkSeparator()).setUrlSafe(false).setDecodingPolicy(decodingPolicy).get()
+                .decode(bytes);
     }
 
     @Override
