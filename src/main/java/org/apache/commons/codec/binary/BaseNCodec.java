@@ -451,6 +451,17 @@ public abstract class BaseNCodec implements BinaryEncoder, BinaryDecoder {
     }
 
     /**
+     * Tests whether or not the {@code value} is in the given {@code table}.
+     *
+     * @param value The value to test.
+     * @param table The table to test against.
+     * @return {@code true} if the value is in the table, {@code false} otherwise.
+     */
+    static boolean isInAlphabet(final byte value, final byte[] table) {
+        return value >= 0 && value < table.length && table[value] != -1;
+    }
+
+    /**
      * Deprecated: Will be removed in 2.0.
      * <p>
      * Instance variable just in case it needs to vary later
@@ -832,12 +843,12 @@ public abstract class BaseNCodec implements BinaryEncoder, BinaryDecoder {
      * Tests a given byte array to see if it contains only valid characters within the alphabet. The method optionally treats whitespace and pad as valid.
      *
      * @param arrayOctet byte array to test.
-     * @param allowWSPad if {@code true}, then whitespace and PAD are also allowed.
+     * @param allowWhitespacePad if {@code true}, then whitespace and PAD are also allowed.
      * @return {@code true} if all bytes are valid characters in the alphabet or if the byte array is empty; {@code false}, otherwise.
      */
-    public boolean isInAlphabet(final byte[] arrayOctet, final boolean allowWSPad) {
+    public boolean isInAlphabet(final byte[] arrayOctet, final boolean allowWhitespacePad) {
         for (final byte octet : arrayOctet) {
-            if (!isInAlphabet(octet) && (!allowWSPad || octet != pad && !Character.isWhitespace(octet))) {
+            if (!isInAlphabet(octet) && (!allowWhitespacePad || octet != pad && !Character.isWhitespace(octet))) {
                 return false;
             }
         }
@@ -876,16 +887,16 @@ public abstract class BaseNCodec implements BinaryEncoder, BinaryDecoder {
      * Package private for access from I/O streams.
      * </p>
      *
-     * @param b       byte[] array to extract the buffered data into.
-     * @param bPos    position in byte[] array to start extraction at.
-     * @param bAvail  amount of bytes we're allowed to extract. We may extract fewer (if fewer are available).
-     * @param context the context to be used.
+     * @param b         byte[] array to extract the buffered data into.
+     * @param position  position in byte[] array to start extraction at.
+     * @param available amount of bytes we're allowed to extract. We may extract fewer (if fewer are available).
+     * @param context   the context to be used.
      * @return The number of bytes successfully extracted into the provided byte[] array.
      */
-    int readResults(final byte[] b, final int bPos, final int bAvail, final Context context) {
+    int readResults(final byte[] b, final int position, final int available, final Context context) {
         if (hasData(context)) {
-            final int len = Math.min(available(context), bAvail);
-            System.arraycopy(context.buffer, context.readPos, b, bPos, len);
+            final int len = Math.min(available(context), available);
+            System.arraycopy(context.buffer, context.readPos, b, position, len);
             context.readPos += len;
             if (!hasData(context)) {
                 // All data read.

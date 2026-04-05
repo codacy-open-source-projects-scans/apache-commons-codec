@@ -18,13 +18,20 @@
 package org.apache.commons.codec.binary;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 
+import org.apache.commons.lang3.ArrayFill;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 /**
  * Tests {@link Base58OutputStream}.
@@ -122,16 +129,18 @@ class Base58OutputStreamTest extends AbstractBaseNOutputStreamTest {
                 out.write(element);
             }
         }
-        byte[] output = byteOut.toByteArray();
-        assertArrayEquals(encoded, output, "Streaming byte-by-byte Base58 encode");
+        final byte[] output0 = byteOut.toByteArray();
+        assertArrayEquals(encoded, output0, "Streaming byte-by-byte Base58 encode");
         byteOut = new ByteArrayOutputStream();
         try (OutputStream out = Base58OutputStream.builder().setOutputStream(byteOut).setEncode(false).get()) {
             for (final byte element : encoded) {
                 out.write(element);
             }
         }
-        output = byteOut.toByteArray();
-        assertArrayEquals(decoded, output, "Streaming byte-by-byte Base58 decode");
+        final byte[] output1 = byteOut.toByteArray();
+        assertArrayEquals(decoded, output1,
+                () -> String.format("Streaming byte-by-byte Base58 decode, chunkSize=%d, separator=%s, encoded=%s, decoded=%s, output=%s", chunkSize,
+                        Arrays.toString(separator), Arrays.toString(encoded), Arrays.toString(decoded), Arrays.toString(output1)));
         byteOut = new ByteArrayOutputStream();
         try (OutputStream out = Base58OutputStream.builder().setOutputStream(byteOut).setEncode(false).get()) {
             for (final byte element : encoded) {
@@ -139,7 +148,7 @@ class Base58OutputStreamTest extends AbstractBaseNOutputStreamTest {
                 out.flush();
             }
         }
-        output = byteOut.toByteArray();
+        byte[] output = byteOut.toByteArray();
         assertArrayEquals(decoded, output, "Streaming byte-by-byte flush() Base58 decode");
         byteOut = new ByteArrayOutputStream();
         OutputStream out = byteOut;
@@ -153,6 +162,55 @@ class Base58OutputStreamTest extends AbstractBaseNOutputStreamTest {
         out.close();
         output = byteOut.toByteArray();
         assertArrayEquals(decoded, output, "Streaming byte-by-byte Base58 wrap-wrap-wrap!");
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = { 0, 1, 2, 3, 4 })
+    void testDecodeByte49(final int len) throws IOException {
+        // Sanity check, each step from scratch:
+        final byte[] zeros = new byte[len];
+        final byte[] encoded0s = ArrayFill.fill(zeros.clone(), (byte) '1');
+        assertArrayEquals(encoded0s, Base58.builder().get().encode(zeros));
+        final byte[] decoded = Base58.builder().get().decode(encoded0s);
+        assertArrayEquals(zeros, decoded, () -> String.format("zeros=%s, decoded=%s", Arrays.toString(zeros), Arrays.toString(decoded)));
+        // Version 1.21.1:
+        // AssertionFailedError: Streaming byte-by-byte Base58 decode, chunkSize=0, separator=[10], encoded=[49], decoded=[0], output=[0, 0] ==> array lengths
+        // differ, expected: <1> but was: <2>
+        ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
+        final byte[] byteData = new byte[len];
+        try (OutputStream out = Base58OutputStream.builder().setOutputStream(byteOut).setEncode(true).get()) {
+            for (final byte element : byteData) {
+                out.write(element);
+            }
+        }
+        final byte[] output0 = byteOut.toByteArray();
+        assertArrayEquals(encoded0s, output0, () -> String.format("Streaming byte-by-byte Base58 decode, encoded=%s, decoded=%s, output=%s",
+                Arrays.toString(encoded0s), Arrays.toString(byteData), Arrays.toString(output0)));
+        byteOut = new ByteArrayOutputStream();
+        try (OutputStream out = Base58OutputStream.builder().setOutputStream(byteOut).setEncode(false).get()) {
+            for (final byte element : encoded0s) {
+                out.write(element);
+            }
+        }
+        final byte[] output1 = byteOut.toByteArray();
+        assertArrayEquals(byteData, output1, () -> String.format("Streaming byte-by-byte Base58 decode, encoded=%s, decoded=%s, output=%s",
+                Arrays.toString(encoded0s), Arrays.toString(byteData), Arrays.toString(output1)));
+    }
+
+    @Test
+    void testRfcTestVector1() {
+        assertEquals("2NEpo7TZRRrLZSi2U", Base58.builder().get().encodeToString("Hello World!".getBytes(StandardCharsets.US_ASCII)));
+    }
+
+    @Test
+    void testRfcTestVector2() {
+        assertEquals("USm3fpXnKG5EUBx2ndxBDMPVciP5hGey2Jh4NDv6gmeo1LkMeiKrLJUUBk6Z",
+                Base58.builder().get().encodeToString("The quick brown fox jumps over the lazy dog.".getBytes(StandardCharsets.US_ASCII)));
+    }
+
+    @Test
+    void testRfcTestVector3() {
+        assertEquals("11233QC4", Base58.builder().get().encodeToString(new byte[] { 00, 00, 0x28, 0x7f, (byte) 0xb4, (byte) 0xcd }));
     }
 
     @Test

@@ -19,8 +19,6 @@ package org.apache.commons.codec.binary;
 
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
-import java.util.Map;
-import java.util.WeakHashMap;
 
 /**
  * Provides Base58 encoding and decoding as commonly used in cryptocurrency and blockchain applications.
@@ -56,7 +54,7 @@ public class Base58 extends BaseNCodec {
     /**
      * Builds {@link Base58} instances with custom configuration.
      */
-    public static class Builder extends AbstractBuilder<Base58, Base58.Builder> {
+    public static class Builder extends AbstractBuilder<Base58, Builder> {
 
         /**
          * Constructs a new Base58 builder.
@@ -69,7 +67,7 @@ public class Base58 extends BaseNCodec {
         /**
          * Builds a new Base58 instance with the configured settings.
          *
-         * @return a new Base58 codec
+         * @return a new Base58 codec.
          */
         @Override
         public Base58 get() {
@@ -87,6 +85,9 @@ public class Base58 extends BaseNCodec {
             return super.setEncodeTable(encodeTable);
         }
     }
+    private static final BigInteger BASE = BigInteger.valueOf(58);
+
+    private static final byte[] EMPTY = new byte[0];
 
     /**
      * Base58 alphabet: 123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz
@@ -103,20 +104,39 @@ public class Base58 extends BaseNCodec {
      * into their numeric equivalents (0-57). Characters that are not in the Base58 alphabet are marked
      * with -1.
      */
+    // @formatter:off
     private static final byte[] DECODE_TABLE = {
-            //  0   1   2   3   4   5   6   7   8   9   A   B   C   D   E   F
+         //  0   1   2   3   4   5   6   7   8   9   A   B   C   D   E   F
             -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, // 00-0f
             -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, // 10-1f
             -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, // 20-2f
-            -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, -1, -1, -1, -1, -1, -1, // 30-3f '1'-'9' -> 0-8
-            -1, 9, 10, 11, 12, 13, 14, 15, 16, -1, 17, 18, 19, 20, 21, -1, // 40-4f 'A'-'N', 'P'-'Z' (skip 'I' and 'O')
+            -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, -1, -1, -1, -1, -1, -1,          // 30-3f '1'-'9' -> 0-8
+            -1, 9, 10, 11, 12, 13, 14, 15, 16, -1, 17, 18, 19, 20, 21, -1,  // 40-4f 'A'-'N', 'P'-'Z' (skip 'I' and 'O')
             22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32,                     // 50-5a 'P'-'Z'
-            -1, -1, -1, -1, -1, // 5b-5f
+            -1, -1, -1, -1, -1,                                             // 5b-5f
             -1, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, -1, 44, 45, 46, // 60-6f 'a'-'k', 'm'-'o' (skip 'l')
             47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57,                     // 70-7a 'p'-'z'
     };
+    // @formatter:on
 
-    private final transient Map<Context, byte[]> accumulated = new WeakHashMap<>();
+    /**
+     * Creates a new Builder.
+     *
+     * <p>
+     * To configure a new instance, use a {@link Builder}. For example:
+     * </p>
+     *
+     * <pre>
+     * Base58 base58 = Base58.builder()
+     *   .setEncode(true)
+     *   .get()
+     * </pre>
+     *
+     * @return a new Builder.
+     */
+    public static Builder builder() {
+        return new Builder();
+    }
 
     /**
      * Constructs a Base58 codec used for encoding and decoding.
@@ -141,31 +161,30 @@ public class Base58 extends BaseNCodec {
      * binary data.
      * </p>
      *
-     * @param base58Data the Base58 encoded data.
+     * @param base58 the Base58 encoded data.
      * @param context    the context for this decoding operation.
      * @throws IllegalArgumentException if the Base58 data contains invalid characters.
      */
-    private void convertFromBase58(final byte[] base58Data, final Context context) {
+    private void convertFromBase58(final byte[] base58, final Context context) {
         BigInteger value = BigInteger.ZERO;
         int leadingOnes = 0;
-        for (final byte b : base58Data) {
+        for (final byte b : base58) {
             if (b != '1') {
                 break;
             }
             leadingOnes++;
         }
-        final BigInteger base = BigInteger.valueOf(58);
         BigInteger power = BigInteger.ONE;
-        for (int i = base58Data.length - 1; i >= leadingOnes; i--) {
-            final byte b = base58Data[i];
+        for (int i = base58.length - 1; i >= leadingOnes; i--) {
+            final byte b = base58[i];
             final int digit = b < DECODE_TABLE.length ? DECODE_TABLE[b] : -1;
             if (digit < 0) {
-                throw new IllegalArgumentException("Invalid character in Base58 string: " + (char) b);
+                throw new IllegalArgumentException(String.format("Invalid character in Base58 string: 0x%02x", b));
             }
             value = value.add(BigInteger.valueOf(digit).multiply(power));
-            power = power.multiply(base);
+            power = power.multiply(BASE);
         }
-        byte[] decoded = value.toByteArray();
+        byte[] decoded = value.equals(BigInteger.ZERO) ? EMPTY : value.toByteArray();
         if (decoded.length > 1 && decoded[0] == 0) {
             final byte[] tmp = new byte[decoded.length - 1];
             System.arraycopy(decoded, 1, tmp, 0, tmp.length);
@@ -185,9 +204,9 @@ public class Base58 extends BaseNCodec {
      * encoding.
      * </p>
      *
-     * @param accumulate the binary data to encode
-     * @param context    the context for this encoding operation
-     * @return the buffer containing the encoded data
+     * @param accumulate the binary data to encode.
+     * @param context    the context for this encoding operation.
+     * @return the buffer containing the encoded data.
      */
     private byte[] convertToBase58(final byte[] accumulate, final Context context) {
         final StringBuilder base58 = getStringBuilder(accumulate);
@@ -202,7 +221,7 @@ public class Base58 extends BaseNCodec {
     /**
      * Decodes the given Base58 encoded data.
      * <p>
-     * This implementation accumulates data internally. When length &lt; 0 (EOF), the accumulated data is converted from Base58 to binary.
+     * This implementation accumulates data internally. When length is less than 0 (EOF), the accumulated data is converted from Base58 to binary.
      * </p>
      *
      * @param array   the byte array containing Base58 encoded data.
@@ -217,26 +236,25 @@ public class Base58 extends BaseNCodec {
         }
         if (length < 0) {
             context.eof = true;
-            final byte[] accumulate = accumulated.getOrDefault(context, new byte[0]);
+            final byte[] accumulate = context.buffer = context.buffer != null ? context.buffer : EMPTY;
             if (accumulate.length > 0) {
                 convertFromBase58(accumulate, context);
             }
-            accumulated.remove(context);
             return;
         }
-        final byte[] accumulate = accumulated.getOrDefault(context, new byte[0]);
+        final byte[] accumulate = context.buffer = context.buffer != null ? context.buffer : EMPTY;
         final byte[] newAccumulated = new byte[accumulate.length + length];
         if (accumulate.length > 0) {
             System.arraycopy(accumulate, 0, newAccumulated, 0, accumulate.length);
         }
         System.arraycopy(array, offset, newAccumulated, accumulate.length, length);
-        accumulated.put(context, newAccumulated);
+        context.buffer = newAccumulated;
     }
 
     /**
      * Encodes the given binary data as Base58.
      * <p>
-     * This implementation accumulates data internally. When length &lt; 0 (EOF), the accumulated data is converted to Base58.
+     * This implementation accumulates data internally. When length is less than 0 (EOF), the accumulated data is converted to Base58.
      * </p>
      *
      * @param array   the byte array containing binary data to encode.
@@ -251,18 +269,17 @@ public class Base58 extends BaseNCodec {
         }
         if (length < 0) {
             context.eof = true;
-            final byte[] accumulate = accumulated.getOrDefault(context, new byte[0]);
+            final byte[] accumulate = context.buffer = context.buffer != null ? context.buffer : EMPTY;
             convertToBase58(accumulate, context);
-            accumulated.remove(context);
             return;
         }
-        final byte[] accumulate = accumulated.getOrDefault(context, new byte[0]);
+        final byte[] accumulate = context.buffer = context.buffer != null ? context.buffer : EMPTY;
         final byte[] newAccumulated = new byte[accumulate.length + length];
         if (accumulate.length > 0) {
             System.arraycopy(accumulate, 0, newAccumulated, 0, accumulate.length);
         }
         System.arraycopy(array, offset, newAccumulated, accumulate.length, length);
-        accumulated.put(context, newAccumulated);
+        context.buffer = newAccumulated;
     }
 
     /**
@@ -286,7 +303,7 @@ public class Base58 extends BaseNCodec {
         }
         final StringBuilder base58 = new StringBuilder();
         while (value.signum() > 0) {
-            final BigInteger[] divRem = value.divideAndRemainder(BigInteger.valueOf(58));
+            final BigInteger[] divRem = value.divideAndRemainder(BASE);
             base58.append((char) ENCODE_TABLE[divRem[1].intValue()]);
             value = divRem[0];
         }
@@ -304,6 +321,6 @@ public class Base58 extends BaseNCodec {
      */
     @Override
     protected boolean isInAlphabet(final byte value) {
-        return value >= 0 && value < DECODE_TABLE.length && DECODE_TABLE[value] != -1;
+        return isInAlphabet(value, DECODE_TABLE);
     }
 }
