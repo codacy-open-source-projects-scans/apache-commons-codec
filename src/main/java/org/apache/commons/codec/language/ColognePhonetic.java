@@ -264,7 +264,7 @@ public class ColognePhonetic implements StringEncoder {
          * Stores the next code in the output buffer, keeping track of the previous code. '0' is only stored if it is the first entry. Ignored chars are never
          * stored. If the code is the same as the last code (whether stored or not) it is not stored.
          *
-         * @param code the code to store.
+         * @param code The code to store.
          */
         void put(final char code) {
             final boolean accept = code != CHAR_IGNORE;
@@ -322,7 +322,7 @@ public class ColognePhonetic implements StringEncoder {
      * </p>
      *
      * @param text The source text to encode.
-     * @return the corresponding encoding according to the <em>K&ouml;lner Phonetik</em> algorithm.
+     * @return The corresponding encoding according to the <em>K&ouml;lner Phonetik</em> algorithm.
      */
     public String colognePhonetic(final String text) {
         if (text == null) {
@@ -411,11 +411,11 @@ public class ColognePhonetic implements StringEncoder {
     }
 
     /**
-     * Compares the first encoded string to the second encoded string.
+     * Tests whether the encodings of two strings are equal.
      *
      * @param text1 source text to encode before testing for equality.
      * @param text2 source text to encode before testing for equality.
-     * @return {@code true} if the encoding the first string equals the encoding of the second string, {@code false} otherwise.
+     * @return {@code true} if the encoding of the first string equals the encoding of the second string, {@code false} otherwise.
      */
     public boolean isEncodeEqual(final String text1, final String text2) {
         return colognePhonetic(text1).equals(colognePhonetic(text2));

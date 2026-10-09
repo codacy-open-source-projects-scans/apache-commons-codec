@@ -73,7 +73,7 @@ public class DigestUtils {
      *
      * @param messageDigest The MessageDigest to use (for example MD5).
      * @param data          Data to digest.
-     * @return the digest.
+     * @return The digest.
      * @since 1.11
      */
     public static byte[] digest(final MessageDigest messageDigest, final byte[] data) {
@@ -85,7 +85,7 @@ public class DigestUtils {
      *
      * @param messageDigest The MessageDigest to use (for example MD5).
      * @param data          Data to digest.
-     * @return the digest.
+     * @return The digest.
      * @since 1.11
      */
     public static byte[] digest(final MessageDigest messageDigest, final ByteBuffer data) {
@@ -98,8 +98,8 @@ public class DigestUtils {
      *
      * @param messageDigest The MessageDigest to use (for example MD5).
      * @param data          Data to digest.
-     * @return the digest.
-     * @throws IOException On error reading from the stream.
+     * @return The digest.
+     * @throws IOException Thrown on error reading from the stream.
      * @since 1.11
      */
     public static byte[] digest(final MessageDigest messageDigest, final File data) throws IOException {
@@ -111,8 +111,8 @@ public class DigestUtils {
      *
      * @param messageDigest The MessageDigest to use (for example MD5).
      * @param data          Data to digest.
-     * @return the digest.
-     * @throws IOException On error reading from the stream.
+     * @return The digest.
+     * @throws IOException Thrown on error reading from the stream.
      * @since 1.11 (was private)
      */
     public static byte[] digest(final MessageDigest messageDigest, final InputStream data) throws IOException {
@@ -125,8 +125,8 @@ public class DigestUtils {
      * @param messageDigest The MessageDigest to use (for example MD5).
      * @param data          Data to digest.
      * @param options       options How to open the file.
-     * @return the digest.
-     * @throws IOException On error reading from the stream.
+     * @return The digest.
+     * @throws IOException Thrown on error reading from the stream.
      * @since 1.14
      */
     public static byte[] digest(final MessageDigest messageDigest, final Path data, final OpenOption... options) throws IOException {
@@ -138,8 +138,8 @@ public class DigestUtils {
      *
      * @param messageDigest The MessageDigest to use (for example MD5).
      * @param data          Data to digest.
-     * @return the digest.
-     * @throws IOException On error reading from the stream.
+     * @return The digest.
+     * @throws IOException Thrown on error reading from the stream.
      * @since 1.14
      */
     public static byte[] digest(final MessageDigest messageDigest, final RandomAccessFile data) throws IOException {
@@ -149,12 +149,12 @@ public class DigestUtils {
     /**
      * Gets a {@code MessageDigest} for the given {@code algorithm}.
      *
-     * @param algorithm the name of the algorithm requested. See
+     * @param algorithm The name of the algorithm requested. See
      *                  <a href="https://docs.oracle.com/javase/8/docs/technotes/guides/security/crypto/CryptoSpec.html#AppA">Appendix A in the Java
      *                  Cryptography Architecture Reference Guide</a> for information about standard algorithm names.
      * @return A digest instance.
      * @see MessageDigest#getInstance(String)
-     * @throws IllegalArgumentException when a {@link NoSuchAlgorithmException} is caught.
+     * @throws IllegalArgumentException Thrown if a {@link NoSuchAlgorithmException} is caught.
      */
     public static MessageDigest getDigest(final String algorithm) {
         try {
@@ -167,13 +167,13 @@ public class DigestUtils {
     /**
      * Gets a {@code MessageDigest} for the given {@code algorithm} or a default if there is a problem getting the algorithm.
      *
-     * @param algorithm            the name of the algorithm requested. See
+     * @param algorithm            The name of the algorithm requested. See
      *                             <a href="https://docs.oracle.com/javase/8/docs/technotes/guides/security/crypto/CryptoSpec.html#AppA"> Appendix A in the Java
      *                             Cryptography Architecture Reference Guide</a> for information about standard algorithm names.
      * @param defaultMessageDigest The default MessageDigest.
      * @return A digest instance.
      * @see MessageDigest#getInstance(String)
-     * @throws IllegalArgumentException when a {@link NoSuchAlgorithmException} is caught.
+     * @throws IllegalArgumentException Thrown if a {@link NoSuchAlgorithmException} is caught.
      * @since 1.11
      */
     public static MessageDigest getDigest(final String algorithm, final MessageDigest defaultMessageDigest) {
@@ -188,7 +188,7 @@ public class DigestUtils {
      * Gets an MD2 MessageDigest.
      *
      * @return An MD2 digest instance.
-     * @throws IllegalArgumentException when a {@link NoSuchAlgorithmException} is caught, which should never happen because MD2 is a built-in algorithm.
+     * @throws IllegalArgumentException Thrown if a {@link NoSuchAlgorithmException} is caught, which should never happen because MD2 is a built-in algorithm.
      * @see MessageDigestAlgorithms#MD2
      * @since 1.7
      */
@@ -200,7 +200,7 @@ public class DigestUtils {
      * Gets an MD5 MessageDigest.
      *
      * @return An MD5 digest instance.
-     * @throws IllegalArgumentException when a {@link NoSuchAlgorithmException} is caught, which should never happen because MD5 is a built-in algorithm.
+     * @throws IllegalArgumentException Thrown if a {@link NoSuchAlgorithmException} is caught, which should never happen because MD5 is a built-in algorithm.
      * @see MessageDigestAlgorithms#MD5
      */
     public static MessageDigest getMd5Digest() {
@@ -210,12 +210,12 @@ public class DigestUtils {
     /**
      * Gets a {@code MessageDigest} for the given {@code algorithm}.
      *
-     * @param algorithm the name of the algorithm requested. See
+     * @param algorithm The name of the algorithm requested. See
      *                  <a href="https://docs.oracle.com/javase/8/docs/technotes/guides/security/crypto/CryptoSpec.html#AppA"> Appendix A in the Java
      *                  Cryptography Architecture Reference Guide</a> for information about standard algorithm names.
      * @return A digest instance.
      * @see MessageDigest#getInstance(String)
-     * @throws NoSuchAlgorithmException if no Provider supports a MessageDigestSpi implementation for the specified algorithm.
+     * @throws NoSuchAlgorithmException Thrown if no Provider supports a MessageDigestSpi implementation for the specified algorithm.
      */
     private static MessageDigest getMessageDigest(final String algorithm) throws NoSuchAlgorithmException {
         return MessageDigest.getInstance(algorithm);
@@ -225,7 +225,7 @@ public class DigestUtils {
      * Gets an SHA-1 digest.
      *
      * @return An SHA-1 digest instance.
-     * @throws IllegalArgumentException when a {@link NoSuchAlgorithmException} is caught, which should never happen because SHA-1 is a built-in algorithm.
+     * @throws IllegalArgumentException Thrown if a {@link NoSuchAlgorithmException} is caught, which should never happen because SHA-1 is a built-in algorithm.
      * @see MessageDigestAlgorithms#SHA_1
      * @since 1.7
      */
@@ -237,7 +237,7 @@ public class DigestUtils {
      * Gets an SHA-256 digest.
      *
      * @return An SHA-256 digest instance.
-     * @throws IllegalArgumentException when a {@link NoSuchAlgorithmException} is caught, which should never happen because SHA-256 is a built-in algorithm.
+     * @throws IllegalArgumentException Thrown if a {@link NoSuchAlgorithmException} is caught, which should never happen because SHA-256 is a built-in algorithm.
      * @see MessageDigestAlgorithms#SHA_256
      */
     public static MessageDigest getSha256Digest() {
@@ -248,7 +248,7 @@ public class DigestUtils {
      * Gets an SHA3-224 digest.
      *
      * @return An SHA3-224 digest instance.
-     * @throws IllegalArgumentException when a {@link NoSuchAlgorithmException} is caught, which should not happen on Oracle Java 9 and greater.
+     * @throws IllegalArgumentException Thrown if a {@link NoSuchAlgorithmException} is caught, which should not happen on Oracle Java 9 and greater.
      * @see MessageDigestAlgorithms#SHA3_224
      * @since 1.12
      */
@@ -257,10 +257,10 @@ public class DigestUtils {
     }
 
     /**
-     * Returns an SHA3-256 digest.
+     * Gets an SHA3-256 digest.
      *
      * @return An SHA3-256 digest instance.
-     * @throws IllegalArgumentException when a {@link NoSuchAlgorithmException} is caught, which should not happen on Oracle Java 9 and greater.
+     * @throws IllegalArgumentException Thrown if a {@link NoSuchAlgorithmException} is caught, which should not happen on Oracle Java 9 and greater.
      * @see MessageDigestAlgorithms#SHA3_256
      * @since 1.12
      */
@@ -272,7 +272,7 @@ public class DigestUtils {
      * Gets an SHA3-384 digest.
      *
      * @return An SHA3-384 digest instance.
-     * @throws IllegalArgumentException when a {@link NoSuchAlgorithmException} is caught, which should not happen on Oracle Java 9 and greater.
+     * @throws IllegalArgumentException Thrown if a {@link NoSuchAlgorithmException} is caught, which should not happen on Oracle Java 9 and greater.
      * @see MessageDigestAlgorithms#SHA3_384
      * @since 1.12
      */
@@ -284,7 +284,7 @@ public class DigestUtils {
      * Gets an SHA3-512 digest.
      *
      * @return An SHA3-512 digest instance.
-     * @throws IllegalArgumentException when a {@link NoSuchAlgorithmException} is caught, which should not happen on Oracle Java 9 and greater.
+     * @throws IllegalArgumentException Thrown if a {@link NoSuchAlgorithmException} is caught, which should not happen on Oracle Java 9 and greater.
      * @see MessageDigestAlgorithms#SHA3_512
      * @since 1.12
      */
@@ -296,7 +296,7 @@ public class DigestUtils {
      * Gets an SHA-384 digest.
      *
      * @return An SHA-384 digest instance.
-     * @throws IllegalArgumentException when a {@link NoSuchAlgorithmException} is caught, which should never happen because SHA-384 is a built-in algorithm.
+     * @throws IllegalArgumentException Thrown if a {@link NoSuchAlgorithmException} is caught, which should never happen because SHA-384 is a built-in algorithm.
      * @see MessageDigestAlgorithms#SHA_384
      */
     public static MessageDigest getSha384Digest() {
@@ -307,7 +307,7 @@ public class DigestUtils {
      * Gets an SHA-512/224 digest.
      *
      * @return An SHA-512/224 digest instance.
-     * @throws IllegalArgumentException when a {@link NoSuchAlgorithmException} is caught.
+     * @throws IllegalArgumentException Thrown if a {@link NoSuchAlgorithmException} is caught.
      * @see MessageDigestAlgorithms#SHA_512_224
      */
     public static MessageDigest getSha512_224Digest() {
@@ -318,7 +318,7 @@ public class DigestUtils {
      * Gets an SHA-512/256 digest.
      *
      * @return An SHA-512/256 digest instance.
-     * @throws IllegalArgumentException when a {@link NoSuchAlgorithmException} is caught.
+     * @throws IllegalArgumentException Thrown if a {@link NoSuchAlgorithmException} is caught.
      * @see MessageDigestAlgorithms#SHA_512_224
      */
     public static MessageDigest getSha512_256Digest() {
@@ -329,7 +329,7 @@ public class DigestUtils {
      * Gets an SHA-512 digest.
      *
      * @return An SHA-512 digest instance.
-     * @throws IllegalArgumentException when a {@link NoSuchAlgorithmException} is caught, which should never happen because SHA-512 is a built-in algorithm.
+     * @throws IllegalArgumentException Thrown if a {@link NoSuchAlgorithmException} is caught, which should never happen because SHA-512 is a built-in algorithm.
      * @see MessageDigestAlgorithms#SHA_512
      */
     public static MessageDigest getSha512Digest() {
@@ -340,7 +340,7 @@ public class DigestUtils {
      * Gets an SHA-1 digest.
      *
      * @return An SHA-1 digest instance.
-     * @throws IllegalArgumentException when a {@link NoSuchAlgorithmException} is caught.
+     * @throws IllegalArgumentException Thrown if a {@link NoSuchAlgorithmException} is caught.
      * @deprecated (1.11) Use {@link #getSha1Digest()}
      */
     @Deprecated
@@ -352,7 +352,7 @@ public class DigestUtils {
      * Gets an SHAKE128_256 digest.
      *
      * @return An SHAKE128_256 digest instance.
-     * @throws IllegalArgumentException when a {@link NoSuchAlgorithmException} is caught, which should not happen on Oracle Java 25 and greater.
+     * @throws IllegalArgumentException Thrown if a {@link NoSuchAlgorithmException} is caught, which should not happen on Oracle Java 25 and greater.
      * @see MessageDigestAlgorithms#SHAKE128_256
      * @see <a href="https://docs.oracle.com/en/java/javase/25/docs/specs/security/standard-names.html#messagedigest-algorithms"> Java 25 Cryptography
      *      Architecture Standard Algorithm Name Documentation</a>
@@ -365,10 +365,10 @@ public class DigestUtils {
     }
 
     /**
-     * Gets an SHAKE128_512 digest.
+     * Gets an SHAKE256_512 digest.
      *
-     * @return An SHAKE128_512 digest instance.
-     * @throws IllegalArgumentException when a {@link NoSuchAlgorithmException} is caught, which should not happen on Oracle Java 25 and greater.
+     * @return An SHAKE256_512 digest instance.
+     * @throws IllegalArgumentException Thrown if a {@link NoSuchAlgorithmException} is caught, which should not happen on Oracle Java 25 and greater.
      * @see MessageDigestAlgorithms#SHAKE256_512
      * @see <a href="https://docs.oracle.com/en/java/javase/25/docs/specs/security/standard-names.html#messagedigest-algorithms"> Java 25 Cryptography
      *      Architecture Standard Algorithm Name Documentation</a>
@@ -381,9 +381,9 @@ public class DigestUtils {
     }
 
     /**
-     * Test whether the algorithm is supported.
+     * Tests whether the algorithm is supported.
      *
-     * @param messageDigestAlgorithm the algorithm name.
+     * @param messageDigestAlgorithm The algorithm name.
      * @return {@code true} if the algorithm can be found.
      * @since 1.11
      */
@@ -407,7 +407,7 @@ public class DigestUtils {
      *
      * @param data Data to digest.
      * @return MD2 digest.
-     * @throws IOException On error reading from the stream.
+     * @throws IOException Thrown on error reading from the stream.
      * @since 1.7
      */
     public static byte[] md2(final InputStream data) throws IOException {
@@ -441,7 +441,7 @@ public class DigestUtils {
      *
      * @param data Data to digest.
      * @return MD2 digest as a hexadecimal string.
-     * @throws IOException On error reading from the stream.
+     * @throws IOException Thrown on error reading from the stream.
      * @since 1.7
      */
     public static String md2Hex(final InputStream data) throws IOException {
@@ -474,7 +474,7 @@ public class DigestUtils {
      *
      * @param data Data to digest.
      * @return MD5 digest.
-     * @throws IOException On error reading from the stream.
+     * @throws IOException Thrown on error reading from the stream.
      * @since 1.4
      */
     public static byte[] md5(final InputStream data) throws IOException {
@@ -506,7 +506,7 @@ public class DigestUtils {
      *
      * @param data Data to digest.
      * @return MD5 digest as a hexadecimal string.
-     * @throws IOException On error reading from the stream.
+     * @throws IOException Thrown on error reading from the stream.
      * @since 1.4
      */
     public static String md5Hex(final InputStream data) throws IOException {
@@ -540,7 +540,7 @@ public class DigestUtils {
      *
      * @param data Data to digest.
      * @return SHA-1 digest.
-     * @throws IOException On error reading from the stream.
+     * @throws IOException Thrown on error reading from the stream.
      * @since 1.4
      * @deprecated (1.11) Use {@link #sha1(InputStream)}
      */
@@ -577,7 +577,7 @@ public class DigestUtils {
      *
      * @param data Data to digest.
      * @return SHA-1 digest.
-     * @throws IOException On error reading from the stream.
+     * @throws IOException Thrown on error reading from the stream.
      * @since 1.7
      */
     public static byte[] sha1(final InputStream data) throws IOException {
@@ -610,7 +610,7 @@ public class DigestUtils {
      *
      * @param data Data to digest.
      * @return SHA-1 digest as a hexadecimal string.
-     * @throws IOException On error reading from the stream.
+     * @throws IOException Thrown on error reading from the stream.
      * @since 1.7
      */
     public static String sha1Hex(final InputStream data) throws IOException {
@@ -644,7 +644,7 @@ public class DigestUtils {
      *
      * @param data Data to digest.
      * @return SHA-256 digest.
-     * @throws IOException On error reading from the stream.
+     * @throws IOException Thrown on error reading from the stream.
      * @since 1.4
      */
     public static byte[] sha256(final InputStream data) throws IOException {
@@ -678,7 +678,7 @@ public class DigestUtils {
      *
      * @param data Data to digest.
      * @return SHA-256 digest as a hexadecimal string.
-     * @throws IOException On error reading from the stream.
+     * @throws IOException Thrown on error reading from the stream.
      * @since 1.4
      */
     public static String sha256Hex(final InputStream data) throws IOException {
@@ -712,7 +712,7 @@ public class DigestUtils {
      *
      * @param data Data to digest.
      * @return SHA3-224 digest.
-     * @throws IOException On error reading from the stream.
+     * @throws IOException Thrown on error reading from the stream.
      * @since 1.12
      */
     public static byte[] sha3_224(final InputStream data) throws IOException {
@@ -746,7 +746,7 @@ public class DigestUtils {
      *
      * @param data Data to digest.
      * @return SHA3-224 digest as a hexadecimal string.
-     * @throws IOException On error reading from the stream.
+     * @throws IOException Thrown on error reading from the stream.
      * @since 1.12
      */
     public static String sha3_224Hex(final InputStream data) throws IOException {
@@ -780,7 +780,7 @@ public class DigestUtils {
      *
      * @param data Data to digest.
      * @return SHA3-256 digest.
-     * @throws IOException On error reading from the stream.
+     * @throws IOException Thrown on error reading from the stream.
      * @since 1.12
      */
     public static byte[] sha3_256(final InputStream data) throws IOException {
@@ -814,7 +814,7 @@ public class DigestUtils {
      *
      * @param data Data to digest.
      * @return SHA3-256 digest as a hexadecimal string.
-     * @throws IOException On error reading from the stream.
+     * @throws IOException Thrown on error reading from the stream.
      * @since 1.12
      */
     public static String sha3_256Hex(final InputStream data) throws IOException {
@@ -848,7 +848,7 @@ public class DigestUtils {
      *
      * @param data Data to digest.
      * @return SHA3-384 digest.
-     * @throws IOException On error reading from the stream.
+     * @throws IOException Thrown on error reading from the stream.
      * @since 1.12
      */
     public static byte[] sha3_384(final InputStream data) throws IOException {
@@ -882,7 +882,7 @@ public class DigestUtils {
      *
      * @param data Data to digest.
      * @return SHA3-384 digest as a hexadecimal string.
-     * @throws IOException On error reading from the stream.
+     * @throws IOException Thrown on error reading from the stream.
      * @since 1.12
      */
     public static String sha3_384Hex(final InputStream data) throws IOException {
@@ -916,7 +916,7 @@ public class DigestUtils {
      *
      * @param data Data to digest.
      * @return SHA3-512 digest.
-     * @throws IOException On error reading from the stream.
+     * @throws IOException Thrown on error reading from the stream.
      * @since 1.12
      */
     public static byte[] sha3_512(final InputStream data) throws IOException {
@@ -950,7 +950,7 @@ public class DigestUtils {
      *
      * @param data Data to digest.
      * @return SHA3-512 digest as a hexadecimal string.
-     * @throws IOException On error reading from the stream.
+     * @throws IOException Thrown on error reading from the stream.
      * @since 1.12
      */
     public static String sha3_512Hex(final InputStream data) throws IOException {
@@ -984,7 +984,7 @@ public class DigestUtils {
      *
      * @param data Data to digest.
      * @return SHA-384 digest.
-     * @throws IOException On error reading from the stream.
+     * @throws IOException Thrown on error reading from the stream.
      * @since 1.4
      */
     public static byte[] sha384(final InputStream data) throws IOException {
@@ -1018,7 +1018,7 @@ public class DigestUtils {
      *
      * @param data Data to digest.
      * @return SHA-384 digest as a hexadecimal string.
-     * @throws IOException On error reading from the stream.
+     * @throws IOException Thrown on error reading from the stream.
      * @since 1.4
      */
     public static String sha384Hex(final InputStream data) throws IOException {
@@ -1052,7 +1052,7 @@ public class DigestUtils {
      *
      * @param data Data to digest.
      * @return SHA-512 digest.
-     * @throws IOException On error reading from the stream.
+     * @throws IOException Thrown on error reading from the stream.
      * @since 1.4
      */
     public static byte[] sha512(final InputStream data) throws IOException {
@@ -1086,7 +1086,7 @@ public class DigestUtils {
      *
      * @param data Data to digest.
      * @return SHA-512/224 digest.
-     * @throws IOException On error reading from the stream.
+     * @throws IOException Thrown on error reading from the stream.
      * @since 1.14
      */
     public static byte[] sha512_224(final InputStream data) throws IOException {
@@ -1120,7 +1120,7 @@ public class DigestUtils {
      *
      * @param data Data to digest.
      * @return SHA-512/224 digest as a hexadecimal string.
-     * @throws IOException On error reading from the stream.
+     * @throws IOException Thrown on error reading from the stream.
      * @since 1.14
      */
     public static String sha512_224Hex(final InputStream data) throws IOException {
@@ -1154,7 +1154,7 @@ public class DigestUtils {
      *
      * @param data Data to digest.
      * @return SHA-512/256 digest.
-     * @throws IOException On error reading from the stream.
+     * @throws IOException Thrown on error reading from the stream.
      * @since 1.14
      */
     public static byte[] sha512_256(final InputStream data) throws IOException {
@@ -1188,7 +1188,7 @@ public class DigestUtils {
      *
      * @param data Data to digest.
      * @return SHA-512/256 digest as a hexadecimal string.
-     * @throws IOException On error reading from the stream.
+     * @throws IOException Thrown on error reading from the stream.
      * @since 1.14
      */
     public static String sha512_256Hex(final InputStream data) throws IOException {
@@ -1222,7 +1222,7 @@ public class DigestUtils {
      *
      * @param data Data to digest.
      * @return SHA-512 digest as a hexadecimal string.
-     * @throws IOException On error reading from the stream.
+     * @throws IOException Thrown on error reading from the stream.
      * @since 1.4
      */
     public static String sha512Hex(final InputStream data) throws IOException {
@@ -1257,7 +1257,7 @@ public class DigestUtils {
      *
      * @param data Data to digest.
      * @return SHA-1 digest as a hexadecimal string.
-     * @throws IOException On error reading from the stream.
+     * @throws IOException Thrown on error reading from the stream.
      * @since 1.4
      * @deprecated (1.11) Use {@link #sha1Hex(InputStream)}
      */
@@ -1297,7 +1297,7 @@ public class DigestUtils {
      *
      * @param data Data to digest.
      * @return A 256 bit SHAKE128-256 digest.
-     * @throws IOException On error reading from the stream.
+     * @throws IOException Thrown on error reading from the stream.
      * @since 1.20.0
      */
     public static byte[] shake128_256(final InputStream data) throws IOException {
@@ -1331,7 +1331,7 @@ public class DigestUtils {
      *
      * @param data Data to digest.
      * @return SHAKE128-256 digest as a hexadecimal string.
-     * @throws IOException On error reading from the stream.
+     * @throws IOException Thrown on error reading from the stream.
      * @since 1.20.0
      */
     public static String shake128_256Hex(final InputStream data) throws IOException {
@@ -1365,7 +1365,7 @@ public class DigestUtils {
      *
      * @param data Data to digest.
      * @return SHAKE256-512 digest.
-     * @throws IOException On error reading from the stream.
+     * @throws IOException Thrown on error reading from the stream.
      * @since 1.20.0
      */
     public static byte[] shake256_512(final InputStream data) throws IOException {
@@ -1399,7 +1399,7 @@ public class DigestUtils {
      *
      * @param data Data to digest.
      * @return SHAKE256-512 digest as a hexadecimal string.
-     * @throws IOException On error reading from the stream.
+     * @throws IOException Thrown on error reading from the stream.
      * @since 1.20.0
      */
     public static String shake256_512Hex(final InputStream data) throws IOException {
@@ -1420,9 +1420,9 @@ public class DigestUtils {
     /**
      * Updates the given {@link MessageDigest}.
      *
-     * @param messageDigest the {@link MessageDigest} to update.
-     * @param valueToDigest the value to update the {@link MessageDigest} with.
-     * @return the updated {@link MessageDigest}.
+     * @param messageDigest The {@link MessageDigest} to update.
+     * @param valueToDigest The value to update the {@link MessageDigest} with.
+     * @return The updated {@link MessageDigest}.
      * @since 1.7
      */
     public static MessageDigest updateDigest(final MessageDigest messageDigest, final byte[] valueToDigest) {
@@ -1433,9 +1433,9 @@ public class DigestUtils {
     /**
      * Updates the given {@link MessageDigest}.
      *
-     * @param messageDigest the {@link MessageDigest} to update.
-     * @param valueToDigest the value to update the {@link MessageDigest} with.
-     * @return the updated {@link MessageDigest}.
+     * @param messageDigest The {@link MessageDigest} to update.
+     * @param valueToDigest The value to update the {@link MessageDigest} with.
+     * @return The updated {@link MessageDigest}.
      * @since 1.11
      */
     public static MessageDigest updateDigest(final MessageDigest messageDigest, final ByteBuffer valueToDigest) {
@@ -1448,8 +1448,8 @@ public class DigestUtils {
      *
      * @param digest The MessageDigest to use (for example MD5).
      * @param data   Data to digest.
-     * @return the digest.
-     * @throws IOException On error reading from the stream.
+     * @return The digest.
+     * @throws IOException Thrown on error reading from the stream.
      * @since 1.11
      */
     public static MessageDigest updateDigest(final MessageDigest digest, final File data) throws IOException {
@@ -1463,8 +1463,8 @@ public class DigestUtils {
      *
      * @param digest The MessageDigest to use (for example MD5).
      * @param data   Data to digest.
-     * @return the digest.
-     * @throws IOException On error reading from the stream.
+     * @return The digest.
+     * @throws IOException Thrown on error reading from the stream.
      * @since 1.14
      */
     private static MessageDigest updateDigest(final MessageDigest digest, final FileChannel data) throws IOException {
@@ -1482,16 +1482,16 @@ public class DigestUtils {
      *
      * @param digest      The MessageDigest to use (for example MD5).
      * @param inputStream Data to digest.
-     * @return the digest.
-     * @throws IOException On error reading from the stream.
+     * @return The digest.
+     * @throws IOException Thrown on error reading from the stream.
      * @since 1.8
      */
     public static MessageDigest updateDigest(final MessageDigest digest, final InputStream inputStream) throws IOException {
         final byte[] buffer = new byte[BUFFER_SIZE];
-        int read = inputStream.read(buffer, 0, BUFFER_SIZE);
+        int read = inputStream.read(buffer);
         while (read > -1) {
             digest.update(buffer, 0, read);
-            read = inputStream.read(buffer, 0, BUFFER_SIZE);
+            read = inputStream.read(buffer);
         }
         return digest;
     }
@@ -1502,8 +1502,8 @@ public class DigestUtils {
      * @param digest  The MessageDigest to use (for example MD5).
      * @param path    Data to digest.
      * @param options options How to open the file.
-     * @return the digest.
-     * @throws IOException On error reading from the stream.
+     * @return The digest.
+     * @throws IOException Thrown on error reading from the stream.
      * @since 1.14
      */
     public static MessageDigest updateDigest(final MessageDigest digest, final Path path, final OpenOption... options) throws IOException {
@@ -1517,8 +1517,8 @@ public class DigestUtils {
      *
      * @param digest The MessageDigest to use (for example MD5).
      * @param data   Data to digest.
-     * @return the digest.
-     * @throws IOException On error reading from the stream.
+     * @return The digest.
+     * @throws IOException Thrown on error reading from the stream.
      * @since 1.14
      */
     @SuppressWarnings("resource") // Closing RandomAccessFile closes the channel.
@@ -1532,9 +1532,9 @@ public class DigestUtils {
      * To update the digest using a different charset for the conversion, convert the String to a byte array using
      * {@link String#getBytes(java.nio.charset.Charset)} and pass that to the {@link DigestUtils#updateDigest(MessageDigest, byte[])} method
      *
-     * @param messageDigest the {@link MessageDigest} to update.
-     * @param valueToDigest the value to update the {@link MessageDigest} with; converted to bytes using {@link StringUtils#getBytesUtf8(String)}.
-     * @return the updated {@link MessageDigest}.
+     * @param messageDigest The {@link MessageDigest} to update.
+     * @param valueToDigest The value to update the {@link MessageDigest} with; converted to bytes using {@link StringUtils#getBytesUtf8(String)}.
+     * @return The updated {@link MessageDigest}.
      * @since 1.7
      */
     public static MessageDigest updateDigest(final MessageDigest messageDigest, final String valueToDigest) {
@@ -1559,7 +1559,7 @@ public class DigestUtils {
      *
      * This can then be used to create digests using methods such as {@link #digest(byte[])} and {@link #digestAsHex(File)}.
      *
-     * @param digest the {@link MessageDigest} to use.
+     * @param digest The {@link MessageDigest} to use.
      * @since 1.11
      */
     public DigestUtils(final MessageDigest digest) {
@@ -1571,9 +1571,9 @@ public class DigestUtils {
      *
      * This can then be used to create digests using methods such as {@link #digest(byte[])} and {@link #digestAsHex(File)}.
      *
-     * @param name the name of the {@link MessageDigest} to use.
+     * @param name The name of the {@link MessageDigest} to use.
      * @see #getDigest(String)
-     * @throws IllegalArgumentException when a {@link NoSuchAlgorithmException} is caught.
+     * @throws IllegalArgumentException Thrown if a {@link NoSuchAlgorithmException} is caught.
      * @since 1.11
      */
     public DigestUtils(final String name) {
@@ -1584,7 +1584,7 @@ public class DigestUtils {
      * Reads through a byte array and returns the digest for the data.
      *
      * @param data Data to digest.
-     * @return the digest.
+     * @return The digest.
      * @since 1.11
      */
     public byte[] digest(final byte[] data) {
@@ -1595,7 +1595,7 @@ public class DigestUtils {
      * Reads through a ByteBuffer and returns the digest for the data
      *
      * @param data Data to digest.
-     * @return the digest.
+     * @return The digest.
      * @since 1.11
      */
     public byte[] digest(final ByteBuffer data) {
@@ -1606,8 +1606,8 @@ public class DigestUtils {
      * Reads through a File and returns the digest for the data
      *
      * @param data Data to digest.
-     * @return the digest.
-     * @throws IOException On error reading from the stream.
+     * @return The digest.
+     * @throws IOException Thrown on error reading from the stream.
      * @since 1.11
      */
     public byte[] digest(final File data) throws IOException {
@@ -1618,8 +1618,8 @@ public class DigestUtils {
      * Reads through an InputStream and returns the digest for the data
      *
      * @param data Data to digest.
-     * @return the digest.
-     * @throws IOException On error reading from the stream.
+     * @return The digest.
+     * @throws IOException Thrown on error reading from the stream.
      * @since 1.11
      */
     public byte[] digest(final InputStream data) throws IOException {
@@ -1631,8 +1631,8 @@ public class DigestUtils {
      *
      * @param data    Data to digest.
      * @param options options How to open the file.
-     * @return the digest.
-     * @throws IOException On error reading from the stream.
+     * @return The digest.
+     * @throws IOException Thrown on error reading from the stream.
      * @since 1.14
      */
     public byte[] digest(final Path data, final OpenOption... options) throws IOException {
@@ -1643,7 +1643,7 @@ public class DigestUtils {
      * Reads through a byte array and returns the digest for the data.
      *
      * @param data Data to digest treated as UTF-8 string.
-     * @return the digest.
+     * @return The digest.
      * @since 1.11
      */
     public byte[] digest(final String data) {
@@ -1654,7 +1654,7 @@ public class DigestUtils {
      * Reads through a byte array and returns the digest for the data.
      *
      * @param data Data to digest.
-     * @return the digest as a hexadecimal string.
+     * @return The digest as a hexadecimal string.
      * @since 1.11
      */
     public String digestAsHex(final byte[] data) {
@@ -1665,7 +1665,7 @@ public class DigestUtils {
      * Reads through a ByteBuffer and returns the digest for the data
      *
      * @param data Data to digest.
-     * @return the digest as a hexadecimal string.
+     * @return The digest as a hexadecimal string.
      * @since 1.11
      */
     public String digestAsHex(final ByteBuffer data) {
@@ -1676,8 +1676,8 @@ public class DigestUtils {
      * Reads through a File and returns the digest for the data
      *
      * @param data Data to digest.
-     * @return the digest as a hexadecimal string.
-     * @throws IOException On error reading from the stream.
+     * @return The digest as a hexadecimal string.
+     * @throws IOException Thrown on error reading from the stream.
      * @since 1.11
      */
     public String digestAsHex(final File data) throws IOException {
@@ -1688,8 +1688,8 @@ public class DigestUtils {
      * Reads through an InputStream and returns the digest for the data
      *
      * @param data Data to digest.
-     * @return the digest as a hexadecimal string.
-     * @throws IOException On error reading from the stream.
+     * @return The digest as a hexadecimal string.
+     * @throws IOException Thrown on error reading from the stream.
      * @since 1.11
      */
     public String digestAsHex(final InputStream data) throws IOException {
@@ -1701,8 +1701,8 @@ public class DigestUtils {
      *
      * @param data    Data to digest.
      * @param options options How to open the file.
-     * @return the digest as a hexadecimal string.
-     * @throws IOException On error reading from the stream.
+     * @return The digest as a hexadecimal string.
+     * @throws IOException Thrown on error reading from the stream.
      * @since 1.11
      */
     public String digestAsHex(final Path data, final OpenOption... options) throws IOException {
@@ -1713,7 +1713,7 @@ public class DigestUtils {
      * Reads through a byte array and returns the digest for the data.
      *
      * @param data Data to digest treated as UTF-8 string.
-     * @return the digest as a hexadecimal string.
+     * @return The digest as a hexadecimal string.
      * @since 1.11
      */
     public String digestAsHex(final String data) {
@@ -1721,9 +1721,9 @@ public class DigestUtils {
     }
 
     /**
-     * Returns the message digest instance.
+     * Gets the message digest instance.
      *
-     * @return the message digest instance.
+     * @return The message digest instance.
      * @since 1.11
      */
     public MessageDigest getMessageDigest() {

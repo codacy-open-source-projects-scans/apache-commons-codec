@@ -24,11 +24,11 @@ limitations under the License.
   <parent>
     <groupId>org.apache.commons</groupId>
     <artifactId>commons-parent</artifactId>
-    <version>99</version>
+    <version>105</version>
   </parent>
   <groupId>commons-codec</groupId>
   <artifactId>commons-codec</artifactId>
-  <version>1.22.1-SNAPSHOT</version>
+  <version>1.23.0-SNAPSHOT</version>
   <name>Apache Commons Codec</name>
   <inceptionYear>2002</inceptionYear>
   <description>
@@ -45,7 +45,7 @@ limitations under the License.
     <connection>scm:git:https://gitbox.apache.org/repos/asf/commons-codec</connection>
     <developerConnection>scm:git:https://gitbox.apache.org/repos/asf/commons-codec</developerConnection>
     <url>https://github.com/apache/commons-codec</url>
-    <tag>rel/commons-codec-1.22.0</tag>
+    <tag>rel/commons-codec-1.22.1</tag>
   </scm>
   <distributionManagement>
     <site>
@@ -62,7 +62,7 @@ limitations under the License.
     <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-lang3</artifactId>
-      <version>3.20.0</version>
+      <version>3.21.0</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -81,6 +81,11 @@ limitations under the License.
       <artifactId>junit-jupiter-params</artifactId>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.junit-pioneer</groupId>
+      <artifactId>junit-pioneer</artifactId>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
   <properties>
     <maven.compiler.source>1.8</maven.compiler.source>
@@ -96,14 +101,14 @@ limitations under the License.
     <checkstyle.header.file>${basedir}/src/conf/checkstyle-header.txt</checkstyle.header.file>
     <checkstyle.config.file>${basedir}/src/conf/checkstyle.xml</checkstyle.config.file>
     <!-- Commons Release Plugin -->
-    <commons.release.version>1.22.1</commons.release.version>
-    <commons.bc.version>1.22.0</commons.bc.version>
-    <commons.release.next>1.22.2</commons.release.next>
+    <commons.release.version>1.23.0</commons.release.version>
+    <commons.bc.version>1.22.1</commons.bc.version>
+    <commons.release.next>1.23.1</commons.release.next>
     <commons.rc.version>RC1</commons.rc.version>
     <commons.release.isDistModule>true</commons.release.isDistModule>
     <commons.distSvnStagingUrl>scm:svn:https://dist.apache.org/repos/dist/dev/commons/${commons.componentid}</commons.distSvnStagingUrl>
     <!-- project.build.outputTimestamp is managed by Maven plugins, see https://maven.apache.org/guides/mini/guide-reproducible-builds.html -->
-    <project.build.outputTimestamp>2026-04-25T00:31:05Z</project.build.outputTimestamp>
+    <project.build.outputTimestamp>2026-07-30T09:34:50Z</project.build.outputTimestamp>
     <!-- JaCoCo: Don't make code coverage worse than: -->
     <jacoco.skip>false</jacoco.skip>
     <commons.jacoco.haltOnFailure>true</commons.jacoco.haltOnFailure>

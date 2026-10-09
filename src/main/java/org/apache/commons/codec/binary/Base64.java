@@ -44,7 +44,7 @@ import org.apache.commons.codec.CodecPolicy;
  * <li>Padding; defaults is {@code '='}.</li>
  * </ul>
  * <p>
- * The URL-safe parameter is only applied to encode operations. Decoding seamlessly handles both modes, see also
+ * The URL-safe parameter selects the encoding alphabet. Lenient decoding seamlessly handles both modes; strict decoding requires the encoding alphabet. See also
  * {@code Builder#setDecodeTableFormat(DecodeTableFormat)}.
  * </p>
  * <p>
@@ -68,6 +68,21 @@ import org.apache.commons.codec.CodecPolicy;
  *   .setUrlSafe(false)                         // default is false
  *   .get()
  * </pre>
+ *
+ * <p>
+ * The static decoding convenience methods use {@link CodecPolicy#LENIENT}. They accept noncanonical input, so different encoded strings can decode to the
+ * same bytes. Selecting a standard or URL-safe decode table does not enable strict validation. To require canonical input, configure a strict instance:
+ * </p>
+ *
+ * <pre>
+ * Base64 standard = Base64.builder().setDecodingPolicy(CodecPolicy.STRICT).get();
+ * Base64 urlSafe = Base64.builder().setUrlSafe(true).setDecodingPolicy(CodecPolicy.STRICT).get();
+ * </pre>
+ *
+ * <p>
+ * These instances accept unchunked input using their respective encoding alphabets. The standard instance requires padding for partial blocks; the URL-safe
+ * instance requires unpadded input. See {@link BaseNCodec} for the full canonical decoding contract and guidance on comparing encoded values.
+ * </p>
  *
  * @see Base64InputStream
  * @see Base64OutputStream
@@ -116,11 +131,12 @@ public class Base64 extends BaseNCodec {
         }
 
         /**
-         * Sets the format of the decoding table. This method allows to explicitly state whether a standard or URL-safe Base64 decoding is expected. This method
+         * Sets the format of the decoding table. This method allows callers to explicitly state whether a standard or URL-safe Base64 decoding is expected. This method
          * does not modify behavior on encoding operations. For configuration of the encoding behavior, please use {@link #setUrlSafe(boolean)} method.
          * <p>
          * By default, the implementation uses the {@link DecodeTableFormat#MIXED} approach, allowing a seamless handling of both
-         * {@link DecodeTableFormat#URL_SAFE} and {@link DecodeTableFormat#STANDARD} base64.
+         * {@link DecodeTableFormat#URL_SAFE} and {@link DecodeTableFormat#STANDARD} base64 in lenient mode. Strict decoding additionally requires each character
+         * to match the configured encoding table.
          * </p>
          *
          * @param format table format to be used on Base64 decoding. Use {@link DecodeTableFormat#MIXED} or null to reset to the default behavior.
@@ -142,19 +158,24 @@ public class Base64 extends BaseNCodec {
             }
         }
 
+        /**
+         * Sets the encode table.
+         *
+         * @param encodeTable The encode table with exactly 64 unique entries, null resets to the default.
+         * @return {@code this} instance.
+         * @throws IllegalArgumentException Thrown if {@code encodeTable} does not contain exactly 64 unique entries.
+         */
         @Override
         public Builder setEncodeTable(final byte... encodeTable) {
-            final boolean isStandardEncodeTable = Arrays.equals(encodeTable, STANDARD_ENCODE_TABLE);
-            final boolean isUrlSafe = Arrays.equals(encodeTable, URL_SAFE_ENCODE_TABLE);
-            setDecodeTableRaw(isStandardEncodeTable || isUrlSafe ? DECODE_TABLE : calculateDecodeTable(encodeTable));
+            setDecodeTableRaw(toDecodeTable(encodeTable));
             return super.setEncodeTable(encodeTable);
         }
 
         /**
          * Sets the URL-safe encoding policy.
          * <p>
-         * This method does not modify behavior on decoding operations. For configuration of the decoding behavior, please use
-         * {@code Builder.setDecodeTableFormat(DecodeTableFormat)} method.
+         * Strict decoding requires this alphabet and its padding convention. Lenient decoding accepts both alphabets by default; use
+         * {@code Builder.setDecodeTableFormat(DecodeTableFormat)} to select a decoding table.
          * </p>
          *
          * @param urlSafe URL-safe encoding policy.
@@ -337,7 +358,7 @@ public class Base64 extends BaseNCodec {
      *   .get()
      * </pre>
      *
-     * @return a new Builder.
+     * @return A new Builder.
      * @since 1.17.0
      */
     public static Builder builder() {
@@ -351,39 +372,69 @@ public class Base64 extends BaseNCodec {
      * @return A new decode table.
      */
     private static byte[] calculateDecodeTable(final byte[] encodeTable) {
+        if (encodeTable.length != STANDARD_ENCODE_TABLE.length) {
+            throw new IllegalArgumentException("encodeTable must have exactly 64 entries.");
+        }
         final byte[] decodeTable = new byte[DECODING_TABLE_LENGTH];
         Arrays.fill(decodeTable, (byte) -1);
         for (int i = 0; i < encodeTable.length; i++) {
-            decodeTable[encodeTable[i]] = (byte) i;
+            final int encodedByte = encodeTable[i] & 0xff;
+            if (decodeTable[encodedByte] != -1) {
+                throw new IllegalArgumentException("encodeTable must not contain duplicate entries.");
+            }
+            decodeTable[encodedByte] = (byte) i;
         }
         return decodeTable;
     }
 
+    private static boolean contains(final byte[] bytes, final byte value) {
+        for (final byte element : bytes) {
+            if (element == value) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /**
-     * Decodes Base64 data into octets.
+     * Decodes Base64 data into octets using lenient decoding.
+     *
      * <p>
-     * This method seamlessly handles data encoded in URL-safe or normal mode. For enforcing verification against strict standard Base64 or Base64 URL-safe
-     * tables, please use {@link #decodeBase64Standard(byte[])} or {@link #decodeBase64UrlSafe(byte[])} methods respectively. This method skips unknown or
-     * unsupported bytes.
+     * This method uses the standard and URL-safe alphabets. It skips unsupported input, discards data after the first padding character, and accepts
+     * noncanonical padding and trailing bits. Different encoded inputs can therefore produce the same decoded bytes. This method does not validate canonical
+     * input.
+     * </p>
+     *
+     * <p>
+     * For canonical decoding, use {@code Base64.builder().setDecodingPolicy(CodecPolicy.STRICT).get().decode(base64Data)}.
+     * See {@link BaseNCodec} for guidance on comparing encoded values.
      * </p>
      *
      * @param base64Data Byte array containing Base64 data.
      * @return New array containing decoded data.
+     * @throws IllegalArgumentException Thrown when a problem is detected processing data.
      */
     public static byte[] decodeBase64(final byte[] base64Data) {
         return new Base64().decode(base64Data);
     }
 
     /**
-     * Decodes a Base64 String into octets.
+     * Decodes a Base64 string into octets using lenient decoding.
+     *
      * <p>
-     * This method seamlessly handles data encoded in URL-safe or normal mode. For enforcing verification against strict standard Base64 or Base64 URL-safe
-     * tables, please use {@link #decodeBase64Standard(String)} or {@link #decodeBase64UrlSafe(String)} methods respectively. This method skips unknown or
-     * unsupported bytes.
+     * This method uses the standard and URL-safe alphabets. It skips unsupported input, discards data after the first padding character, and accepts
+     * noncanonical padding and trailing bits. Different encoded inputs can therefore produce the same decoded bytes. This method does not validate canonical
+     * input.
+     * </p>
+     *
+     * <p>
+     * For canonical decoding, use {@code Base64.builder().setDecodingPolicy(CodecPolicy.STRICT).get().decode(base64String)}.
+     * See {@link BaseNCodec} for guidance on comparing encoded values.
      * </p>
      *
      * @param base64String String containing Base64 data.
      * @return New array containing decoded data.
+     * @throws IllegalArgumentException Thrown when a problem is detected processing data.
      * @since 1.4
      */
     public static byte[] decodeBase64(final String base64String) {
@@ -391,14 +442,21 @@ public class Base64 extends BaseNCodec {
     }
 
     /**
-     * Decodes standard Base64 data into octets.
+     * Decodes standard Base64 data into octets using lenient decoding.
+     *
      * <p>
-     * This implementation is aligned with the <a href="https://www.ietf.org/rfc/rfc2045#:~:text=Table%201%3A%20The%20Base64%20Alphabet">RFC 2045 Table 1: The
-     * Base64 Alphabet</a>. This method skips unknown or unsupported bytes.
+     * This method uses the standard alphabet. It skips unsupported input, discards data after the first padding character, and accepts noncanonical
+     * padding and trailing bits. Different encoded inputs can therefore produce the same decoded bytes. This method does not validate canonical input.
+     * </p>
+     *
+     * <p>
+     * For canonical decoding, use {@code Base64.builder().setDecodingPolicy(CodecPolicy.STRICT).get().decode(base64Data)}.
+     * See {@link BaseNCodec} for guidance on comparing encoded values.
      * </p>
      *
      * @param base64Data Byte array containing Base64 data.
      * @return New array containing decoded data.
+     * @throws IllegalArgumentException Thrown when a problem is detected processing data.
      * @since 1.21
      */
     public static byte[] decodeBase64Standard(final byte[] base64Data) {
@@ -406,14 +464,21 @@ public class Base64 extends BaseNCodec {
     }
 
     /**
-     * Decodes a standard Base64 String into octets.
+     * Decodes a standard Base64 string into octets using lenient decoding.
+     *
      * <p>
-     * This implementation is aligned with the <a href="https://www.ietf.org/rfc/rfc2045#:~:text=Table%201%3A%20The%20Base64%20Alphabet">RFC 2045 Table 1: The
-     * Base64 Alphabet</a>. This method skips unknown or unsupported characters.
+     * This method uses the standard alphabet. It skips unsupported input, discards data after the first padding character, and accepts noncanonical
+     * padding and trailing bits. Different encoded inputs can therefore produce the same decoded bytes. This method does not validate canonical input.
+     * </p>
+     *
+     * <p>
+     * For canonical decoding, use {@code Base64.builder().setDecodingPolicy(CodecPolicy.STRICT).get().decode(base64String)}.
+     * See {@link BaseNCodec} for guidance on comparing encoded values.
      * </p>
      *
      * @param base64String String containing Base64 data.
      * @return New array containing decoded data.
+     * @throws IllegalArgumentException Thrown when a problem is detected processing data.
      * @since 1.21
      */
     public static byte[] decodeBase64Standard(final String base64String) {
@@ -421,15 +486,21 @@ public class Base64 extends BaseNCodec {
     }
 
     /**
-     * Decodes URL-safe Base64 data into octets.
+     * Decodes URL-safe Base64 data into octets using lenient decoding.
+     *
      * <p>
-     * This implementation is aligned with
-     * <a href="https://datatracker.ietf.org/doc/html/rfc4648#:~:text=Table%202%3A%20The%20%22URL%20and%20Filename%20safe%22%20Base%2064%20Alphabet">RFC 4648
-     * Table 2: The "URL and Filename safe" Base 64 Alphabet</a>. This method skips unknown or unsupported characters.
+     * This method uses the URL-safe alphabet. It skips unsupported input, discards data after the first padding character, and accepts noncanonical
+     * padding and trailing bits. Different encoded inputs can therefore produce the same decoded bytes. This method does not validate canonical input.
+     * </p>
+     *
+     * <p>
+     * For canonical decoding, use {@code Base64.builder().setUrlSafe(true).setDecodingPolicy(CodecPolicy.STRICT).get().decode(base64Data)}.
+     * See {@link BaseNCodec} for guidance on comparing encoded values.
      * </p>
      *
      * @param base64Data Byte array containing Base64 data.
      * @return New array containing decoded data.
+     * @throws IllegalArgumentException Thrown when a problem is detected processing data.
      * @since 1.21
      */
     public static byte[] decodeBase64UrlSafe(final byte[] base64Data) {
@@ -437,15 +508,21 @@ public class Base64 extends BaseNCodec {
     }
 
     /**
-     * Decodes a URL-safe Base64 String into octets.
+     * Decodes a URL-safe Base64 string into octets using lenient decoding.
+     *
      * <p>
-     * This implementation is aligned with
-     * <a href="https://datatracker.ietf.org/doc/html/rfc4648#:~:text=Table%202%3A%20The%20%22URL%20and%20Filename%20safe%22%20Base%2064%20Alphabet">RFC 4648
-     * Table 2: The "URL and Filename safe" Base 64 Alphabet</a>. This method skips unknown or unsupported characters.
+     * This method uses the URL-safe alphabet. It skips unsupported input, discards data after the first padding character, and accepts noncanonical
+     * padding and trailing bits. Different encoded inputs can therefore produce the same decoded bytes. This method does not validate canonical input.
+     * </p>
+     *
+     * <p>
+     * For canonical decoding, use {@code Base64.builder().setUrlSafe(true).setDecodingPolicy(CodecPolicy.STRICT).get().decode(base64String)}.
+     * See {@link BaseNCodec} for guidance on comparing encoded values.
      * </p>
      *
      * @param base64String String containing Base64 data.
      * @return New array containing decoded data.
+     * @throws IllegalArgumentException Thrown when a problem is detected processing data.
      * @since 1.21
      */
     public static byte[] decodeBase64UrlSafe(final String base64String) {
@@ -455,8 +532,9 @@ public class Base64 extends BaseNCodec {
     /**
      * Decodes a byte64-encoded integer according to crypto standards such as W3C's XML-Signature.
      *
-     * @param array a byte array containing base64 character data.
+     * @param array A byte array containing base64 character data.
      * @return A BigInteger.
+     * @throws IllegalArgumentException Thrown when a problem is detected processing data.
      * @since 1.4
      */
     public static BigInteger decodeInteger(final byte[] array) {
@@ -578,14 +656,14 @@ public class Base64 extends BaseNCodec {
     /**
      * Encodes to a byte64-encoded integer according to crypto standards such as W3C's XML-Signature.
      *
-     * @param bigInteger a BigInteger.
+     * @param bigInteger A BigInteger.
      * @return A byte array containing base64 character data.
-     * @throws NullPointerException if null is passed in.
+     * @throws NullPointerException Thrown if null is passed in.
      * @since 1.4
      */
     public static byte[] encodeInteger(final BigInteger bigInteger) {
         Objects.requireNonNull(bigInteger, "bigInteger");
-        return encodeBase64(toIntegerBytes(bigInteger), false);
+        return encodeBase64(toUnsignedBytes(bigInteger), false);
     }
 
     /**
@@ -603,9 +681,9 @@ public class Base64 extends BaseNCodec {
     /**
      * Tests whether or not the {@code octet} is in the Base64 alphabet.
      * <p>
-     * This method threats all characters included within standard base64 and base64url encodings as valid base64 characters. This includes the '+' and '/'
-     * (standard base64), as well as '-' and '_' (URL-safe base64) characters. For enforcing verification against strict standard Base64 or Base64 URL-safe
-     * tables, please use {@link #isBase64Standard(byte)} or {@link #isBase64Url(byte)} methods respectively.
+     * This method treats all characters included within standard base64 and base64url encodings as valid base64 characters. This includes the '+' and '/'
+     * (standard base64), as well as '-' and '_' (URL-safe base64) characters. To test membership in only the standard Base64 or Base64 URL-safe
+     * alphabet, use {@link #isBase64Standard(byte)} or {@link #isBase64Url(byte)} methods respectively.
      * </p>
      *
      * @param octet The value to test.
@@ -620,8 +698,13 @@ public class Base64 extends BaseNCodec {
      * Tests a given byte array to see if it contains only valid characters within the Base64 alphabet. Currently the method treats whitespace as valid.
      * <p>
      * This method treats all characters included within standard base64 and base64url encodings as valid base64 characters. This includes the '+' and '/'
-     * (standard base64), as well as '-' and '_' (URL-safe base64) characters. For enforcing verification against strict standard Base64 or Base64 URL-safe
-     * tables, please use {@link #isBase64Standard(byte[])} or {@link #isBase64Url(byte[])} methods respectively.
+     * (standard base64), as well as '-' and '_' (URL-safe base64) characters. To test membership in only the standard Base64 or Base64 URL-safe
+     * alphabet, use {@link #isBase64Standard(byte[])} or {@link #isBase64Url(byte[])} methods respectively.
+     * </p>
+     *
+     * <p>
+     * This is a character-membership check, not canonical validation. It permits whitespace and padding in any position and does not check trailing bits.
+     * Use an instance configured with {@link CodecPolicy#STRICT} to require canonical input.
      * </p>
      *
      * @param arrayOctet byte array to test.
@@ -640,9 +723,14 @@ public class Base64 extends BaseNCodec {
     /**
      * Tests a given String to see if it contains only valid characters within the Base64 alphabet. Currently the method treats whitespace as valid.
      * <p>
-     * This method threats all characters included within standard base64 and base64url encodings as valid base64 characters. This includes the '+' and '/'
-     * (standard base64), as well as '-' and '_' (URL-safe base64) characters. For enforcing verification against strict standard Base64 or Base64 URL-safe
-     * tables, please use {@link #isBase64Standard(String)} or {@link #isBase64Url(String)} methods respectively.
+     * This method treats all characters included within standard base64 and base64url encodings as valid base64 characters. This includes the '+' and '/'
+     * (standard base64), as well as '-' and '_' (URL-safe base64) characters. To test membership in only the standard Base64 or Base64 URL-safe
+     * alphabet, use {@link #isBase64Standard(String)} or {@link #isBase64Url(String)} methods respectively.
+     * </p>
+     *
+     * <p>
+     * This is a character-membership check, not canonical validation. It permits whitespace and padding in any position and does not check trailing bits.
+     * Use an instance configured with {@link CodecPolicy#STRICT} to require canonical input.
      * </p>
      *
      * @param base64 String to test.
@@ -675,6 +763,11 @@ public class Base64 extends BaseNCodec {
      * Base64 Alphabet</a>.
      * </p>
      *
+     * <p>
+     * This is a character-membership check, not canonical validation. It permits whitespace and padding in any position and does not check trailing bits.
+     * Use an instance configured with {@link CodecPolicy#STRICT} to require canonical input.
+     * </p>
+     *
      * @param arrayOctet byte array to test.
      * @return {@code true} if all bytes are valid characters in the standard Base64 alphabet. {@code false}, otherwise.
      * @since 1.21
@@ -693,6 +786,11 @@ public class Base64 extends BaseNCodec {
      * <p>
      * This implementation is aligned with <a href="https://www.ietf.org/rfc/rfc2045#:~:text=Table%201%3A%20The%20Base64%20Alphabet">RFC 2045 Table 1: The
      * Base64 Alphabet</a>.
+     * </p>
+     *
+     * <p>
+     * This is a character-membership check, not canonical validation. It permits whitespace and padding in any position and does not check trailing bits.
+     * Use an instance configured with {@link CodecPolicy#STRICT} to require canonical input.
      * </p>
      *
      * @param base64 String to test.
@@ -728,6 +826,11 @@ public class Base64 extends BaseNCodec {
      * Table 2: The "URL and Filename safe" Base 64 Alphabet</a>.
      * </p>
      *
+     * <p>
+     * This is a character-membership check, not canonical validation. It permits whitespace and padding in any position and does not check trailing bits.
+     * Use an instance configured with {@link CodecPolicy#STRICT} to require canonical input.
+     * </p>
+     *
      * @param arrayOctet byte array to test.
      * @return {@code true} if all bytes are valid characters in the URL-safe Base64 alphabet, {@code false}, otherwise.
      * @since 1.21
@@ -749,6 +852,11 @@ public class Base64 extends BaseNCodec {
      * Table 2: The "URL and Filename safe" Base 64 Alphabet</a>.
      * </p>
      *
+     * <p>
+     * This is a character-membership check, not canonical validation. It permits whitespace and padding in any position and does not check trailing bits.
+     * Use an instance configured with {@link CodecPolicy#STRICT} to require canonical input.
+     * </p>
+     *
      * @param base64 String to test.
      * @return {@code true} if all characters in the String are valid characters in the URL-safe Base64 alphabet or if the String is empty; {@code false},
      *         otherwise.
@@ -758,32 +866,12 @@ public class Base64 extends BaseNCodec {
         return isBase64Url(StringUtils.getBytesUtf8(base64));
     }
 
-    /**
-     * Returns a byte-array representation of a {@code BigInteger} without sign bit.
-     *
-     * @param bigInt {@code BigInteger} to be converted.
-     * @return a byte array representation of the BigInteger parameter.
-     */
-    static byte[] toIntegerBytes(final BigInteger bigInt) {
-        int bitlen = bigInt.bitLength();
-        // round bitlen
-        bitlen = bitlen + 7 >> 3 << 3;
-        final byte[] bigBytes = bigInt.toByteArray();
-        if (bigInt.bitLength() % 8 != 0 && bigInt.bitLength() / 8 + 1 == bitlen / 8) {
-            return bigBytes;
+    private static byte[] toDecodeTable(final byte[] encodeTable) {
+        final byte[] table = encodeTable != null ? encodeTable : STANDARD_ENCODE_TABLE;
+        if (Arrays.equals(table, STANDARD_ENCODE_TABLE) || Arrays.equals(table, URL_SAFE_ENCODE_TABLE)) {
+            return DECODE_TABLE;
         }
-        // set up params for copying everything but sign bit
-        int startSrc = 0;
-        int len = bigBytes.length;
-        // if bigInt is exactly byte-aligned, just skip signbit in copy
-        if (bigInt.bitLength() % 8 == 0) {
-            startSrc = 1;
-            len--;
-        }
-        final int startDst = bitlen / 8 - len; // to pad w/ nulls as per spec
-        final byte[] resizedBytes = new byte[bitlen / 8];
-        System.arraycopy(bigBytes, startSrc, resizedBytes, startDst, len);
-        return resizedBytes;
+        return calculateDecodeTable(table);
     }
 
     static byte[] toUrlSafeEncodeTable(final boolean urlSafe) {
@@ -791,7 +879,7 @@ public class Base64 extends BaseNCodec {
     }
 
     /**
-     * Line separator for encoding. Not used when decoding. Only used if lineLength &gt; 0.
+     * Line separator for encoding and strict decoding. Only used if lineLength &gt; 0.
      */
     private final byte[] lineSeparator;
 
@@ -808,7 +896,7 @@ public class Base64 extends BaseNCodec {
      * When encoding the line length is 0 (no chunking), and the encoding table is STANDARD_ENCODE_TABLE.
      * </p>
      * <p>
-     * When decoding all variants are supported.
+     * When decoding leniently all variants are supported. Strict decoding requires the configured encoding alphabet and layout.
      * </p>
      */
     public Base64() {
@@ -821,7 +909,7 @@ public class Base64 extends BaseNCodec {
      * When encoding the line length is 76, the line separator is CRLF, and the encoding table is STANDARD_ENCODE_TABLE.
      * </p>
      * <p>
-     * When decoding all variants are supported.
+     * When decoding leniently all variants are supported. Strict decoding requires the configured encoding alphabet and layout.
      * </p>
      *
      * @param urlSafe if {@code true}, URL-safe encoding is used. In most cases this should be set to {@code false}.
@@ -838,6 +926,9 @@ public class Base64 extends BaseNCodec {
         final byte[] encTable = builder.getEncodeTable();
         if (encTable.length != STANDARD_ENCODE_TABLE.length) {
             throw new IllegalArgumentException("encodeTable must have exactly 64 entries.");
+        }
+        if (contains(encTable, pad)) {
+            throw new IllegalArgumentException("encodeTable must not contain the padding byte.");
         }
         this.isStandardEncodeTable = Arrays.equals(encTable, STANDARD_ENCODE_TABLE);
         this.isUrlSafe = Arrays.equals(encTable, URL_SAFE_ENCODE_TABLE);
@@ -871,11 +962,11 @@ public class Base64 extends BaseNCodec {
      * Line lengths that aren't multiples of 4 will still essentially end up being multiples of 4 in the encoded data.
      * </p>
      * <p>
-     * When decoding all variants are supported.
+     * When decoding leniently all variants are supported. Strict decoding requires the configured encoding alphabet and layout.
      * </p>
      *
      * @param lineLength Each line of encoded data will be at most of the given length (rounded down to the nearest multiple of 4). If lineLength &lt;= 0, then
-     *                   the output will not be divided into lines (chunks). Ignored when decoding.
+     *                   the output will not be divided into lines (chunks). Ignored when decoding leniently.
      * @since 1.4
      * @deprecated Use {@link #builder()} and {@link Builder}.
      */
@@ -893,11 +984,11 @@ public class Base64 extends BaseNCodec {
      * Line lengths that aren't multiples of 4 will still essentially end up being multiples of 4 in the encoded data.
      * </p>
      * <p>
-     * When decoding all variants are supported.
+     * When decoding leniently all variants are supported. Strict decoding requires the configured encoding alphabet and layout.
      * </p>
      *
      * @param lineLength    Each line of encoded data will be at most of the given length (rounded down to the nearest multiple of 4). If lineLength &lt;= 0,
-     *                      then the output will not be divided into lines (chunks). Ignored when decoding.
+     *                      then the output will not be divided into lines (chunks). Ignored when decoding leniently.
      * @param lineSeparator Each line of encoded data will end with this sequence of bytes.
      * @throws IllegalArgumentException Thrown when the provided lineSeparator included some base64 characters.
      * @since 1.4
@@ -917,11 +1008,11 @@ public class Base64 extends BaseNCodec {
      * Line lengths that aren't multiples of 4 will still essentially end up being multiples of 4 in the encoded data.
      * </p>
      * <p>
-     * When decoding all variants are supported.
+     * When decoding leniently all variants are supported. Strict decoding requires the configured encoding alphabet and layout.
      * </p>
      *
      * @param lineLength    Each line of encoded data will be at most of the given length (rounded down to the nearest multiple of 4). If lineLength &lt;= 0,
-     *                      then the output will not be divided into lines (chunks). Ignored when decoding.
+     *                      then the output will not be divided into lines (chunks). Ignored when decoding leniently.
      * @param lineSeparator Each line of encoded data will end with this sequence of bytes.
      * @param urlSafe       Instead of emitting '+' and '/' we emit '-' and '_' respectively. urlSafe is only applied to encode operations. Decoding seamlessly
      *                      handles both modes. <strong>No padding is added when using the URL-safe alphabet.</strong>
@@ -944,14 +1035,14 @@ public class Base64 extends BaseNCodec {
      * Line lengths that aren't multiples of 4 will still essentially end up being multiples of 4 in the encoded data.
      * </p>
      * <p>
-     * When decoding all variants are supported.
+     * When decoding leniently all variants are supported. Strict decoding requires the configured encoding alphabet and layout.
      * </p>
      *
      * @param lineLength     Each line of encoded data will be at most of the given length (rounded down to the nearest multiple of 4). If lineLength &lt;= 0,
-     *                       then the output will not be divided into lines (chunks). Ignored when decoding.
+     *                       then the output will not be divided into lines (chunks). Ignored when decoding leniently.
      * @param lineSeparator  Each line of encoded data will end with this sequence of bytes.
-     * @param urlSafe        Instead of emitting '+' and '/' we emit '-' and '_' respectively. urlSafe is only applied to encode operations. Decoding seamlessly
-     *                       handles both modes. <strong>No padding is added when using the URL-safe alphabet.</strong>
+     * @param urlSafe        Instead of emitting '+' and '/' we emit '-' and '_' respectively. Strict decoding requires this alphabet. Lenient
+     *                       decoding handles both modes. <strong>No padding is added when using the URL-safe alphabet.</strong>
      * @param decodingPolicy The decoding policy.
      * @throws IllegalArgumentException Thrown when the {@code lineSeparator} contains Base64 characters.
      * @since 1.15
@@ -966,11 +1057,11 @@ public class Base64 extends BaseNCodec {
     /**
      * <p>
      * Decodes all of the provided data, starting at inPos, for inAvail bytes. Should be called at least twice: once with the data to decode, and once with
-     * inAvail set to "-1" to alert decoder that EOF has been reached. The "-1" call is not necessary when decoding, but it doesn't hurt, either.
+     * inAvail set to "-1" to alert decoder that EOF has been reached. Strict decoding requires the "-1" call to validate the complete input.
      * </p>
      * <p>
-     * Ignores all non-base64 characters. This is how chunked (for example 76 character) data is handled, since CR and LF are silently ignored, but has
-     * implications for other bytes, too. This method subscribes to the garbage-in, garbage-out philosophy: it will not check the provided data for validity.
+     * Lenient decoding ignores non-alphabet characters and stops at the first padding byte. Strict decoding accepts only the canonical form produced by this
+     * instance's encoder, including its alphabet, padding, and line separators.
      * </p>
      * <p>
      * Thanks to "commons" project in ws.apache.org for the bitwise operations, and general approach.
@@ -980,7 +1071,8 @@ public class Base64 extends BaseNCodec {
      * @param input   byte[] array of ASCII data to base64 decode.
      * @param inPos   Position to start reading data from.
      * @param inAvail Amount of bytes available from input for decoding.
-     * @param context the context to be used.
+     * @param context The context to be used.
+     * @throws IllegalArgumentException Thrown when a problem is detected processing data.
      */
     @Override
     void decode(final byte[] input, int inPos, final int inAvail, final Context context) {
@@ -989,17 +1081,24 @@ public class Base64 extends BaseNCodec {
         }
         if (inAvail < 0) {
             context.eof = true;
+            if (isStrictDecoding()) {
+                validateCanonicalEnd(isStandardEncodeTable, context);
+            }
         }
         final int decodeSize = this.encodeSize - 1;
         for (int i = 0; i < inAvail; i++) {
-            final byte[] buffer = ensureBufferSize(decodeSize, context);
-            final byte b = input[inPos++];
-            if (b == pad) {
+            final int b = input[inPos++] & 0xff;
+            if (isStrictDecoding()) {
+                if (!validateCanonicalByte(b, lineSeparator, isStandardEncodeTable, context)) {
+                    continue;
+                }
+            } else if (b == (pad & 0xff)) {
                 // We're done.
                 context.eof = true;
                 break;
             }
-            if (b >= 0 && b < decodeTable.length) {
+            final byte[] buffer = ensureBufferSize(decodeSize, context);
+            if (b < decodeTable.length) {
                 final int result = decodeTable[b];
                 if (result >= 0) {
                     context.modulus = (context.modulus + 1) % BYTES_PER_ENCODED_BLOCK;
@@ -1013,9 +1112,8 @@ public class Base64 extends BaseNCodec {
             }
         }
 
-        // Two forms of EOF as far as base64 decoder is concerned: actual
-        // EOF (-1) and first time '=' character is encountered in stream.
-        // This approach makes the '=' padding characters completely optional.
+        // Strict decoding waits for physical EOF to validate the complete input.
+        // Lenient decoding also treats the first padding byte as EOF.
         if (context.eof && context.modulus != 0) {
             final byte[] buffer = ensureBufferSize(decodeSize, context);
 
@@ -1059,7 +1157,8 @@ public class Base64 extends BaseNCodec {
      * @param in      byte[] array of binary data to base64 encode.
      * @param inPos   Position to start reading data from.
      * @param inAvail Amount of bytes available from input for encoding.
-     * @param context the context to be used.
+     * @param context The context to be used.
+     * @throws IllegalArgumentException Thrown when a problem is detected processing data.
      */
     @Override
     void encode(final byte[] in, int inPos, final int inAvail, final Context context) {
@@ -1136,25 +1235,26 @@ public class Base64 extends BaseNCodec {
     /**
      * Gets the line separator (for testing only).
      *
-     * @return the line separator.
+     * @return The line separator.
      */
     byte[] getLineSeparator() {
         return lineSeparator;
     }
 
     /**
-     * Returns whether or not the {@code octet} is in the Base64 alphabet.
+     * Tests whether the {@code octet} is in the Base64 alphabet.
      *
      * @param octet The value to test.
      * @return {@code true} if the value is defined in the Base64 alphabet {@code false} otherwise.
      */
     @Override
     protected boolean isInAlphabet(final byte octet) {
-        return isInAlphabet(octet, decodeTable);
+        final int value = octet & 0xff;
+        return value < decodeTable.length && decodeTable[value] != -1;
     }
 
     /**
-     * Returns our current encode mode. True if we're URL-safe, false otherwise.
+     * Tests whether the current encoding mode is URL-safe.
      *
      * @return true if we're in URL-safe mode, false otherwise.
      * @since 1.4
@@ -1171,8 +1271,8 @@ public class Base64 extends BaseNCodec {
      * </p>
      *
      * @param emptyBitsMask The mask of the lower bits that should be empty.
-     * @param context       the context to be used.
-     * @throws IllegalArgumentException if the bits being checked contain any non-zero value.
+     * @param context       The context to be used.
+     * @throws IllegalArgumentException Thrown if the bits being checked contain any non-zero value.
      */
     private void validateCharacter(final int emptyBitsMask, final Context context) {
         if (isStrictDecoding() && (context.ibitWorkArea & emptyBitsMask) != 0) {
@@ -1184,7 +1284,7 @@ public class Base64 extends BaseNCodec {
     /**
      * Validates whether decoding allows an entire final trailing character that cannot be used for a complete byte.
      *
-     * @throws IllegalArgumentException if strict decoding is enabled.
+     * @throws IllegalArgumentException Thrown if strict decoding is enabled.
      */
     private void validateTrailingCharacter() {
         if (isStrictDecoding()) {

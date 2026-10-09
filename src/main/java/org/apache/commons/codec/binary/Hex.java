@@ -31,7 +31,14 @@ import org.apache.commons.codec.EncoderException;
  * Converts hexadecimal Strings. The Charset used for certain operation can be set, the default is set in
  * {@link #DEFAULT_CHARSET_NAME}
  *
+ * <p>
+ * Decoding accepts only the ASCII hexadecimal characters {@code 0-9}, {@code A-F}, and {@code a-f}. Non-ASCII Unicode digits and fullwidth letters
+ * are rejected.
+ * </p>
+ *
+ * <p>
  * This class is thread-safe.
+ * </p>
  *
  * @since 1.1
  */
@@ -84,7 +91,7 @@ public class Hex implements BinaryEncoder, BinaryDecoder {
      * @param data An array of characters containing hexadecimal digits.
      * @param out A byte array to contain the binary data decoded from the supplied char array.
      * @param outOffset The position within {@code out} to start writing the decoded bytes.
-     * @return the number of bytes written to {@code out}.
+     * @return The number of bytes written to {@code out}.
      * @throws DecoderException Thrown if an odd number of characters or illegal characters are supplied.
      * @since 1.15
      */
@@ -127,7 +134,7 @@ public class Hex implements BinaryEncoder, BinaryDecoder {
      * The returned array will be double the length of the passed array, as it takes two characters to represent any
      * given byte.
      *
-     * @param data a byte[] to convert to hexadecimal characters.
+     * @param data A byte[] to convert to hexadecimal characters.
      * @return A char[] containing lower-case hexadecimal characters.
      */
     public static char[] encodeHex(final byte[] data) {
@@ -139,7 +146,7 @@ public class Hex implements BinaryEncoder, BinaryDecoder {
      * The returned array will be double the length of the passed array, as it takes two characters to represent any
      * given byte.
      *
-     * @param data        a byte[] to convert to Hex characters.
+     * @param data        A byte[] to convert to Hex characters.
      * @param toLowerCase {@code true} converts to lowercase, {@code false} to uppercase.
      * @return A char[] containing hexadecimal characters in the selected case.
      * @since 1.4
@@ -153,8 +160,8 @@ public class Hex implements BinaryEncoder, BinaryDecoder {
      * The returned array will be double the length of the passed array, as it takes two characters to represent any
      * given byte.
      *
-     * @param data     a byte[] to convert to hexadecimal characters.
-     * @param toDigits the output alphabet (must contain at least 16 chars).
+     * @param data     A byte[] to convert to hexadecimal characters.
+     * @param toDigits The output alphabet (must contain at least 16 chars).
      * @return A char[] containing the appropriate characters from the alphabet For best results, this should be either
      *         upper- or lower-case hex.
      * @since 1.4
@@ -167,9 +174,9 @@ public class Hex implements BinaryEncoder, BinaryDecoder {
     /**
      * Converts an array of bytes into an array of characters representing the hexadecimal values of each byte in order.
      *
-     * @param data a byte[] to convert to hexadecimal characters.
-     * @param dataOffset the position in {@code data} to start encoding from.
-     * @param dataLen the number of bytes from {@code dataOffset} to encode.
+     * @param data A byte[] to convert to hexadecimal characters.
+     * @param dataOffset The position in {@code data} to start encoding from.
+     * @param dataLen The number of bytes from {@code dataOffset} to encode.
      * @param toLowerCase {@code true} converts to lowercase, {@code false} to uppercase.
      * @return A char[] containing the appropriate characters from the alphabet For best results, this should be either
      *         upper- or lower-case hex.
@@ -182,12 +189,12 @@ public class Hex implements BinaryEncoder, BinaryDecoder {
     /**
      * Converts an array of bytes into an array of characters representing the hexadecimal values of each byte in order.
      *
-     * @param data a byte[] to convert to hexadecimal characters.
-     * @param dataOffset the position in {@code data} to start encoding from.
-     * @param dataLen the number of bytes from {@code dataOffset} to encode.
+     * @param data A byte[] to convert to hexadecimal characters.
+     * @param dataOffset The position in {@code data} to start encoding from.
+     * @param dataLen The number of bytes from {@code dataOffset} to encode.
      * @param toLowerCase {@code true} converts to lowercase, {@code false} to uppercase.
-     * @param out a char[] which will hold the resultant appropriate characters from the alphabet.
-     * @param outOffset the position within {@code out} at which to start writing the encoded characters.
+     * @param out A char[] which will hold the resultant appropriate characters from the alphabet.
+     * @param outOffset The position within {@code out} at which to start writing the encoded characters.
      * @since 1.15
      */
     public static void encodeHex(final byte[] data, final int dataOffset, final int dataLen, final boolean toLowerCase, final char[] out, final int outOffset) {
@@ -197,13 +204,13 @@ public class Hex implements BinaryEncoder, BinaryDecoder {
     /**
      * Converts an array of bytes into an array of characters representing the hexadecimal values of each byte in order.
      *
-     * @param data a byte[] to convert to hexadecimal characters.
-     * @param dataOffset the position in {@code data} to start encoding from.
-     * @param dataLen the number of bytes from {@code dataOffset} to encode.
-     * @param toDigits the output alphabet (must contain at least 16 chars).
-     * @param out a char[] which will hold the resultant appropriate characters from the alphabet.
-     * @param outOffset the position within {@code out} at which to start writing the encoded characters.
-     * @return the given {@code out}.
+     * @param data A byte[] to convert to hexadecimal characters.
+     * @param dataOffset The position in {@code data} to start encoding from.
+     * @param dataLen The number of bytes from {@code dataOffset} to encode.
+     * @param toDigits The output alphabet (must contain at least 16 chars).
+     * @param out A char[] which will hold the resultant appropriate characters from the alphabet.
+     * @param outOffset The position within {@code out} at which to start writing the encoded characters.
+     * @return The given {@code out}.
      */
     private static char[] encodeHex(final byte[] data, final int dataOffset, final int dataLen, final char[] toDigits, final char[] out, final int outOffset) {
         // two characters form the hex value.
@@ -219,10 +226,12 @@ public class Hex implements BinaryEncoder, BinaryDecoder {
      * returned array will be double the length of the passed array, as it takes two characters to represent any given
      * byte.
      *
-     * <p>All bytes identified by {@link ByteBuffer#remaining()} will be used; after this method
-     * the value {@link ByteBuffer#remaining() remaining()} will be zero.</p>
+     * <p>
+     * All bytes identified by {@link ByteBuffer#remaining()} will be used; after this method
+     * the value {@link ByteBuffer#remaining() remaining()} will be zero.
+     * </p>
      *
-     * @param data a byte buffer to convert to hexadecimal characters.
+     * @param data A byte buffer to convert to hexadecimal characters.
      * @return A char[] containing lower-case hexadecimal characters.
      * @since 1.11
      */
@@ -235,10 +244,12 @@ public class Hex implements BinaryEncoder, BinaryDecoder {
      * returned array will be double the length of the passed array, as it takes two characters to represent any given
      * byte.
      *
-     * <p>All bytes identified by {@link ByteBuffer#remaining()} will be used; after this method
-     * the value {@link ByteBuffer#remaining() remaining()} will be zero.</p>
+     * <p>
+     * All bytes identified by {@link ByteBuffer#remaining()} will be used; after this method
+     * the value {@link ByteBuffer#remaining() remaining()} will be zero.
+     * </p>
      *
-     * @param data        a byte buffer to convert to hexadecimal characters.
+     * @param data        A byte buffer to convert to hexadecimal characters.
      * @param toLowerCase {@code true} converts to lowercase, {@code false} to uppercase.
      * @return A char[] containing hexadecimal characters in the selected case.
      * @since 1.11
@@ -252,11 +263,13 @@ public class Hex implements BinaryEncoder, BinaryDecoder {
      * returned array will be double the length of the passed array, as it takes two characters to represent any given
      * byte.
      *
-     * <p>All bytes identified by {@link ByteBuffer#remaining()} will be used; after this method
-     * the value {@link ByteBuffer#remaining() remaining()} will be zero.</p>
+     * <p>
+     * All bytes identified by {@link ByteBuffer#remaining()} will be used; after this method
+     * the value {@link ByteBuffer#remaining() remaining()} will be zero.
+     * </p>
      *
-     * @param byteBuffer a byte buffer to convert to hexadecimal characters.
-     * @param toDigits   the output alphabet (must be at least 16 characters).
+     * @param byteBuffer A byte buffer to convert to hexadecimal characters.
+     * @param toDigits   The output alphabet (must be at least 16 characters).
      * @return A char[] containing the appropriate characters from the alphabet For best results, this should be either
      *         upper- or lower-case hex.
      * @since 1.11
@@ -269,7 +282,7 @@ public class Hex implements BinaryEncoder, BinaryDecoder {
      * Converts an array of bytes into a String representing the hexadecimal values of each byte in order. The returned
      * String will be double the length of the passed array, as it takes two characters to represent any given byte.
      *
-     * @param data a byte[] to convert to hexadecimal characters.
+     * @param data A byte[] to convert to hexadecimal characters.
      * @return A String containing lower-case hexadecimal characters.
      * @since 1.4
      */
@@ -281,7 +294,7 @@ public class Hex implements BinaryEncoder, BinaryDecoder {
      * Converts an array of bytes into a String representing the hexadecimal values of each byte in order. The returned
      * String will be double the length of the passed array, as it takes two characters to represent any given byte.
      *
-     * @param data        a byte[] to convert to hexadecimal characters.
+     * @param data        A byte[] to convert to hexadecimal characters.
      * @param toLowerCase {@code true} converts to lowercase, {@code false} to uppercase.
      * @return A String containing lower-case hexadecimal characters.
      * @since 1.11
@@ -294,10 +307,12 @@ public class Hex implements BinaryEncoder, BinaryDecoder {
      * Converts a byte buffer into a String representing the hexadecimal values of each byte in order. The returned
      * String will be double the length of the passed array, as it takes two characters to represent any given byte.
      *
-     * <p>All bytes identified by {@link ByteBuffer#remaining()} will be used; after this method
-     * the value {@link ByteBuffer#remaining() remaining()} will be zero.</p>
+     * <p>
+     * All bytes identified by {@link ByteBuffer#remaining()} will be used; after this method
+     * the value {@link ByteBuffer#remaining() remaining()} will be zero.
+     * </p>
      *
-     * @param data a byte buffer to convert to hexadecimal characters.
+     * @param data A byte buffer to convert to hexadecimal characters.
      * @return A String containing lower-case hexadecimal characters.
      * @since 1.11
      */
@@ -309,10 +324,12 @@ public class Hex implements BinaryEncoder, BinaryDecoder {
      * Converts a byte buffer into a String representing the hexadecimal values of each byte in order. The returned
      * String will be double the length of the passed array, as it takes two characters to represent any given byte.
      *
-     * <p>All bytes identified by {@link ByteBuffer#remaining()} will be used; after this method
-     * the value {@link ByteBuffer#remaining() remaining()} will be zero.</p>
+     * <p>
+     * All bytes identified by {@link ByteBuffer#remaining()} will be used; after this method
+     * the value {@link ByteBuffer#remaining() remaining()} will be zero.
+     * </p>
      *
-     * @param data        a byte buffer to convert to hexadecimal characters.
+     * @param data        A byte buffer to convert to hexadecimal characters.
      * @param toLowerCase {@code true} converts to lowercase, {@code false} to uppercase.
      * @return A String containing lower-case hexadecimal characters.
      * @since 1.11
@@ -325,7 +342,7 @@ public class Hex implements BinaryEncoder, BinaryDecoder {
      * Converts a boolean to an alphabet.
      *
      * @param toLowerCase true for lowercase, false for uppercase.
-     * @return an alphabet.
+     * @return An alphabet.
      */
     private static char[] toAlphabet(final boolean toLowerCase) {
         return toLowerCase ? DIGITS_LOWER : DIGITS_UPPER;
@@ -335,8 +352,8 @@ public class Hex implements BinaryEncoder, BinaryDecoder {
      * Convert the byte buffer to a byte array. All bytes identified by
      * {@link ByteBuffer#remaining()} will be used.
      *
-     * @param byteBuffer the byte buffer.
-     * @return the byte[].
+     * @param byteBuffer The byte buffer.
+     * @return The byte[].
      */
     private static byte[] toByteArray(final ByteBuffer byteBuffer) {
         final int remaining = byteBuffer.remaining();
@@ -357,15 +374,30 @@ public class Hex implements BinaryEncoder, BinaryDecoder {
     /**
      * Converts a hexadecimal character to an integer.
      *
+     * <p>
+     * Only the ASCII characters {@code '0'} to {@code '9'}, {@code 'A'} to {@code 'F'} and {@code 'a'} to {@code 'f'} are accepted. Other Unicode digits,
+     * such as fullwidth or Arabic-Indic digits, are rejected even though {@link Character#digit(char, int)} would accept them. These alternate spellings
+     * can bypass textual blocklists or replay caches that compare hexadecimal strings without decoding or normalizing them first.
+     * </p>
+     *
      * @param ch    A character to convert to an integer digit.
      * @param index The index of the character in the source.
      * @return An integer.
      * @throws DecoderException Thrown if ch is an illegal hexadecimal character.
      */
     protected static int toDigit(final char ch, final int index) throws DecoderException {
-        final int digit = Character.digit(ch, 16);
+        final int digit;
+        if (ch >= '0' && ch <= '9') {
+            digit = ch - '0';
+        } else if (ch >= 'A' && ch <= 'F') {
+            digit = ch - 'A' + 10;
+        } else if (ch >= 'a' && ch <= 'f') {
+            digit = ch - 'a' + 10;
+        } else {
+            digit = -1;
+        }
         if (digit == -1) {
-            throw new DecoderException("Illegal hexadecimal character 0x%02X at index %,d.", ch & 0xFF, index);
+            throw new DecoderException("Illegal hexadecimal character 0x%02X at index %,d.", ch & 0xFFFF, index);
         }
         return digit;
     }
@@ -383,7 +415,7 @@ public class Hex implements BinaryEncoder, BinaryDecoder {
     /**
      * Creates a new codec with the given Charset.
      *
-     * @param charset the charset.
+     * @param charset The charset.
      * @since 1.7
      */
     public Hex(final Charset charset) {
@@ -393,8 +425,8 @@ public class Hex implements BinaryEncoder, BinaryDecoder {
     /**
      * Creates a new codec with the given charset name.
      *
-     * @param charsetName the charset name.
-     * @throws java.nio.charset.UnsupportedCharsetException If the named charset is unavailable.
+     * @param charsetName The charset name.
+     * @throws java.nio.charset.UnsupportedCharsetException Thrown if the named charset is unavailable.
      * @since 1.4
      * @since 1.7 throws UnsupportedCharsetException if the named charset is unavailable
      */
@@ -422,8 +454,10 @@ public class Hex implements BinaryEncoder, BinaryDecoder {
      * The returned array will be half the length of the passed array, as it takes two characters to represent any given
      * byte. An exception is thrown if the passed char array has an odd number of elements.
      *
-     * <p>All bytes identified by {@link ByteBuffer#remaining()} will be used; after this method
-     * the value {@link ByteBuffer#remaining() remaining()} will be zero.</p>
+     * <p>
+     * All bytes identified by {@link ByteBuffer#remaining()} will be used; after this method
+     * the value {@link ByteBuffer#remaining() remaining()} will be zero.
+     * </p>
      *
      * @param buffer An array of character bytes containing hexadecimal digits.
      * @return A byte array containing binary data decoded from the supplied byte array (representing characters).
@@ -473,7 +507,7 @@ public class Hex implements BinaryEncoder, BinaryDecoder {
      * {@link #getCharset()}.
      * </p>
      *
-     * @param array a byte[] to convert to hexadecimal characters.
+     * @param array A byte[] to convert to hexadecimal characters.
      * @return A byte[] containing the bytes of the lower-case hexadecimal characters.
      * @since 1.7 No longer throws IllegalStateException if the charsetName is invalid.
      * @see #encodeHex(byte[])
@@ -488,13 +522,17 @@ public class Hex implements BinaryEncoder, BinaryDecoder {
      * in order. The returned array will be double the length of the passed array, as it takes two characters to
      * represent any given byte.
      *
-     * <p>The conversion from hexadecimal characters to the returned bytes is performed with the charset named by
-     * {@link #getCharset()}.</p>
+     * <p>
+     * The conversion from hexadecimal characters to the returned bytes is performed with the charset named by
+     * {@link #getCharset()}.
+     * </p>
      *
-     * <p>All bytes identified by {@link ByteBuffer#remaining()} will be used; after this method
-     * the value {@link ByteBuffer#remaining() remaining()} will be zero.</p>
+     * <p>
+     * All bytes identified by {@link ByteBuffer#remaining()} will be used; after this method
+     * the value {@link ByteBuffer#remaining() remaining()} will be zero.
+     * </p>
      *
-     * @param array a byte buffer to convert to hexadecimal characters.
+     * @param array A byte buffer to convert to hexadecimal characters.
      * @return A byte[] containing the bytes of the lower-case hexadecimal characters.
      * @see #encodeHex(byte[])
      * @since 1.11
@@ -512,7 +550,7 @@ public class Hex implements BinaryEncoder, BinaryDecoder {
      * {@link #getCharset()}.
      * </p>
      *
-     * @param object a String, ByteBuffer, or byte[] to convert to hexadecimal characters.
+     * @param object A String, ByteBuffer, or byte[] to convert to hexadecimal characters.
      * @return A char[] containing lower-case hexadecimal characters.
      * @throws EncoderException Thrown if the given object is not a String or byte[].
      * @see #encodeHex(byte[])
@@ -537,7 +575,7 @@ public class Hex implements BinaryEncoder, BinaryDecoder {
     /**
      * Gets the charset.
      *
-     * @return the charset.
+     * @return The charset.
      * @since 1.7
      */
     public Charset getCharset() {
@@ -547,7 +585,7 @@ public class Hex implements BinaryEncoder, BinaryDecoder {
     /**
      * Gets the charset name.
      *
-     * @return the charset name.
+     * @return The charset name.
      * @since 1.4
      */
     public String getCharsetName() {
@@ -557,7 +595,7 @@ public class Hex implements BinaryEncoder, BinaryDecoder {
     /**
      * Returns a string representation of the object, which includes the charset name.
      *
-     * @return a string representation of the object.
+     * @return A string representation of the object.
      */
     @Override
     public String toString() {

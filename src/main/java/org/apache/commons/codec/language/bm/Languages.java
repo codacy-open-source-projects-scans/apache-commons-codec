@@ -73,8 +73,8 @@ public class Languages {
         /**
          * Gets a language set for the given languages.
          *
-         * @param languages a language set.
-         * @return a LanguageSet.
+         * @param languages A language set.
+         * @return A LanguageSet.
          */
         public static LanguageSet from(final Set<String> languages) {
             return languages.isEmpty() ? NO_LANGUAGES : new SomeLanguages(languages);
@@ -90,7 +90,7 @@ public class Languages {
         /**
          * Tests whether this instance contains the given value.
          *
-         * @param language the value to test.
+         * @param language The value to test.
          * @return whether this instance contains the given value.
          */
         public abstract boolean contains(String language);
@@ -122,7 +122,7 @@ public class Languages {
          * Returns an instance restricted to this instances and the given values'.
          *
          * @param other The other instance.
-         * @return an instance restricted to this instances and the given values'.
+         * @return An instance restricted to this instances and the given values'.
          */
         public abstract LanguageSet restrictTo(LanguageSet other);
     }
@@ -150,7 +150,7 @@ public class Languages {
         /**
          * Gets the language strings
          *
-         * @return the languages strings.
+         * @return The languages strings.
          */
         public Set<String> getLanguages() {
             return this.languages;
@@ -216,6 +216,12 @@ public class Languages {
             return false;
         }
 
+        /**
+         * Always throws {@link NoSuchElementException} because this language set does not identify a specific language.
+         *
+         * @return Never returns normally.
+         * @throws NoSuchElementException Thrown whenever this method is invoked.
+         */
         @Override
         public String getAny() {
             throw new NoSuchElementException("Can't fetch any language from the empty language set.");
@@ -257,6 +263,12 @@ public class Languages {
             return true;
         }
 
+        /**
+         * Always throws {@link NoSuchElementException} because this language set does not identify a specific language.
+         *
+         * @return Never returns normally.
+         * @throws NoSuchElementException Thrown whenever this method is invoked.
+         */
         @Override
         public String getAny() {
             throw new NoSuchElementException("Can't fetch any language from the any language set.");
@@ -298,7 +310,7 @@ public class Languages {
      * Gets an instance for the given name type.
      *
      * @param nameType The name type to lookup.
-     * @return an instance for the given name type.
+     * @return An instance for the given name type.
      */
     public static Languages getInstance(final NameType nameType) {
         return LANGUAGES.get(nameType);
@@ -307,8 +319,8 @@ public class Languages {
     /**
      * Gets a new instance for the given resource name.
      *
-     * @param languagesResourceName the resource name to lookup.
-     * @return a new instance.
+     * @param languagesResourceName The resource name to lookup.
+     * @return A new instance.
      */
     public static Languages getInstance(final String languagesResourceName) {
         // read languages list
@@ -345,7 +357,7 @@ public class Languages {
     /**
      * Gets the language set.
      *
-     * @return the language set.
+     * @return The language set.
      */
     public Set<String> getLanguages() {
         return this.languages;

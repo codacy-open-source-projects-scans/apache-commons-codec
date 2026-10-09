@@ -55,17 +55,17 @@ class Base58InputStreamTest {
         }
     }
 
-    private void testBase58EmptyInputStream(final int chuckSize) throws Exception {
+    private void testBase58EmptyInputStream(final int chunkSize) throws Exception {
         final byte[] emptyEncoded = {};
         final byte[] emptyDecoded = {};
-        testByChunk(emptyEncoded, emptyDecoded, chuckSize, CRLF);
-        testByteByByte(emptyEncoded, emptyDecoded, chuckSize, CRLF);
+        testByChunk(emptyEncoded, emptyDecoded, chunkSize, CRLF);
+        testByteByByte(emptyEncoded, emptyDecoded, chunkSize, CRLF);
     }
 
     /**
      * Tests the Base58InputStream implementation against empty input.
      *
-     * @throws Exception for some failure scenarios.
+     * @throws Exception Thrown for some failure scenarios.
      */
     @Test
     void testBase58EmptyInputStreamMimeChuckSize() throws Exception {
@@ -75,7 +75,7 @@ class Base58InputStreamTest {
     /**
      * Tests the Base58InputStream implementation against empty input.
      *
-     * @throws Exception for some failure scenarios.
+     * @throws Exception Thrown for some failure scenarios.
      */
     @Test
     void testBase58EmptyInputStreamPemChuckSize() throws Exception {
@@ -126,10 +126,10 @@ class Base58InputStreamTest {
      * By "[WRAP-WRAP-WRAP-etc...]" we mean situation where the Base58InputStream wraps itself in encode and decode mode over and over again.
      *
      * @param encoded   base58 encoded data
-     * @param decoded   the data from above, but decoded
+     * @param decoded   The data from above, but decoded
      * @param chunkSize chunk size (line-length) of the base58 encoded data.
      * @param separator Line separator in the base58 encoded data.
-     * @throws Exception Usually signifies a bug in the Base58 commons-codec implementation.
+     * @throws Exception Thrown if a bug occurs in the Base58 commons-codec implementation.
      */
     private void testByChunk(final byte[] encoded, final byte[] decoded, final int chunkSize, final byte[] separator) throws Exception {
         try (InputStream in = Base58InputStream.builder().setByteArray(decoded).setEncode(true).get()) {
@@ -164,10 +164,10 @@ class Base58InputStreamTest {
      * By "[WRAP-WRAP-WRAP-etc...]" we mean situation where the Base58InputStream wraps itself in encode and decode mode over and over again.
      *
      * @param encoded   base58 encoded data
-     * @param decoded   the data from above, but decoded
+     * @param decoded   The data from above, but decoded
      * @param chunkSize chunk size (line-length) of the base58 encoded data.
      * @param separator Line separator in the base58 encoded data.
-     * @throws Exception Usually signifies a bug in the Base58 commons-codec implementation.
+     * @throws Exception Thrown if a bug occurs in the Base58 commons-codec implementation.
      */
     private void testByteByByte(final byte[] encoded, final byte[] decoded, final int chunkSize, final byte[] separator) throws Exception {
         InputStream in;
@@ -200,7 +200,7 @@ class Base58InputStreamTest {
     /**
      * Tests markSupported.
      *
-     * @throws Exception for some failure scenarios.
+     * @throws Exception Thrown for some failure scenarios.
      */
     @Test
     void testMarkSupported() throws Exception {
@@ -214,7 +214,7 @@ class Base58InputStreamTest {
     /**
      * Tests read returning 0
      *
-     * @throws Exception for some failure scenarios.
+     * @throws Exception Thrown for some failure scenarios.
      */
     @Test
     void testRead0() throws Exception {
@@ -230,7 +230,7 @@ class Base58InputStreamTest {
     /**
      * Tests read with null.
      *
-     * @throws Exception for some failure scenarios.
+     * @throws Exception Thrown for some failure scenarios.
      */
     @Test
     void testReadNull() throws Exception {
@@ -243,7 +243,7 @@ class Base58InputStreamTest {
     /**
      * Tests read throwing IndexOutOfBoundsException
      *
-     * @throws Exception for some failure scenarios.
+     * @throws Exception Thrown for some failure scenarios.
      */
     @Test
     void testReadOutOfBounds() throws Exception {
@@ -260,7 +260,7 @@ class Base58InputStreamTest {
     /**
      * Tests skipping number of characters larger than the internal buffer.
      *
-     * @throws Throwable for some failure scenarios.
+     * @throws Throwable Thrown for some failure scenarios.
      */
     @Test
     void testSkipBig() throws Throwable {
@@ -277,7 +277,7 @@ class Base58InputStreamTest {
     /**
      * Tests skipping as a noop
      *
-     * @throws Throwable for some failure scenarios.
+     * @throws Throwable Thrown for some failure scenarios.
      */
     @Test
     void testSkipNone() throws Throwable {
@@ -296,7 +296,7 @@ class Base58InputStreamTest {
     /**
      * Tests skipping past the end of a stream.
      *
-     * @throws Throwable for some failure scenarios.
+     * @throws Throwable Thrown for some failure scenarios.
      */
     @Test
     void testSkipPastEnd() throws Throwable {
@@ -314,7 +314,7 @@ class Base58InputStreamTest {
     /**
      * Tests skipping to the end of a stream.
      *
-     * @throws Throwable for some failure scenarios.
+     * @throws Throwable Thrown for some failure scenarios.
      */
     @Test
     void testSkipToEnd() throws Throwable {
@@ -330,7 +330,7 @@ class Base58InputStreamTest {
     /**
      * Tests if negative arguments to skip are handled correctly.
      *
-     * @throws Throwable for some failure scenarios.
+     * @throws Throwable Thrown for some failure scenarios.
      */
     @Test
     void testSkipWrongArgument() throws Throwable {

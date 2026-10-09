@@ -90,7 +90,7 @@ class Base64Test {
      * alphabet where the final bits are zero. This asserts that illegal final
      * characters throw an exception when decoding.
      *
-     * @param nbits the number of trailing bits (must be a factor of 6 and {@code <24})
+     * @param nbits The number of trailing bits (must be a factor of 6 and {@code <24})
      */
     private static void assertBase64DecodingOfTrailingBits(final int nbits) {
         final Base64 codec = new Base64(0, null, false, CodecPolicy.STRICT);
@@ -171,7 +171,9 @@ class Base64Test {
     private final Random random = new Random();
 
     /**
-     * @return the random.
+     * Gets the random number generator.
+     *
+     * @return The random.
      */
     Random getRandom() {
         return this.random;
@@ -535,6 +537,42 @@ class Base64Test {
                 '.', '-', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M'
         };
         assertThrows(IllegalArgumentException.class, () -> Base64.builder().setEncodeTable(encodeTable).get());
+    }
+
+    @Test
+    void testCustomEncodingAlphabetAllowsNonAsciiBytes() {
+        final byte[] encodeTable = STANDARD_ENCODE_TABLE.clone();
+        encodeTable[0] = (byte) 0x80;
+        final Base64 base64 = Base64.builder().setEncodeTable(encodeTable).get();
+        final byte[] data = { 0 };
+        final byte[] encoded = base64.encode(data);
+        assertArrayEquals(new byte[] { (byte) 0x80, (byte) 0x80 }, encoded);
+        assertTrue(base64.isInAlphabet(encoded, false));
+        assertArrayEquals(data, base64.decode(encoded));
+    }
+
+    @Test
+    void testCustomEncodingAlphabetAllowsPaddingByteWhenPaddingChanges() {
+        final byte[] encodeTable = STANDARD_ENCODE_TABLE.clone();
+        encodeTable[0] = '=';
+        final Base64 base64 = Base64.builder().setEncodeTable(encodeTable).setPadding((byte) '.').get();
+        final byte[] data = { 0 };
+        assertArrayEquals(data, base64.decode(base64.encode(data)));
+    }
+
+    @Test
+    void testCustomEncodingAlphabetRejectsConfiguredPaddingByte() {
+        final byte[] encodeTable = STANDARD_ENCODE_TABLE.clone();
+        encodeTable[0] = '=';
+        assertThrows(IllegalArgumentException.class, () -> Base64.builder().setEncodeTable(encodeTable).get());
+        assertThrows(IllegalArgumentException.class, () -> Base64.builder().setPadding((byte) 'A').get());
+    }
+
+    @Test
+    void testCustomEncodingAlphabetRejectsDuplicateEntries() {
+        final byte[] encodeTable = STANDARD_ENCODE_TABLE.clone();
+        encodeTable[1] = encodeTable[0];
+        assertThrows(IllegalArgumentException.class, () -> Base64.builder().setEncodeTable(encodeTable));
     }
 
     @Test
@@ -999,7 +1037,7 @@ class Base64Test {
     }
 
     /**
-     * Tests RFC 1421 section 4.3.2.4 chuck size definition.
+     * Tests RFC 1421 section 4.3.2.4 chunk size definition.
      */
     @Test
     void testRfc1421Section6Dot8ChunkSizeDefinition() {
@@ -1015,7 +1053,7 @@ class Base64Test {
     }
 
     /**
-     * Tests RFC 2045 section 6.8 chuck size definition.
+     * Tests RFC 2045 section 6.8 chunk size definition.
      */
     @Test
     void testRfc2045Section6Dot8ChunkSizeDefinition() {
@@ -1567,7 +1605,7 @@ class Base64Test {
      * mode. This test case ends up being the "URL-SAFE" JUnit's.
      *
      * @throws DecoderException
-     *             if Hex.decode() fails - a serious problem since Hex comes
+     *             Thrown if Hex.decode() fails - a serious problem since Hex comes
      *             from our own commons-codec!
      */
     @Test

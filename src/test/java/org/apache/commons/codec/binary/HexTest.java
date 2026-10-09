@@ -36,6 +36,7 @@ import org.apache.commons.codec.EncoderException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 /**
  * Tests {@link Hex}.
@@ -48,13 +49,13 @@ class HexTest {
 
     /**
      * Allocate a ByteBuffer.
-     *
-     * <p>The default implementation uses {@link ByteBuffer#allocate(int)}.
-     * The method is overridden in AllocateDirectHexTest to use
+     * <p>
+     * The default implementation uses {@link ByteBuffer#allocate(int)}. The method is overridden in AllocateDirectHexTest to use
      * {@link ByteBuffer#allocateDirect(int)}
+     * </p>
      *
-     * @param capacity the capacity
-     * @return the byte buffer
+     * @param capacity The capacity
+     * @return The byte buffer
      */
     protected ByteBuffer allocate(final int capacity) {
         return ByteBuffer.allocate(capacity);
@@ -116,12 +117,14 @@ class HexTest {
     }
 
     /**
-     * Encodes the given string into a byte buffer using the UTF-8 charset.
+     * Gets the encoding of the given string as a byte buffer using the UTF-8 charset.
      *
-     * <p>The buffer is allocated using {@link #allocate(int)}.
+     * <p>
+     * The buffer is allocated using {@link #allocate(int)}.
+     * </p>
      *
-     * @param string the String to encode
-     * @return the byte buffer
+     * @param string The String to encode
+     * @return The byte buffer
      */
     private ByteBuffer getByteBufferUtf8(final String string) {
         final byte[] bytes = string.getBytes(StandardCharsets.UTF_8);
@@ -148,8 +151,8 @@ class HexTest {
     /**
      * @param name
      * @param parent
-     * @throws UnsupportedEncodingException
-     * @throws DecoderException
+     * @throws UnsupportedEncodingException Thrown if the named charset is unavailable.
+     * @throws DecoderException Thrown if decoding fails.
      */
     private void testCharset(final String name, final String parent) throws UnsupportedEncodingException,
             DecoderException {
@@ -327,6 +330,21 @@ class HexTest {
     @Test
     void testDecodeHexStringOddCharacters1() {
         checkDecodeHexCharArrayOddCharacters("A");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "\uFF14\uFF11", "\u0664\u0661", "\u096A\u0967", "\uFF21\uFF26", "\uFF41\uFF46", "4\uFF11" })
+    void testDecodeNonAsciiUnicodeDigits(final String input) {
+        // Alternate spellings must not decode to the same bytes as ASCII hexadecimal strings.
+        assertThrows(DecoderException.class, () -> Hex.decodeHex(input));
+        assertThrows(DecoderException.class, () -> Hex.decodeHex(input.toCharArray()));
+        assertThrows(DecoderException.class, () -> Hex.decodeHex(input.toCharArray(), new byte[input.length() / 2], 0));
+        assertThrows(DecoderException.class, () -> new Hex().decode(input));
+        final byte[] utf8 = input.getBytes(StandardCharsets.UTF_8);
+        assertThrows(DecoderException.class, () -> new Hex().decode(utf8));
+        final ByteBuffer buffer = allocate(utf8.length);
+        buffer.put(utf8).flip();
+        assertThrows(DecoderException.class, () -> new Hex().decode(buffer));
     }
 
     @Test

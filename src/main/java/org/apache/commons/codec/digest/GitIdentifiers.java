@@ -36,10 +36,20 @@ import java.util.function.Supplier;
  * Computes <a href="https://git-scm.com/">Git</a> object identifiers and their generalizations described by the
  * <a href="https://www.swhid.org/swhid-specification/">SWHID specification</a>.
  *
- * <p>When the hash algorithm is SHA-1, the identifiers produced by this class are identical to those used by Git.
- * Other hash algorithms produce generalized identifiers as described by the SWHID specification.</p>
+ * <p>
+ * When the hash algorithm is SHA-1, the identifiers produced by this class are identical to those used by Git.
+ * Other hash algorithms produce generalized identifiers as described by the SWHID specification.
+ * </p>
  *
- * <p>This class is immutable and thread-safe. However, the {@link MessageDigest} instances passed to it generally won't be.</p>
+ * <p>
+ * Git and SWHID treat file names and symbolic link targets as opaque byte sequences with no defined encoding. The
+ * identifiers produced here coincide with Git's or SWHID's own identifiers only if the original names and targets were
+ * UTF-8 encoded.
+ * </p>
+ *
+ * <p>
+ * This class is immutable and thread-safe. However, the {@link MessageDigest} instances passed to it generally won't be.
+ * </p>
  *
  * @see <a href="https://git-scm.com/book/en/v2/Git-Internals-Git-Objects">Git Internals – Git Objects</a>
  * @see <a href="https://www.swhid.org/swhid-specification/">SWHID Specification</a>
@@ -50,20 +60,39 @@ public class GitIdentifiers {
     /**
      * Represents a single entry in a Git tree object.
      *
-     * <p>A Git tree object encodes a directory snapshot. Each entry holds:</p>
+     * <p>
+     * A Git tree object encodes a directory snapshot. Each entry holds:
+     * </p>
      * <ul>
      *   <li>a {@link FileMode} that determines the Unix file mode (e.g. {@code 100644} for a regular file),</li>
      *   <li>the entry name (file or directory name, without a path separator),</li>
      *   <li>the raw object id of the referenced blob or sub-tree.</li>
      * </ul>
      *
-     * <p>Entries are ordered by {@link #compareTo} using Git's tree-sort rule: directory names are compared as if they ended with {@code '/'}, so that {@code foo/}
-     * sorts after {@code foobar}.</p>
+     * <p>
+     * Entries are ordered by {@link #compareTo} using Git's tree-sort rule: names are compared as unsigned UTF-8 bytes, and directory names are compared as if
+     * they ended with {@code '/'}, so that {@code foo/} sorts after {@code foobar}. Comparing the UTF-8 bytes rather than the Java {@link String} matches Git's
+     * order for names outside the Basic Multilingual Plane, whose UTF-16 code units do not sort in code point order.
+     * </p>
      *
      * @see <a href="https://git-scm.com/book/en/v2/Git-Internals-Git-Objects">Git Internals – Git Objects</a>
      * @see <a href="https://www.swhid.org/swhid-specification/v1.2/5.Core_identifiers/#53-directories">SWHID Directory Identifier</a>
      */
     static class DirectoryEntry implements Comparable<DirectoryEntry> {
+
+        private static String requireValidName(final String name) {
+            Objects.requireNonNull(name, "name");
+            if (name.isEmpty() || ".".equals(name) || "..".equals(name)) {
+                throw new IllegalArgumentException("Entry name must not be empty, '.' or '..'");
+            }
+            if (name.indexOf('/') >= 0 || name.indexOf('\0') >= 0) {
+                throw new IllegalArgumentException("Entry name must not contain '/' or NUL");
+            }
+            if (!StandardCharsets.UTF_8.newEncoder().canEncode(name)) {
+                throw new IllegalArgumentException("Entry name must not contain unpaired surrogates");
+            }
+            return name;
+        }
 
         /**
          * The entry name (file or directory name, no path separator).
@@ -76,11 +105,13 @@ public class GitIdentifiers {
         private final byte[] rawObjectId;
 
         /**
-         * The key used for ordering entries within a tree object.
+         * The key used for ordering entries within a tree object, as the UTF-8 bytes Git itself compares.
          *
-         * <p>>Git appends {@code '/'} to directory names before comparing.</p>
+         * <p>
+         * Git appends {@code '/'} to directory names before comparing.
+         * </p>
          */
-        private final String sortKey;
+        private final byte[] sortKey;
 
         /**
          * The Git object type, which determines the Unix file-mode prefix.
@@ -90,23 +121,29 @@ public class GitIdentifiers {
         /**
          * Constructs a new entry.
          *
-         * @param name The name of the entry, not containing {@code '/'}.
+         * @param name The nonempty entry name, not {@code .} or {@code ..}, without {@code '/'}, NUL or unpaired surrogates.
          * @param type The type of the entry, not null.
          * @param rawObjectId The id of the entry, not null.
          */
         DirectoryEntry(final String name, final FileMode type, final byte[] rawObjectId) {
-            if (Objects.requireNonNull(name).indexOf('/') >= 0) {
-                throw new IllegalArgumentException("Entry name must not contain '/': " + name);
-            }
-            this.name = name;
-            this.type = Objects.requireNonNull(type);
-            this.sortKey = type == FileMode.DIRECTORY ? name + "/" : name;
-            this.rawObjectId = Objects.requireNonNull(rawObjectId);
+            this.name = requireValidName(name);
+            this.type = Objects.requireNonNull(type, "type");
+            this.sortKey = (type == FileMode.DIRECTORY ? name + "/" : name).getBytes(StandardCharsets.UTF_8);
+            this.rawObjectId = Objects.requireNonNull(rawObjectId, "rawObjectId");
         }
 
         @Override
         public int compareTo(final DirectoryEntry o) {
-            return sortKey.compareTo(o.sortKey);
+            final byte[] a = sortKey;
+            final byte[] b = o.sortKey;
+            final int shared = Math.min(a.length, b.length);
+            for (int i = 0; i < shared; i++) {
+                final int diff = (a[i] & 0xff) - (b[i] & 0xff);
+                if (diff != 0) {
+                    return diff;
+                }
+            }
+            return a.length != b.length ? a.length - b.length : name.compareTo(o.name);
         }
 
         @Override
@@ -131,8 +168,10 @@ public class GitIdentifiers {
     /**
      * The type of a Git tree entry, which maps to a Unix file-mode string.
      *
-     * <p>Git encodes the file type and permission bits as an ASCII octal string that precedes the entry name in the binary tree format. The values defined here
-     * cover the four entry types that Git itself produces.</p>
+     * <p>
+     * Git encodes the file type and permission bits as an ASCII octal string that precedes the entry name in the binary tree format. The values defined here
+     * cover the four entry types that Git itself produces.
+     * </p>
      *
      * @see <a href="https://git-scm.com/book/en/v2/Git-Internals-Git-Objects">Git Internals – Git Objects</a>
      */
@@ -211,19 +250,12 @@ public class GitIdentifiers {
             byte[] get() throws IOException;
         }
 
-        private static String requireNoParentTraversal(final String name) {
-            if ("..".equals(name)) {
-                throw new IllegalArgumentException("Path component not allowed: " + name);
-            }
-            return name;
-        }
-
         private final Map<String, TreeIdBuilder> dirEntries = new HashMap<>();
         private final Map<String, DirectoryEntry> fileEntries = new HashMap<>();
         private final MessageDigest messageDigest;
 
         private TreeIdBuilder(final MessageDigest messageDigest) {
-            this.messageDigest = Objects.requireNonNull(messageDigest);
+            this.messageDigest = Objects.requireNonNull(messageDigest, "messageDigest");
         }
 
         /**
@@ -231,7 +263,7 @@ public class GitIdentifiers {
          *
          * @param name The relative path of the subdirectory in normalized form (may contain {@code '/'}).
          * @return The {@link TreeIdBuilder} for the subdirectory.
-         * @throws IllegalArgumentException If any path component is {@code ".."}.
+         * @throws IllegalArgumentException Thrown if any path component is {@code ".."}, contains NUL or contains unpaired surrogates.
          */
         public TreeIdBuilder addDirectory(final String name) {
             TreeIdBuilder current = this;
@@ -240,7 +272,7 @@ public class GitIdentifiers {
                 if (component.isEmpty() || ".".equals(component)) {
                     continue;
                 }
-                current = current.dirEntries.computeIfAbsent(requireNoParentTraversal(component), k -> new TreeIdBuilder(messageDigest));
+                current = current.dirEntries.computeIfAbsent(DirectoryEntry.requireValidName(component), k -> new TreeIdBuilder(messageDigest));
             }
             return current;
         }
@@ -248,7 +280,8 @@ public class GitIdentifiers {
         private void addFile(final FileMode mode, final String name, final BlobIdSupplier blobId) throws IOException {
             final int slash = name.lastIndexOf('/');
             if (slash < 0) {
-                fileEntries.put(name, new DirectoryEntry(requireNoParentTraversal(name), mode, blobId.get()));
+                DirectoryEntry.requireValidName(name);
+                fileEntries.put(name, new DirectoryEntry(name, mode, blobId.get()));
             } else {
                 addDirectory(name.substring(0, slash)).addFile(mode, name.substring(slash + 1), blobId);
             }
@@ -257,13 +290,16 @@ public class GitIdentifiers {
         /**
          * Adds a file entry at the given path within this tree.
          *
-         * <p>If {@code name} contains {@code '/'}, intermediate subdirectories are created automatically.</p>
+         * <p>
+         * If {@code name} contains {@code '/'}, intermediate subdirectories are created automatically.
+         * </p>
          *
          * @param mode The file mode (e.g. {@link FileMode#REGULAR}).
          * @param name The relative path of the entry in normalized form(may contain {@code '/'}).
          * @param data The file content.
-         * @throws IOException If an I/O error occurs.
-         * @throws IllegalArgumentException If any path component is {@code ".."}.
+         * @throws IOException Thrown if an I/O error occurs.
+         * @throws IllegalArgumentException Thrown if the entry name is empty or {@code "."}, or any path component is {@code ".."}, contains NUL or contains unpaired
+         *                                  surrogates.
          */
         public void addFile(final FileMode mode, final String name, final byte[] data) throws IOException {
             addFile(mode, name, () -> blobId(messageDigest, data));
@@ -272,16 +308,21 @@ public class GitIdentifiers {
         /**
          * Adds a file entry at the given path within this tree, streaming content without buffering.
          *
-         * <p>If {@code name} contains {@code '/'}, intermediate subdirectories are created automatically.</p>
+         * <p>
+         * If {@code name} contains {@code '/'}, intermediate subdirectories are created automatically.
+         * </p>
          *
-         * <p>The stream is eagerly drained.</p>
+         * <p>
+         * The stream is eagerly drained.
+         * </p>
          *
          * @param mode     The file mode (e.g. {@link FileMode#REGULAR}).
          * @param name The relative path of the entry in normalized form(may contain {@code '/'}).
          * @param dataSize The exact number of bytes in {@code data}.
          * @param data     The file content.
-         * @throws IOException If the stream cannot be read.
-         * @throws IllegalArgumentException If any path component is {@code ".."}.
+         * @throws IOException Thrown if the stream cannot be read, or does not contain exactly {@code dataSize} bytes.
+         * @throws IllegalArgumentException Thrown if the entry name is empty or {@code "."}, or any path component is {@code ".."}, contains NUL or contains unpaired
+         *                                  surrogates.
          */
         public void addFile(final FileMode mode, final String name, final long dataSize, final InputStream data) throws IOException {
             addFile(mode, name, () -> blobId(messageDigest, dataSize, data));
@@ -290,24 +331,33 @@ public class GitIdentifiers {
         /**
          * Adds a symbolic link entry at the given path within this tree.
          *
-         * <p>If {@code name} contains {@code '/'}, intermediate subdirectories are created automatically.</p>
+         * <p>
+         * If {@code name} contains {@code '/'}, intermediate subdirectories are created automatically.
+         * </p>
          *
          * @param name The relative path of the entry in normalized form(may contain {@code '/'}).
          * @param target The target of the symbolic link.
-         * @throws IOException If an I/O error occurs.
-         * @throws IllegalArgumentException If any path component is {@code ".."}.
+         * @throws IOException Thrown if an I/O error occurs.
+         * @throws IllegalArgumentException Thrown if the entry name is empty or {@code "."}, or any path component is {@code ".."}, contains NUL or contains unpaired
+         *                                  surrogates.
          */
         public void addSymbolicLink(final String name, final String target) throws IOException {
             addFile(FileMode.SYMBOLIC_LINK, name, target.getBytes(StandardCharsets.UTF_8));
         }
 
         /**
-         * Computes the Git tree identifier for this directory and all its descendants.
+         * Gets the Git tree identifier for this directory and all its descendants.
          *
          * @return The raw tree identifier bytes.
+         * @throws IllegalStateException Thrown if a file and a directory have the same name in this directory or any descendant.
          */
         @Override
         public byte[] get() {
+            for (final String name : dirEntries.keySet()) {
+                if (fileEntries.containsKey(name)) {
+                    throw new IllegalStateException("File and directory have the same name: " + name);
+                }
+            }
             final Set<DirectoryEntry> entries = new TreeSet<>(fileEntries.values());
             dirEntries.forEach((k, v) -> entries.add(new DirectoryEntry(k, FileMode.DIRECTORY, v.get())));
             final ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -343,11 +393,15 @@ public class GitIdentifiers {
     /**
      * Reads through a byte array and returns a generalized Git blob identifier.
      *
-     * <p>The identifier is computed in the way described by the
+     * <p>
+     * The identifier is computed in the way described by the
      * <a href="https://www.swhid.org/swhid-specification/v1.2/5.Core_identifiers/#52-contents">SWHID contents identifier</a>, but it can use any hash
-     * algorithm.</p>
+     * algorithm.
+     * </p>
      *
-     * <p>When the hash algorithm is SHA-1, the identifier is identical to Git blob identifier and SWHID contents identifier.</p>
+     * <p>
+     * When the hash algorithm is SHA-1, the identifier is identical to Git blob identifier and SWHID contents identifier.
+     * </p>
      *
      * @param messageDigest The MessageDigest to use (for example SHA-1).
      * @param data          Data to digest.
@@ -362,45 +416,68 @@ public class GitIdentifiers {
     /**
      * Reads through a stream of known size and returns a generalized Git blob identifier, without buffering.
      *
-     * <p>When the size of the content is known in advance, this overload streams {@code data} directly through
-     * the digest without buffering the full content in memory.</p>
+     * <p>
+     * When the size of the content is known in advance, this overload streams {@code data} directly through
+     * the digest without buffering the full content in memory.
+     * </p>
      *
-     * <p>When the hash algorithm is SHA-1, the identifier is identical to Git blob identifier and SWHID contents identifier.</p>
+     * <p>
+     * The stream is drained to its end. If the number of bytes read differs from {@code dataSize}, an {@link IOException} is thrown.
+     * </p>
+     *
+     * <p>
+     * When the hash algorithm is SHA-1, the identifier is identical to Git blob identifier and SWHID contents identifier.
+     * </p>
      *
      * @param messageDigest The MessageDigest to use (for example SHA-1).
      * @param dataSize      The exact number of bytes in {@code data}.
      * @param data          Stream to digest.
      * @return A generalized Git blob identifier.
-     * @throws IOException On error reading the stream.
+     * @throws IOException Thrown on error reading the stream, or if the stream does not contain exactly {@code dataSize} bytes.
      */
     public static byte[] blobId(final MessageDigest messageDigest, final long dataSize, final InputStream data) throws IOException {
         messageDigest.reset();
         DigestUtils.updateDigest(messageDigest, getGitBlobPrefix(dataSize));
-        return DigestUtils.updateDigest(messageDigest, data).digest();
+        final byte[] buffer = new byte[8192];
+        long actualSize = 0;
+        int read;
+        while ((read = data.read(buffer)) != -1) {
+            messageDigest.update(buffer, 0, read);
+            actualSize += read;
+        }
+        if (actualSize != dataSize) {
+            throw new IOException("Stream contained " + actualSize + " bytes, but dataSize declared " + dataSize + " bytes");
+        }
+        return messageDigest.digest();
     }
 
     /**
      * Reads through a file and returns a generalized Git blob identifier.
      *
-     * <p>The identifier is computed in the way described by the
+     * <p>
+     * The identifier is computed in the way described by the
      * <a href="https://www.swhid.org/swhid-specification/v1.2/5.Core_identifiers/#52-contents">SWHID contents identifier</a>, but it can use any hash
-     * algorithm.</p>
+     * algorithm.
+     * </p>
      *
-     * <p>When the hash algorithm is SHA-1, the identifier is identical to Git blob identifier and SWHID contents identifier.</p>
+     * <p>
+     * When the hash algorithm is SHA-1, the identifier is identical to Git blob identifier and SWHID contents identifier.
+     * </p>
      *
      * @param messageDigest The MessageDigest to use (for example SHA-1).
      * @param data          Path to the file to digest.
      * @return A generalized Git blob identifier.
-     * @throws IOException On error accessing the file.
+     * @throws IOException Thrown on error accessing the file, or if the number of bytes read differs from its measured size.
      */
     public static byte[] blobId(final MessageDigest messageDigest, final Path data) throws IOException {
         if (Files.isSymbolicLink(data)) {
             final byte[] linkTarget = Files.readSymbolicLink(data).toString().getBytes(StandardCharsets.UTF_8);
             return blobId(messageDigest, linkTarget);
         }
-        messageDigest.reset();
-        DigestUtils.updateDigest(messageDigest, getGitBlobPrefix(Files.size(data)));
-        return DigestUtils.updateDigest(messageDigest, data).digest();
+        final long dataSize = Files.size(data);
+        try (InputStream input = Files.newInputStream(data)) {
+            return blobId(messageDigest, dataSize, input);
+        }
     }
 
     private static byte[] getGitBlobPrefix(final long dataSize) {
@@ -418,16 +495,20 @@ public class GitIdentifiers {
     /**
      * Reads through a directory and returns a generalized Git tree identifier.
      *
-     * <p>The identifier is computed in the way described by the
+     * <p>
+     * The identifier is computed in the way described by the
      * <a href="https://www.swhid.org/swhid-specification/v1.2/5.Core_identifiers/#53-directories">SWHID directory identifier</a>, but it can use any hash
-     * algorithm.</p>
+     * algorithm.
+     * </p>
      *
-     * <p>When the hash algorithm is SHA-1, the identifier is identical to Git tree identifier and SWHID directory identifier.</p>
+     * <p>
+     * When the hash algorithm is SHA-1, the identifier is identical to Git tree identifier and SWHID directory identifier.
+     * </p>
      *
      * @param messageDigest The MessageDigest to use (for example SHA-1).
      * @param data          Path to the directory to digest.
      * @return A generalized Git tree identifier.
-     * @throws IOException On error accessing the directory or its contents.
+     * @throws IOException Thrown on error accessing the directory or its contents.
      */
     public static byte[] treeId(final MessageDigest messageDigest, final Path data) throws IOException {
         return treeIdBuilder(messageDigest).populate(data).get();
@@ -437,11 +518,15 @@ public class GitIdentifiers {
      * Returns a new {@link TreeIdBuilder} for constructing a generalized Git tree identifier from a virtual directory
      * structure, such as the contents of an archive.
      *
-     * <p>The identifier is computed in the way described by the
+     * <p>
+     * The identifier is computed in the way described by the
      * <a href="https://www.swhid.org/swhid-specification/v1.2/5.Core_identifiers/#53-directories">SWHID directory identifier</a>, but it can use any hash
-     * algorithm.</p>
+     * algorithm.
+     * </p>
      *
-     * <p>When the hash algorithm is SHA-1, the identifier is identical to Git tree identifier and SWHID directory identifier.</p>
+     * <p>
+     * When the hash algorithm is SHA-1, the identifier is identical to Git tree identifier and SWHID directory identifier.
+     * </p>
      *
      * @param messageDigest The MessageDigest to use (for example SHA-1).
      * @return A new {@link TreeIdBuilder}.

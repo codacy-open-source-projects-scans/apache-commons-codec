@@ -96,14 +96,24 @@ public class Base32 extends BaseNCodec {
             return new Base32(this);
         }
 
+        /**
+         * Sets the encode table and derives the matching decode table.
+         * <p>
+         * The RFC 4648 Base32 and Base32 Hex tables keep their case-insensitive decoders in lenient mode. Strict decoding requires the encoding alphabet.
+         * </p>
+         *
+         * @param encodeTable The encode table with exactly 32 unique entries, null resets to the default.
+         * @return {@code this} instance.
+         * @throws IllegalArgumentException Thrown if the encode table does not contain exactly 32 unique entries.
+         */
         @Override
         public Builder setEncodeTable(final byte... encodeTable) {
-            super.setDecodeTableRaw(Arrays.equals(encodeTable, HEX_ENCODE_TABLE) ? HEX_DECODE_TABLE : DECODE_TABLE);
+            super.setDecodeTableRaw(toDecodeTable(encodeTable));
             return super.setEncodeTable(encodeTable);
         }
 
         /**
-         * Sets the decode table to use Base32 hexadecimal if {@code true}, otherwise use the Base32 alphabet.
+         * Sets the encode and decode tables to use Base32 hexadecimal if {@code true}, otherwise use the Base32 alphabet.
          * <p>
          * This overrides a value previously set with {@link #setEncodeTable(byte...)}.
          * </p>
@@ -113,7 +123,7 @@ public class Base32 extends BaseNCodec {
          * @since 1.18.0
          */
         public Builder setHexDecodeTable(final boolean useHex) {
-            return setEncodeTable(decodeTable(useHex));
+            return setEncodeTable(encodeTable(useHex));
         }
 
         /**
@@ -145,6 +155,8 @@ public class Base32 extends BaseNCodec {
 
     private static final int BYTES_PER_ENCODED_BLOCK = 8;
     private static final int BYTES_PER_UNENCODED_BLOCK = 5;
+    private static final int DECODING_TABLE_LENGTH = 256;
+    private static final int ENCODING_TABLE_LENGTH = 1 << BITS_PER_ENCODED_BYTE;
 
     /**
      * This array is a lookup table that translates Unicode characters drawn from the "Base32 Alphabet" (as specified in Table 3 of RFC 4648) into their 5-bit
@@ -249,11 +261,34 @@ public class Base32 extends BaseNCodec {
      *   .get()
      * </pre>
      *
-     * @return a new Builder.
+     * @return A new Builder.
      * @since 1.17.0
      */
     public static Builder builder() {
         return new Builder();
+    }
+
+    /**
+     * Calculates a decode table for a given encode table.
+     *
+     * @param encodeTable that is used to determine decode lookup table.
+     * @return A new decode table.
+     * @throws IllegalArgumentException Thrown if the encode table does not contain exactly 32 unique entries.
+     */
+    private static byte[] calculateDecodeTable(final byte[] encodeTable) {
+        if (encodeTable.length != ENCODING_TABLE_LENGTH) {
+            throw new IllegalArgumentException("encodeTable must have exactly 32 entries.");
+        }
+        final byte[] decodeTable = new byte[DECODING_TABLE_LENGTH];
+        Arrays.fill(decodeTable, (byte) -1);
+        for (int i = 0; i < encodeTable.length; i++) {
+            final int encodedByte = encodeTable[i] & 0xff;
+            if (decodeTable[encodedByte] != -1) {
+                throw new IllegalArgumentException("encodeTable must not contain duplicate entries.");
+            }
+            decodeTable[encodedByte] = (byte) i;
+        }
+        return decodeTable;
     }
 
     private static byte[] decodeTable(final boolean useHex) {
@@ -270,10 +305,27 @@ public class Base32 extends BaseNCodec {
      *               <li>If false, then use <a href="https://datatracker.ietf.org/doc/html/rfc4648#section-6">RFC 4648 Section 6, Table 3: The Base 32
      *               Alphabet</a></li>
      *               </ul>
-     * @return the encoding table that matches {@code useHex}.
+     * @return The encoding table that matches {@code useHex}.
      */
     private static byte[] encodeTable(final boolean useHex) {
         return useHex ? HEX_ENCODE_TABLE : ENCODE_TABLE;
+    }
+
+    /**
+     * Gets the decode table that matches the given encode table.
+     *
+     * @param encodeTable that is used to determine decode lookup table.
+     * @return The matching decode table.
+     */
+    private static byte[] toDecodeTable(final byte[] encodeTable) {
+        final byte[] table = encodeTable != null ? encodeTable : ENCODE_TABLE;
+        if (Arrays.equals(table, ENCODE_TABLE)) {
+            return DECODE_TABLE;
+        }
+        if (Arrays.equals(table, HEX_ENCODE_TABLE)) {
+            return HEX_DECODE_TABLE;
+        }
+        return calculateDecodeTable(table);
     }
 
     /**
@@ -283,7 +335,7 @@ public class Base32 extends BaseNCodec {
     private final int encodeSize;
 
     /**
-     * Line separator for encoding. Not used when decoding. Only used if lineLength &gt; 0.
+     * Line separator for encoding and strict decoding. Only used if lineLength &gt; 0.
      */
     private final byte[] lineSeparator;
 
@@ -379,7 +431,7 @@ public class Base32 extends BaseNCodec {
      * </p>
      *
      * @param lineLength Each line of encoded data will be at most of the given length (rounded down to the nearest multiple of 8). If lineLength &lt;= 0, then
-     *                   the output will not be divided into lines (chunks). Ignored when decoding.
+     *                   the output will not be divided into lines (chunks). Ignored when decoding leniently.
      * @deprecated Use {@link #builder()} and {@link Builder}.
      */
     @Deprecated
@@ -397,7 +449,7 @@ public class Base32 extends BaseNCodec {
      * </p>
      *
      * @param lineLength    Each line of encoded data will be at most of the given length (rounded down to the nearest multiple of 8). If lineLength &lt;= 0,
-     *                      then the output will not be divided into lines (chunks). Ignored when decoding.
+     *                      then the output will not be divided into lines (chunks). Ignored when decoding leniently.
      * @param lineSeparator Each line of encoded data will end with this sequence of bytes.
      * @throws IllegalArgumentException Thrown when the {@code lineSeparator} contains Base32 characters.
      * @deprecated Use {@link #builder()} and {@link Builder}.
@@ -417,7 +469,7 @@ public class Base32 extends BaseNCodec {
      * </p>
      *
      * @param lineLength    Each line of encoded data will be at most of the given length (rounded down to the nearest multiple of 8). If lineLength &lt;= 0,
-     *                      then the output will not be divided into lines (chunks). Ignored when decoding.
+     *                      then the output will not be divided into lines (chunks). Ignored when decoding leniently.
      * @param lineSeparator Each line of encoded data will end with this sequence of bytes.
      * @param useHex
      *               <ul>
@@ -444,7 +496,7 @@ public class Base32 extends BaseNCodec {
      * </p>
      *
      * @param lineLength    Each line of encoded data will be at most of the given length (rounded down to the nearest multiple of 8). If lineLength &lt;= 0,
-     *                      then the output will not be divided into lines (chunks). Ignored when decoding.
+     *                      then the output will not be divided into lines (chunks). Ignored when decoding leniently.
      * @param lineSeparator Each line of encoded data will end with this sequence of bytes.
      * @param useHex
      *               <ul>
@@ -472,7 +524,7 @@ public class Base32 extends BaseNCodec {
      * </p>
      *
      * @param lineLength     Each line of encoded data will be at most of the given length (rounded down to the nearest multiple of 8). If lineLength &lt;= 0,
-     *                       then the output will not be divided into lines (chunks). Ignored when decoding.
+     *                       then the output will not be divided into lines (chunks). Ignored when decoding leniently.
      * @param lineSeparator  Each line of encoded data will end with this sequence of bytes.
      * @param useHex
      *               <ul>
@@ -503,21 +555,22 @@ public class Base32 extends BaseNCodec {
     /**
      * <p>
      * Decodes all of the provided data, starting at inPos, for inAvail bytes. Should be called at least twice: once with the data to decode, and once with
-     * inAvail set to "-1" to alert decoder that EOF has been reached. The "-1" call is not necessary when decoding, but it doesn't hurt, either.
+     * inAvail set to "-1" to alert decoder that EOF has been reached. Strict decoding requires the "-1" call to validate the complete input.
      * </p>
      * <p>
-     * Ignores all non-Base32 characters. This is how chunked (for example 76 character) data is handled, since CR and LF are silently ignored, but has implications
-     * for other bytes, too. This method subscribes to the garbage-in, garbage-out philosophy: it will not check the provided data for validity.
+     * Lenient decoding ignores non-alphabet characters and stops at the first padding byte. Strict decoding accepts only the canonical form produced by this
+     * instance's encoder, including its alphabet, padding, and line separators.
      * </p>
      * <p>
-     * Output is written to {@link org.apache.commons.codec.binary.BaseNCodec.Context#buffer Context#buffer} as 8-bit octets, using
-     * {@link org.apache.commons.codec.binary.BaseNCodec.Context#pos Context#pos} as the buffer position
+     * Output is written to {@link BaseNCodec.Context#buffer Context#buffer} as 8-bit octets, using
+     * {@link BaseNCodec.Context#pos Context#pos} as the buffer position
      * </p>
      *
      * @param input   byte[] array of ASCII data to Base32 decode.
      * @param inPos   Position to start reading data from.
      * @param inAvail Amount of bytes available from input for decoding.
-     * @param context the context to be used.
+     * @param context The context to be used.
+     * @throws IllegalArgumentException Thrown when a problem is detected processing data.
      */
     @Override
     void decode(final byte[] input, int inPos, final int inAvail, final Context context) {
@@ -527,17 +580,24 @@ public class Base32 extends BaseNCodec {
         }
         if (inAvail < 0) {
             context.eof = true;
+            if (isStrictDecoding()) {
+                validateCanonicalEnd(true, context);
+            }
         }
         final int decodeSize = this.encodeSize - 1;
         for (int i = 0; i < inAvail; i++) {
-            final byte b = input[inPos++];
-            if (b == pad) {
+            final int b = input[inPos++] & 0xff;
+            if (isStrictDecoding()) {
+                if (!validateCanonicalByte(b, lineSeparator, true, context)) {
+                    continue;
+                }
+            } else if (b == (pad & 0xff)) {
                 // We're done.
                 context.eof = true;
                 break;
             }
             final byte[] buffer = ensureBufferSize(decodeSize, context);
-            if (b >= 0 && b < this.decodeTable.length) {
+            if (b < this.decodeTable.length) {
                 final int result = this.decodeTable[b];
                 if (result >= 0) {
                     context.modulus = (context.modulus + 1) % BYTES_PER_ENCODED_BLOCK;
@@ -553,9 +613,8 @@ public class Base32 extends BaseNCodec {
                 }
             }
         }
-        // Two forms of EOF as far as Base32 decoder is concerned: actual
-        // EOF (-1) and first time '=' character is encountered in stream.
-        // This approach makes the '=' padding characters completely optional.
+        // Strict decoding waits for physical EOF to validate the complete input.
+        // Lenient decoding also treats the first padding byte as EOF.
         if (context.eof && context.modulus > 0) { // if modulus == 0, nothing to do
             final byte[] buffer = ensureBufferSize(decodeSize, context);
             // We ignore partial bytes, i.e. only multiples of 8 count.
@@ -623,7 +682,8 @@ public class Base32 extends BaseNCodec {
      * @param input   byte[] array of binary data to Base32 encode.
      * @param inPos   Position to start reading data from.
      * @param inAvail Amount of bytes available from input for encoding.
-     * @param context the context to be used.
+     * @param context The context to be used.
+     * @throws IllegalArgumentException Thrown when a problem is detected processing data.
      */
     @Override
     void encode(final byte[] input, int inPos, final int inAvail, final Context context) {
@@ -724,21 +784,22 @@ public class Base32 extends BaseNCodec {
     /**
      * Gets the line separator (for testing only).
      *
-     * @return the line separator.
+     * @return The line separator.
      */
     byte[] getLineSeparator() {
         return lineSeparator;
     }
 
     /**
-     * Returns whether or not the {@code octet} is in the Base32 alphabet.
+     * Tests whether the {@code octet} is in the Base32 alphabet.
      *
      * @param octet The value to test.
      * @return {@code true} if the value is defined in the Base32 alphabet {@code false} otherwise.
      */
     @Override
     public boolean isInAlphabet(final byte octet) {
-        return isInAlphabet(octet, decodeTable);
+        final int value = octet & 0xff;
+        return value < decodeTable.length && decodeTable[value] != -1;
     }
 
     /**
@@ -749,8 +810,8 @@ public class Base32 extends BaseNCodec {
      * </p>
      *
      * @param emptyBitsMask The mask of the lower bits that should be empty.
-     * @param context       the context to be used.
-     * @throws IllegalArgumentException if the bits being checked contain any non-zero value.
+     * @param context       The context to be used.
+     * @throws IllegalArgumentException Thrown if the bits being checked contain any non-zero value.
      */
     private void validateCharacter(final long emptyBitsMask, final Context context) {
         // Use the long bit work area
@@ -763,7 +824,7 @@ public class Base32 extends BaseNCodec {
     /**
      * Validates whether decoding allows final trailing characters that cannot be created during encoding.
      *
-     * @throws IllegalArgumentException if strict decoding is enabled.
+     * @throws IllegalArgumentException Thrown if strict decoding is enabled.
      */
     private void validateTrailingCharacters() {
         if (isStrictDecoding()) {

@@ -22,9 +22,9 @@ import java.util.function.Supplier;
 /**
  * Builds input and output stream instances in {@link BaseNCodec} format.
  *
- * @param <T> the stream type to build.
+ * @param <T> The stream type to build.
  * @param <C> A {@link BaseNCodec} subclass.
- * @param <B> the builder subclass.
+ * @param <B> The builder subclass.
  * @since 1.20.0
  */
 public abstract class AbstractBaseNCodecStreamBuilder<T, C extends BaseNCodec, B extends AbstractBaseNCodecStreamBuilder<T, C, B>> implements Supplier<T> {
@@ -47,7 +47,7 @@ public abstract class AbstractBaseNCodecStreamBuilder<T, C extends BaseNCodec, B
     /**
      * Gets the codec to encode/decode a stream.
      *
-     * @return the codec to encode/decode a stream.
+     * @return The codec to encode/decode a stream.
      */
     protected C getBaseNCodec() {
         return baseNCodec;
@@ -65,14 +65,14 @@ public abstract class AbstractBaseNCodecStreamBuilder<T, C extends BaseNCodec, B
     /**
      * Creates a new BaseNCodec subclass of type C.
      *
-     * @return a new BaseNCodec subclass of type C.
+     * @return A new BaseNCodec subclass of type C.
      */
     protected abstract C newBaseNCodec();
 
     /**
      * Sets a BaseNCodec subclass of type C.
      *
-     * @param baseNCodec a BaseNCodec subclass of type C.
+     * @param baseNCodec A BaseNCodec subclass of type C.
      * @return {@code this} instance.
      */
     public B setBaseNCodec(final C baseNCodec) {

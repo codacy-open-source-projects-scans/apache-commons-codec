@@ -37,6 +37,7 @@ import org.apache.commons.codec.EncoderException;
 import org.apache.commons.lang3.ArrayFill;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 /**
@@ -46,11 +47,33 @@ public class Base58Test {
 
     private static final int BOUND = 10_000;
 
+    private static final String DEFAULT_ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+
     private static final Charset CHARSET_UTF8 = StandardCharsets.UTF_8;
 
     private static void assertArrayEqualsAt(final byte[] data, final byte[] dec, final int i) {
         final AtomicInteger counter = new AtomicInteger(i);
         assertArrayEquals(data, dec, () -> String.format("Failed for length %,d: %s", counter.get(), Arrays.toString(data)));
+    }
+
+    private static byte[] fromHex(final String hex) {
+        try {
+            return Hex.decodeHex(hex);
+        } catch (final DecoderException e) {
+            throw new AssertionError("Invalid test-vector hex: " + hex, e);
+        }
+    }
+
+    private static byte[] newEncodeTable() {
+        return DEFAULT_ALPHABET.getBytes(StandardCharsets.US_ASCII);
+    }
+
+    private static byte[] newSwappedEncodeTable() {
+        final byte[] encodeTable = newEncodeTable();
+        final byte tmp = encodeTable[0];
+        encodeTable[0] = encodeTable[1];
+        encodeTable[1] = tmp;
+        return encodeTable;
     }
 
     private final Random random = new Random();
@@ -64,6 +87,65 @@ public class Base58Test {
         final byte[] decodedBytes = new Base58().decode(encodedBytes);
         final String decodedContent = StringUtils.newStringUtf8(decodedBytes);
         assertEquals(content, decodedContent, "decoding hello world");
+    }
+
+    @Test
+    void testBuilderCustomEncodeTableAffectsEncodeAndDecode() {
+        final Base58 base58 = Base58.builder().setEncodeTable(newSwappedEncodeTable()).get();
+        assertEquals("1", new String(base58.encode(new byte[] { 1 }), StandardCharsets.US_ASCII));
+        assertArrayEquals(new byte[] { 1 }, base58.decode("1".getBytes(StandardCharsets.US_ASCII)));
+    }
+
+    @Test
+    void testBuilderCustomEncodeTableAffectsIsInAlphabet() {
+        final byte[] encodeTable = newEncodeTable();
+        encodeTable[0] = '0';
+        final Base58 base58 = Base58.builder().setEncodeTable(encodeTable).get();
+        assertTrue(base58.isInAlphabet((byte) '0'));
+        assertFalse(base58.isInAlphabet((byte) '1'));
+        assertEquals("0", new String(base58.encode(new byte[] { 0 }), StandardCharsets.US_ASCII));
+        assertArrayEquals(new byte[] { 0 }, base58.decode("0".getBytes(StandardCharsets.US_ASCII)));
+    }
+
+    @Test
+    void testBuilderCustomEncodeTableAffectsLeadingZeros() {
+        final Base58 base58 = Base58.builder().setEncodeTable(newSwappedEncodeTable()).get();
+        final byte[] data = { 0, 0, 1 };
+        final byte[] encoded = base58.encode(data);
+        assertEquals("221", new String(encoded, StandardCharsets.US_ASCII));
+        assertArrayEquals(data, base58.decode(encoded));
+    }
+
+    @Test
+    void testBuilderCustomEncodeTableRejectsDuplicateEntries() {
+        final byte[] encodeTable = newEncodeTable();
+        encodeTable[1] = encodeTable[0];
+        assertThrows(IllegalArgumentException.class, () -> Base58.builder().setEncodeTable(encodeTable));
+    }
+
+    @Test
+    void testBuilderCustomEncodeTableRejectsInvalidLength() {
+        assertThrows(IllegalArgumentException.class, () -> Base58.builder().setEncodeTable(Arrays.copyOf(newEncodeTable(), DEFAULT_ALPHABET.length() - 1)));
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = { 20_000, 40_000, 80_000, 160_000, 320_000 })
+    void testDecodeLargeInput(final int n) {
+        // any valid non-'1' Base58 char
+        Base58.builder().setMaxDecodeLength(n).get().decode(ArrayFill.fill(new byte[n], (byte) 'z'));
+    }
+
+    /**
+     * Verifies that characters not in the Base58 alphabet (whitespace, punctuation, excluded
+     * letters) are rejected during decoding.
+     */
+    @ParameterizedTest
+    @ValueSource(strings = { "0", "O", "I", "l", "+", "/", " ", "=", "~" })
+    void testDecodeRejectsNonAlphabetCharacters(final String badChar) {
+        // Wrap in a valid prefix/suffix so only the bad char triggers the error.
+        final byte[] input = ("1" + badChar + "1").getBytes(StandardCharsets.US_ASCII);
+        assertThrows(IllegalArgumentException.class, () -> new Base58().decode(input),
+            "expected rejection of character: " + badChar);
     }
 
     @Test
@@ -83,8 +165,8 @@ public class Base58Test {
         for (int i = 1; i < 5; i++) {
             final byte[] data = new byte[random.nextInt(BOUND) + 1];
             Arrays.fill(data, (byte) i);
-            final byte[] enc = new Base58().encode(data);
-            final byte[] dec = new Base58().decode(enc);
+            final byte[] enc = Base58.builder().setMaxEncodeLength(BOUND).get().encode(data);
+            final byte[] dec = Base58.builder().setMaxDecodeLength(BOUND * 2).get().decode(enc);
             assertArrayEqualsAt(data, dec, i);
         }
     }
@@ -94,8 +176,8 @@ public class Base58Test {
         for (int i = 1; i < 5; i++) {
             final byte[] data = new byte[random.nextInt(BOUND) + 1];
             random.nextBytes(data);
-            final byte[] enc = new Base58().encode(data);
-            final byte[] dec = new Base58().decode(enc);
+            final byte[] enc = Base58.builder().setMaxEncodeLength(BOUND).get().encode(data);
+            final byte[] dec = Base58.builder().setMaxDecodeLength(BOUND * 2).get().decode(enc);
             assertArrayEqualsAt(data, dec, i);
         }
     }
@@ -123,12 +205,76 @@ public class Base58Test {
     }
 
     @Test
+    void testEncodedLength() {
+        final Base58 codec = new Base58();
+        assertEquals(0, codec.getEncodedLength(new byte[0]));
+        assertEquals(1, codec.getEncodedLength(new byte[] { 0 }));
+        assertEquals(3, codec.getEncodedLength(new byte[] { 0, 0, 0 }));
+        assertEquals(1, codec.getEncodedLength(new byte[] { 57 }));
+        assertEquals(2, codec.getEncodedLength(new byte[] { 58 }));
+        assertEquals(3, codec.getEncodedLength(new byte[] { 0, 58 }));
+        final Random random = new Random(58);
+        for (int length = 1; length <= 256; length++) {
+            final byte[] input = new byte[length];
+            random.nextBytes(input);
+            assertEquals(codec.encode(input).length, codec.getEncodedLength(input));
+        }
+    }
+
+    @Test
+    void testEncodedLengthLimit() {
+        final Base58 codec = Base58.builder().setMaxEncodeLength(10).get();
+        assertEquals(10, codec.getEncodedLength(new byte[10]));
+        assertThrows(IllegalArgumentException.class, () -> codec.getEncodedLength(new byte[11]));
+        assertEquals(11, Base58.builder().setMaxEncodeLength(11).get().getEncodedLength(new byte[11]));
+    }
+
+    @Test
     void testHexEncoding() {
         final String hexString = "48656c6c6f20576f726c6421";
         final byte[] encoded = new Base58().encode(StringUtils.getBytesUtf8(hexString));
         final byte[] decoded = new Base58().decode(StringUtils.newStringUtf8(encoded));
         assertEquals("5m7UdtXCfQxGvX2K9dLrkNs7AFMS98qn8", StringUtils.newStringUtf8(encoded), "Hex encoding failed");
         assertEquals(hexString, StringUtils.newStringUtf8(decoded), "Hex decoding failed");
+    }
+
+    /**
+     * Tests encode and decode against every test vector in the IETF Base58 encoding draft
+     * (draft-msporny-base58-03, Appendix A). The hex column is the raw binary input; the second
+     * column is the expected Base58 output.
+     *
+     * @see <a href="https://datatracker.ietf.org/doc/html/draft-msporny-base58-03#appendix-A">
+     *      draft-msporny-base58-03 Appendix A</a>
+     */
+    @ParameterizedTest(name = "[{index}] hex={0}")
+    @CsvSource({
+        // single byte 'a' (0x61)
+        "61,                                                                                     2g",
+        // "bbb"
+        "626262,                                                                                 a3gV",
+        // "ccc"
+        "636363,                                                                                 aPEr",
+        // "simply a long string"
+        "73696d706c792061206c6f6e6720737472696e67,                                               2cFupjhnEsSn59qHXstmK2ffpLv2",
+        // leading zero byte + random payload (produces leading '1')
+        // 25-byte Bitcoin address payload (version + RIPEMD160 hash + checksum) from Bitcoin wiki
+        "00010966776006953d5567439e5e39f86a0d273beed61967f6,                                     16UwLL9Risc3QfPqBUvKofHmBQ7wMtjvM",
+        "516b6fcd0f,                                                                             ABnLTmg",
+        "bf4f89001e670274dd,                                                                     3SEo3LWLoPntC",
+        "572e4794,                                                                               3EFU7m",
+        "ecac89cad93923c02321,                                                                   EJDM8drfXA6uyA",
+        "10c8511e,                                                                               Rt5zm",
+        // ten zero bytes -> ten '1' characters
+        "00000000000000000000,                                                                   1111111111",
+        // 43-byte payload whose Base58 encoding is exactly the full alphabet in order
+        "000111d38e5fc9071ffcd20b4a763cc9ae4f252bb4e48fd66a835e252ada93ff480d6dd43dc62a641155a5, 123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
+    })
+    void testIetfDraftBase58Vectors(final String hex, final String expectedBase58) {
+        final byte[] binary = fromHex(hex.trim());
+        final String base58 = expectedBase58.trim();
+        final byte[] base58Bytes = base58.getBytes(StandardCharsets.US_ASCII);
+        assertArrayEquals(base58Bytes, new Base58().encode(binary), "encode failed for hex=" + hex.trim());
+        assertArrayEquals(binary, new Base58().decode(base58Bytes), "decode failed for base58=" + base58);
     }
 
     @Test
@@ -172,6 +318,30 @@ public class Base58Test {
         assertFalse(base58.isInAlphabet((byte) 255));
     }
 
+    /**
+     * Verifies that the number of leading {@code '1'} characters in the encoded output exactly
+     * equals the number of leading zero bytes in the input, for a range of counts.
+     */
+    @ParameterizedTest
+    @ValueSource(ints = { 0, 1, 2, 3, 5, 10 })
+    void testLeadingZeroByteCountPreserved(final int zeros) {
+        // Append a non-zero tail so the total value is non-trivial.
+        final byte[] data = new byte[zeros + 3];
+        data[zeros]     = 0x01;
+        data[zeros + 1] = 0x02;
+        data[zeros + 2] = 0x03;
+        final byte[] encoded = new Base58().encode(data);
+        int leadingOnes = 0;
+        for (final byte b : encoded) {
+            if (b != '1') {
+                break;
+            }
+            leadingOnes++;
+        }
+        assertEquals(zeros, leadingOnes, "leading '1' count must equal leading zero-byte count");
+        assertArrayEquals(data, new Base58().decode(encoded), "round-trip must preserve leading zeros");
+    }
+
     @Test
     void testLeadingZeros() {
         // Test that leading zero bytes are encoded as '1' characters
@@ -183,6 +353,17 @@ public class Base58Test {
         // Decode should restore the leading zeros
         final byte[] decoded = new Base58().decode(encoded);
         assertArrayEquals(input, decoded, "Decoded should match original including leading zeros");
+    }
+
+    @Test
+    void testLineLength() {
+        assertThrows(IllegalArgumentException.class, () -> Base58.builder().setLineLength(76));
+        assertThrows(IllegalArgumentException.class, () -> Base58.builder().setLineSeparator(new byte[0]).setLineLength(1));
+        for (final int length : new int[] { 0, -1 }) {
+            final Base58 codec = Base58.builder().setLineLength(length).get();
+            assertArrayEquals(new byte[] { '2', '1' }, codec.encode(new byte[] { 58 }));
+            assertEquals(2, codec.getEncodedLength(new byte[] { 58 }));
+        }
     }
 
     @Test
@@ -228,6 +409,19 @@ public class Base58Test {
         }
     }
 
+    /**
+     * Round-trips arrays of all-{@code 0xFF} bytes (maximum unsigned byte value) to confirm
+     * that bytes with the high bit set are handled correctly.
+     */
+    @ParameterizedTest
+    @ValueSource(ints = { 1, 2, 3, 4, 8, 16 })
+    void testRoundTripAllMaxBytes(final int len) {
+        final byte[] data = new byte[len];
+        Arrays.fill(data, (byte) 0xFF);
+        assertArrayEquals(data, new Base58().decode(new Base58().encode(data)),
+            "round-trip failed for " + len + " x 0xFF bytes");
+    }
+
     @ParameterizedTest
     @ValueSource(ints = { 0, 1, 2, 3, 4 })
     void testRoundtripByte0(final int len) throws IOException {
@@ -248,6 +442,19 @@ public class Base58Test {
             final byte[] dec = new Base58().decode(enc);
             assertArrayEquals(data, dec, "Failed for byte value: " + i);
         }
+    }
+
+    /**
+     * Encodes a single zero byte; it must produce the single character {@code '1'}, and the
+     * round-trip must restore {@code [0x00]}.  This byte value is excluded from {@link #testSingleBytes()}
+     * which starts at {@code 1}.
+     */
+    @Test
+    void testSingleByteZero() {
+        final byte[] data = { 0 };
+        final byte[] encoded = new Base58().encode(data);
+        assertArrayEquals(new byte[] { '1' }, encoded, "single zero byte must encode as '1'");
+        assertArrayEquals(data, new Base58().decode(encoded), "round-trip of single zero byte");
     }
 
     @Test

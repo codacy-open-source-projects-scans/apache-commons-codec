@@ -101,7 +101,6 @@ public class QCodec extends RFC1522Codec implements StringEncoder, StringDecoder
         PRINTABLE_CHARS.set('}');
         PRINTABLE_CHARS.set('~');
     }
-    private static final byte SPACE = 32;
 
     private static final byte UNDERSCORE = 95;
 
@@ -133,7 +132,7 @@ public class QCodec extends RFC1522Codec implements StringEncoder, StringDecoder
      * @param charsetName
      *            the Charset to use.
      * @throws java.nio.charset.UnsupportedCharsetException
-     *             If the named Charset is unavailable.
+     *             Thrown if the named Charset is unavailable.
      * @since 1.7 throws UnsupportedCharsetException if the named Charset is unavailable
      * @see Charset
      */
@@ -167,11 +166,17 @@ public class QCodec extends RFC1522Codec implements StringEncoder, StringDecoder
      * Decodes a quoted-printable string into its original form. Escaped characters are converted back to their original
      * representation.
      *
+     * <p>
+     * Uses {@link QuotedPrintableCodec#decodeQuotedPrintable(byte[])} to decode the encoded text. Since 1.23.0, unescaped CR and LF bytes in malformed
+     * encoded words are preserved rather than discarded, and {@code =CR} without a following LF is rejected. This lenient handling does not make such
+     * encoded words valid under RFC 2047.
+     * </p>
+     *
      * @param str
      *            quoted-printable string to convert into its original form.
      * @return original string.
      * @throws DecoderException
-     *             A decoder exception is thrown if a failure condition is encountered during the decode process.
+     *             Thrown if a failure condition is encountered during the decoding process.
      */
     @Override
     public String decode(final String str) throws DecoderException {
@@ -201,7 +206,7 @@ public class QCodec extends RFC1522Codec implements StringEncoder, StringDecoder
                 if (b != UNDERSCORE) {
                     tmp[i] = b;
                 } else {
-                    tmp[i] = SPACE;
+                    tmp[i] = Utils.SPACE;
                 }
             }
             return QuotedPrintableCodec.decodeQuotedPrintable(tmp);
@@ -217,7 +222,7 @@ public class QCodec extends RFC1522Codec implements StringEncoder, StringDecoder
         final byte[] data = QuotedPrintableCodec.encodeQuotedPrintable(PRINTABLE_CHARS, bytes);
         if (this.encodeBlanks) {
             for (int i = 0; i < data.length; i++) {
-                if (data[i] == SPACE) {
+                if (data[i] == Utils.SPACE) {
                     data[i] = UNDERSCORE;
                 }
             }
@@ -232,7 +237,7 @@ public class QCodec extends RFC1522Codec implements StringEncoder, StringDecoder
      *            object to convert to quoted-printable form.
      * @return quoted-printable object.
      * @throws EncoderException
-     *             thrown if a failure condition is encountered during the encoding process.
+     *             Thrown if a failure condition is encountered during the encoding process.
      */
     @Override
     public Object encode(final Object obj) throws EncoderException {
@@ -252,7 +257,7 @@ public class QCodec extends RFC1522Codec implements StringEncoder, StringDecoder
      *            string to convert to quoted-printable form.
      * @return quoted-printable string.
      * @throws EncoderException
-     *             thrown if a failure condition is encountered during the encoding process.
+     *             Thrown if a failure condition is encountered during the encoding process.
      */
     @Override
     public String encode(final String sourceStr) throws EncoderException {
@@ -268,7 +273,7 @@ public class QCodec extends RFC1522Codec implements StringEncoder, StringDecoder
      *            the Charset for sourceStr.
      * @return quoted-printable string.
      * @throws EncoderException
-     *             thrown if a failure condition is encountered during the encoding process.
+     *             Thrown if a failure condition is encountered during the encoding process.
      * @since 1.7
      */
     public String encode(final String sourceStr, final Charset sourceCharset) throws EncoderException {
@@ -284,7 +289,7 @@ public class QCodec extends RFC1522Codec implements StringEncoder, StringDecoder
      *            the Charset for sourceStr.
      * @return quoted-printable string.
      * @throws EncoderException
-     *             thrown if a failure condition is encountered during the encoding process.
+     *             Thrown if a failure condition is encountered during the encoding process.
      */
     public String encode(final String sourceStr, final String sourceCharset) throws EncoderException {
         try {
@@ -300,7 +305,7 @@ public class QCodec extends RFC1522Codec implements StringEncoder, StringDecoder
     }
 
     /**
-     * Tests if optional transformation of SPACE characters is to be used
+     * Tests whether the optional transformation of SPACE characters is to be used.
      *
      * @return {@code true} if SPACE characters are to be transformed, {@code false} otherwise.
      */
@@ -309,7 +314,7 @@ public class QCodec extends RFC1522Codec implements StringEncoder, StringDecoder
     }
 
     /**
-     * Defines whether optional transformation of SPACE characters is to be used
+     * Sets whether the optional transformation of SPACE characters is to be used.
      *
      * @param b
      *            {@code true} if SPACE characters are to be transformed, {@code false} otherwise.

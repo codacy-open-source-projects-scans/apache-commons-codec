@@ -24,11 +24,17 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.charset.UnsupportedCharsetException;
+import java.util.stream.Stream;
 
 import org.apache.commons.codec.CharEncoding;
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.EncoderException;
+import org.junit.jupiter.api.Named;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 /**
  * Quoted-printable codec test cases
@@ -38,6 +44,24 @@ class QCodecTest {
     static final int[] SWISS_GERMAN_STUFF_UNICODE = { 0x47, 0x72, 0xFC, 0x65, 0x7A, 0x69, 0x5F, 0x7A, 0xE4, 0x6D, 0xE4 };
 
     static final int[] RUSSIAN_STUFF_UNICODE = { 0x412, 0x441, 0x435, 0x43C, 0x5F, 0x43F, 0x440, 0x438, 0x432, 0x435, 0x442 };
+
+    static Stream<Arguments> literalLineBreaks() {
+        // @formatter:off
+        return Stream.of(false, true).flatMap(underscore -> Stream.of(
+                Arguments.of(underscore, Named.of("CRLF", "\r\n")),
+                Arguments.of(underscore, Named.of("CR", "\r")),
+                Arguments.of(underscore, Named.of("LF", "\n"))));
+        // @formatter:on
+    }
+
+    static Stream<Arguments> malformedLineBreaks() {
+        // @formatter:off
+        return Stream.of(false, true).flatMap(underscore -> Stream.of(
+                Arguments.of(underscore, Named.of("CR without LF", "foo=\rbar")),
+                Arguments.of(underscore, Named.of("trailing CR", "foo=\r")),
+                Arguments.of(underscore, Named.of("LF without CR", "foo=\nbar"))));
+        // @formatter:on
+    }
 
     private String constructString(final int[] unicodeChars) {
         final StringBuilder buffer = new StringBuilder();
@@ -58,6 +82,40 @@ class QCodecTest {
         assertEquals(plain, qcodec.decode(encoded), "Basic Q decoding test");
     }
 
+    @ParameterizedTest(name = "{0}")
+    @ValueSource(strings = { "=?UTF-8?Q?ABC?DEF?=", "=?UTF-8?Q?ABC??=", "=?UTF-8?Q???=" })
+    void testDecodeEmbeddedQuestionMark(final String encoded) {
+        assertThrows(DecoderException.class, () -> new QCodec().decode(encoded));
+    }
+
+    @Test
+    void testDecodeEncodedQuestionMark() throws DecoderException {
+        assertEquals("ABC?DEF", new QCodec().decode("=?UTF-8?Q?ABC=3FDEF?="));
+    }
+
+    @ParameterizedTest(name = "underscore={0}")
+    @ValueSource(booleans = { false, true })
+    void testDecodeEscapedCrlf(final boolean underscore) throws DecoderException {
+        final String suffix = underscore ? "_" : "";
+        final String decodedSuffix = underscore ? " " : "";
+        assertEquals("SEC\r\nRET" + decodedSuffix, new QCodec().decode("=?UTF-8?Q?SEC=0D=0ARET" + suffix + "?="));
+    }
+
+    @ParameterizedTest(name = "underscore={0}: {1}")
+    @MethodSource("literalLineBreaks")
+    void testDecodeLiteralLineBreaks(final boolean underscore, final String lineBreak) throws DecoderException {
+        final String suffix = underscore ? "_" : "";
+        final String decodedSuffix = underscore ? " " : "";
+        assertEquals("SEC" + lineBreak + "RET" + decodedSuffix, new QCodec().decode("=?UTF-8?Q?SEC" + lineBreak + "RET" + suffix + "?="));
+    }
+
+    @ParameterizedTest(name = "underscore={0}: {1}")
+    @MethodSource("malformedLineBreaks")
+    void testDecodeMalformedLineBreaks(final boolean underscore, final String encoded) {
+        final String prefix = underscore ? "_" : "";
+        assertThrows(DecoderException.class, () -> new QCodec().decode("=?UTF-8?Q?" + prefix + encoded + "?="));
+    }
+
     @Test
     void testDecodeObjects() throws Exception {
         final QCodec qcodec = new QCodec();
@@ -68,6 +126,11 @@ class QCodecTest {
         final Object result = qcodec.decode((Object) null);
         assertNull(result, "Decoding a null Object should return null");
         assertThrows(DecoderException.class, () -> qcodec.decode(Double.valueOf(3.0d)), "Trying to url encode a Double object should cause an exception.");
+    }
+
+    @Test
+    void testDecodeSeparatorNotFoundThrowsDecoderException() {
+        assertThrows(DecoderException.class, () -> new QCodec().decode("=?="));
     }
 
     @Test

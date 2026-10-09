@@ -44,7 +44,9 @@ class Base16Test {
     private final Random random = new Random();
 
     /**
-     * @return the random.
+     * Gets the random number generator.
+     *
+     * @return The random.
      */
     Random getRandom() {
         return this.random;
@@ -89,6 +91,15 @@ class Base16Test {
         final byte[] encodedBytes = new Base16().encode(buffer, startPasSize, bytesUtf8.length);
         encodedContent = StringUtils.newStringUtf8(encodedBytes);
         assertEquals("48656C6C6F20576F726C64", encodedContent, "encoding hello world");
+    }
+
+    @Test
+    void testBuilderSetLowerCaseDecodesOwnOutput() {
+        final Base16 base16 = Base16.builder().setLowerCase(true).get();
+        final byte[] data = { (byte) 0xab };
+        final byte[] encoded = base16.encode(data);
+        assertEquals("ab", new String(encoded, StandardCharsets.US_ASCII));
+        assertArrayEquals(data, base16.decode(encoded));
     }
 
     @Test
@@ -147,6 +158,30 @@ class Base16Test {
         new Base16(true);
         new Base16(false, CodecPolicy.LENIENT);
         new Base16(false, CodecPolicy.STRICT);
+    }
+
+    @Test
+    void testCustomEncodeTableAffectsDecodeTable() {
+        final byte[] encodeTable = "0123456789ABCDEF".getBytes(StandardCharsets.US_ASCII);
+        final byte tmp = encodeTable[0];
+        encodeTable[0] = encodeTable[1];
+        encodeTable[1] = tmp;
+        final Base16 base16 = Base16.builder().setEncodeTable(encodeTable).get();
+        final byte[] encoded = base16.encode(new byte[] { 1 });
+        assertEquals("10", new String(encoded, StandardCharsets.US_ASCII));
+        assertArrayEquals(new byte[] { 1 }, base16.decode(encoded));
+    }
+
+    @Test
+    void testCustomEncodeTableRejectsDuplicates() {
+        final byte[] encodeTable = "00123456789ABCDE".getBytes(StandardCharsets.US_ASCII);
+        assertThrows(IllegalArgumentException.class, () -> Base16.builder().setEncodeTable(encodeTable));
+    }
+
+    @Test
+    void testCustomEncodeTableRejectsInvalidLength() {
+        assertThrows(IllegalArgumentException.class,
+                () -> Base16.builder().setEncodeTable("0123456789ABCDE".getBytes(StandardCharsets.US_ASCII)));
     }
 
     @Test

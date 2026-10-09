@@ -35,6 +35,7 @@ import org.apache.commons.codec.binary.BaseNCodec.Context;
  * @param <B> A subclass.
  * @see Base16InputStream
  * @see Base32InputStream
+ * @see Base58InputStream
  * @see Base64InputStream
  * @since 1.5
  */
@@ -44,9 +45,9 @@ public class BaseNCodecInputStream<C extends BaseNCodec, T extends BaseNCodecInp
     /**
      * Builds input stream instances in {@link BaseNCodec} format.
      *
-     * @param <T> the input stream type to build.
+     * @param <T> The input stream type to build.
      * @param <C> A {@link BaseNCodec} subclass.
-     * @param <B> the builder subclass.
+     * @param <B> The builder subclass.
      * @since 1.20.0
      */
     public abstract static class AbstracBuilder<T, C extends BaseNCodec, B extends AbstractBaseNCodecStreamBuilder<T, C, B>>
@@ -64,7 +65,7 @@ public class BaseNCodecInputStream<C extends BaseNCodec, T extends BaseNCodecInp
         /**
          * Gets the input stream.
          *
-         * @return the input stream.
+         * @return The input stream.
          */
         protected InputStream getInputStream() {
             return inputStream;
@@ -73,7 +74,7 @@ public class BaseNCodecInputStream<C extends BaseNCodec, T extends BaseNCodecInp
         /**
          * Sets the input bytes.
          *
-         * @param inputBytes the input bytes.
+         * @param inputBytes The input bytes.
          * @return {@code this} instance.
          * @since 1.22.0
          */
@@ -84,7 +85,7 @@ public class BaseNCodecInputStream<C extends BaseNCodec, T extends BaseNCodecInp
         /**
          * Sets the input stream.
          *
-         * @param inputStream the input stream.
+         * @param inputStream The input stream.
          * @return {@code this} instance.
          */
         public B setInputStream(final InputStream inputStream) {
@@ -116,8 +117,8 @@ public class BaseNCodecInputStream<C extends BaseNCodec, T extends BaseNCodecInp
     /**
      * Constructs a new instance.
      *
-     * @param inputStream the input stream.
-     * @param baseNCodec  the codec.
+     * @param inputStream The input stream.
+     * @param baseNCodec  The codec.
      * @param doEncode    set to true to perform encoding, else decoding.
      */
     protected BaseNCodecInputStream(final InputStream inputStream, final C baseNCodec, final boolean doEncode) {
@@ -131,6 +132,7 @@ public class BaseNCodecInputStream<C extends BaseNCodec, T extends BaseNCodecInp
      * {@inheritDoc}
      *
      * @return {@code 0} if the {@link InputStream} has reached {@code EOF}, {@code 1} otherwise.
+     * @throws IOException Thrown if an I/O error occurs.
      * @since 1.7
      */
     @Override
@@ -143,10 +145,11 @@ public class BaseNCodecInputStream<C extends BaseNCodec, T extends BaseNCodecInp
     }
 
     /**
-     * Returns true if decoding behavior is strict. Decoding will raise an {@link IllegalArgumentException} if trailing bits are not part of a valid encoding.
+     * Tests whether decoding behavior is strict.
      *
      * <p>
-     * The default is false for lenient encoding. Decoding will compose trailing bits into 8-bit bytes and discard the remainder.
+     * Strict decoding rejects invalid trailing bits and, for Base32 and Base64, noncanonical input. Decoding errors are reported as {@link IOException}.
+     * To complete validation, consume this stream to EOF. Decoded bytes can be emitted before a later validation error.
      * </p>
      *
      * @return true if using strict decoding.
@@ -162,7 +165,7 @@ public class BaseNCodecInputStream<C extends BaseNCodec, T extends BaseNCodecInp
      * The {@link #mark} method of {@link BaseNCodecInputStream} does nothing.
      * </p>
      *
-     * @param readLimit the maximum limit of bytes that can be read before the mark position becomes invalid.
+     * @param readLimit The maximum limit of bytes that can be read before the mark position becomes invalid.
      * @see #markSupported()
      * @since 1.7
      */
@@ -184,8 +187,8 @@ public class BaseNCodecInputStream<C extends BaseNCodec, T extends BaseNCodecInp
     /**
      * Reads one {@code byte} from this input stream.
      *
-     * @return the byte as an integer in the range 0 to 255. Returns -1 if EOF has been reached.
-     * @throws IOException if an I/O error occurs.
+     * @return The byte as an integer in the range 0 to 255. Returns -1 if EOF has been reached.
+     * @throws IOException Thrown if an I/O error occurs.
      */
     @Override
     public int read() throws IOException {
@@ -207,9 +210,9 @@ public class BaseNCodecInputStream<C extends BaseNCodec, T extends BaseNCodecInp
      * @param offset where to start writing the bytes.
      * @param len    maximum number of bytes to read.
      * @return number of bytes read.
-     * @throws IOException               if an I/O error occurs.
-     * @throws NullPointerException      if the byte array parameter is null.
-     * @throws IndexOutOfBoundsException if offset, len or buffer size are invalid.
+     * @throws IOException               Thrown if an I/O error occurs.
+     * @throws NullPointerException      Thrown if the byte array parameter is null.
+     * @throws IndexOutOfBoundsException Thrown if the offset, length, or buffer size is invalid.
      */
     @Override
     public int read(final byte[] array, final int offset, final int len) throws IOException {
@@ -234,12 +237,7 @@ public class BaseNCodecInputStream<C extends BaseNCodec, T extends BaseNCodecInp
             if (!baseNCodec.hasData(context)) {
                 // Obtain more data.
                 // buf is reused across calls to read to avoid repeated allocations
-                final int c = in.read(buf);
-                if (doEncode) {
-                    baseNCodec.encode(buf, 0, c, context);
-                } else {
-                    baseNCodec.decode(buf, 0, c, context);
-                }
+                BaseNCodec.code(doEncode, baseNCodec, buf, 0, in.read(buf), context);
             }
             final int read = baseNCodec.readResults(array, offset + readLen, len - readLen, context);
             if (read < 0) {
@@ -252,12 +250,9 @@ public class BaseNCodecInputStream<C extends BaseNCodec, T extends BaseNCodecInp
     }
 
     /**
-     * Repositions this stream to the position at the time the mark method was last called on this input stream.
-     * <p>
-     * The {@link #reset} method of {@link BaseNCodecInputStream} does nothing except throw an {@link IOException}.
-     * </p>
+     * Always throws {@link IOException} because this stream does not support resetting.
      *
-     * @throws IOException if this method is invoked.
+     * @throws IOException Thrown if this method is invoked.
      * @since 1.7
      */
     @Override
@@ -268,7 +263,8 @@ public class BaseNCodecInputStream<C extends BaseNCodec, T extends BaseNCodecInp
     /**
      * {@inheritDoc}
      *
-     * @throws IllegalArgumentException if the provided skip length is negative.
+     * @throws IllegalArgumentException Thrown if the provided skip length is negative.
+     * @throws IOException Thrown if an I/O error occurs.
      * @since 1.7
      */
     @Override

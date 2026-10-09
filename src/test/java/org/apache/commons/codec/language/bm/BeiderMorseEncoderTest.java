@@ -25,15 +25,20 @@ import static org.junit.jupiter.api.Assertions.assertTimeout;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.Duration;
+import java.util.Random;
 import java.util.regex.Pattern;
 
 import org.apache.commons.codec.AbstractStringEncoderTest;
 import org.apache.commons.codec.EncoderException;
 import org.apache.commons.codec.StringEncoder;
+import org.apache.commons.lang3.StringUtils;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 /**
- * Tests BeiderMorseEncoder.
+ * Tests {@link BeiderMorseEncoder}.
  */
 class BeiderMorseEncoderTest extends AbstractStringEncoderTest<StringEncoder> {
 
@@ -60,7 +65,7 @@ class BeiderMorseEncoderTest extends AbstractStringEncoderTest<StringEncoder> {
     /**
      * Tests we do not blow up.
      *
-     * @throws EncoderException for some failure scenarios     */
+     * @throws EncoderException Thrown for some failure scenarios     */
     @Test
     void testAllChars() throws EncoderException {
         final BeiderMorseEncoder bmpm = createGenericApproxEncoder();
@@ -93,6 +98,14 @@ class BeiderMorseEncoderTest extends AbstractStringEncoderTest<StringEncoder> {
         }
     }
 
+    @ParameterizedTest
+    @ValueSource(ints = { 20_000, 100_000, 200_000, 400_000 })
+    void testDQuoteRepeatLarge(final int repeat) throws Exception {
+        final String source = StringUtils.repeat("d'", repeat) + "aaa";
+        assertEquals("(D|a|i|o)-(dD|da|di|do)",
+                BeiderMorseEncoder.builder().setPhoneticEngine(PhoneticEngine.builder().setMaxInputLength(source.length()).get()).get().encode(source));
+    }
+
     @Test
     void testEncodeAtzNotEmpty() throws EncoderException {
         final BeiderMorseEncoder bmpm = createGenericApproxEncoder();
@@ -107,11 +120,27 @@ class BeiderMorseEncoderTest extends AbstractStringEncoderTest<StringEncoder> {
      * Tests https://issues.apache.org/jira/browse/CODEC-125?focusedCommentId=13071566&page=com.atlassian.jira.plugin.system.issuetabpanels:
      * comment-tabpanel#comment-13071566
      *
-     * @throws EncoderException for some failure scenarios     */
+     * @throws EncoderException Thrown for some failure scenarios.
+     */
     @Test
     void testEncodeGna() throws EncoderException {
         final BeiderMorseEncoder bmpm = createGenericApproxEncoder();
         bmpm.encode("gna");
+    }
+
+    @Disabled("For performance testing.")
+    @ParameterizedTest
+    @ValueSource(ints = { 2_000, 8_000, 16_000, 32_000 })
+    void testEncodeLargePerf(final int target) throws EncoderException {
+        final String[] units = { "a", "e", "i", "o", "u", "ai", "ei", "ou", "au", "ie", "tsch", "sch", "zh", "kh", "ye", "yo" };
+        final Random r = new Random(1);
+        // default GENERIC/APPROX, maxPhonemes=20
+        final BeiderMorseEncoder enc = new BeiderMorseEncoder();
+        final StringBuilder sb = new StringBuilder();
+        while (sb.length() < target) {
+            sb.append(units[r.nextInt(units.length)]); // one long token, no spaces
+        }
+        assertTrue(enc.encode(sb.toString()).length() > 0);
     }
 
     @Test
@@ -189,7 +218,7 @@ class BeiderMorseEncoderTest extends AbstractStringEncoderTest<StringEncoder> {
     /**
      * (Un)luckily, the worse performing test because of the data in the test characters.
      *
-     * @throws EncoderException for some failure scenarios
+     * @throws EncoderException Thrown for some failure scenarios
      */
     @Test /* timeout = 20000L */
     void testSpeedCheck() throws EncoderException {

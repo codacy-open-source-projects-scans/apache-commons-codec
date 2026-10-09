@@ -83,13 +83,13 @@ public class StringUtils {
     }
 
     /**
-     * Calls {@link String#getBytes(Charset)}
+     * Gets a byte buffer containing the bytes encoded by {@link String#getBytes(Charset)}.
      *
      * @param string
      *            The string to encode (if null, return null).
      * @param charset
      *            The {@link Charset} to encode the {@code String}.
-     * @return the encoded bytes.
+     * @return The encoded bytes.
      */
     private static ByteBuffer getByteBuffer(final String string, final Charset charset) {
         if (string == null) {
@@ -99,7 +99,7 @@ public class StringUtils {
     }
 
     /**
-     * Encodes the given string into a byte buffer using the UTF-8 charset, storing the result into a new byte
+     * Gets the encoding of the given string as a byte buffer using the UTF-8 charset, storing the result into a new byte
      * array.
      *
      * @param string
@@ -117,20 +117,20 @@ public class StringUtils {
     }
 
     /**
-     * Calls {@link String#getBytes(Charset)}
+     * Gets the encoded bytes by calling {@link String#getBytes(Charset)}.
      *
      * @param string
      *            The string to encode (if null, return null).
      * @param charset
      *            The {@link Charset} to encode the {@code String}.
-     * @return the encoded bytes.
+     * @return The encoded bytes.
      */
     private static byte[] getBytes(final String string, final Charset charset) {
         return string == null ? null : string.getBytes(charset);
     }
 
     /**
-     * Encodes the given string into a sequence of bytes using the ISO-8859-1 charset, storing the result into a new
+     * Gets the encoding of the given string as a sequence of bytes using the ISO-8859-1 charset, storing the result into a new
      * byte array.
      *
      * @param string
@@ -148,7 +148,7 @@ public class StringUtils {
     }
 
     /**
-     * Encodes the given string into a sequence of bytes using the named charset, storing the result into a new byte
+     * Gets the encoding of the given string as a sequence of bytes using the named charset, storing the result into a new byte
      * array.
      * <p>
      * This method catches {@link UnsupportedEncodingException} and rethrows it as {@link IllegalStateException}, which
@@ -158,7 +158,7 @@ public class StringUtils {
      * @param string
      *            the String to encode, may be {@code null}.
      * @param charsetName
-     *            The name of a required {@link java.nio.charset.Charset}.
+     *            The name of a required {@link Charset}.
      * @return encoded bytes, or {@code null} if the input string was {@code null}.
      * @throws IllegalStateException
      *             Thrown when a {@link UnsupportedEncodingException} is caught, which should never happen for a
@@ -178,7 +178,7 @@ public class StringUtils {
     }
 
     /**
-     * Encodes the given string into a sequence of bytes using the US-ASCII charset, storing the result into a new byte
+     * Gets the encoding of the given string as a sequence of bytes using the US-ASCII charset, storing the result into a new byte
      * array.
      *
      * @param string
@@ -196,7 +196,7 @@ public class StringUtils {
     }
 
     /**
-     * Encodes the given string into a sequence of bytes using the UTF-16 charset, storing the result into a new byte
+     * Gets the encoding of the given string as a sequence of bytes using the UTF-16 charset, storing the result into a new byte
      * array.
      *
      * @param string
@@ -214,7 +214,7 @@ public class StringUtils {
     }
 
     /**
-     * Encodes the given string into a sequence of bytes using the UTF-16BE charset, storing the result into a new byte
+     * Gets the encoding of the given string as a sequence of bytes using the UTF-16BE charset, storing the result into a new byte
      * array.
      *
      * @param string
@@ -232,7 +232,7 @@ public class StringUtils {
     }
 
     /**
-     * Encodes the given string into a sequence of bytes using the UTF-16LE charset, storing the result into a new byte
+     * Gets the encoding of the given string as a sequence of bytes using the UTF-16LE charset, storing the result into a new byte
      * array.
      *
      * @param string
@@ -250,7 +250,7 @@ public class StringUtils {
     }
 
     /**
-     * Encodes the given string into a sequence of bytes using the UTF-8 charset, storing the result into a new byte
+     * Gets the encoding of the given string as a sequence of bytes using the UTF-8 charset, storing the result into a new byte
      * array.
      *
      * @param string
@@ -297,7 +297,7 @@ public class StringUtils {
      * @param bytes
      *            The bytes to be decoded into characters, may be {@code null}.
      * @param charsetName
-     *            The name of a required {@link java.nio.charset.Charset}.
+     *            The name of a required {@link Charset}.
      * @return A new {@code String} decoded from the specified array of bytes using the given charset,
      *         or {@code null} if the input byte array was {@code null}.
      * @throws IllegalStateException

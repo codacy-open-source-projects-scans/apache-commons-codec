@@ -45,6 +45,11 @@ public class PercentCodec implements BinaryEncoder, BinaryDecoder {
     private static final byte ESCAPE_CHAR = '%';
 
     /**
+     * The plus character used to encode spaces when plusForSpace is true.
+     */
+    private static final byte PLUS_CHAR = '+';
+
+    /**
      * The bit set used to store the character that should be always encoded.
      */
     private final BitSet alwaysEncodeChars = new BitSet();
@@ -74,12 +79,15 @@ public class PercentCodec implements BinaryEncoder, BinaryDecoder {
      * always be encoded. The rest US-ASCII characters will not be encoded, except for character '%' that
      * is used as escape character for Percent-Encoding.
      *
-     * @param alwaysEncodeChars the unsafe characters that should always be encoded.
-     * @param plusForSpace      the flag defining if the space character should be encoded as '+'.
+     * @param alwaysEncodeChars The unsafe characters that should always be encoded.
+     * @param plusForSpace      The flag defining if the space character should be encoded as '+'.
      */
     public PercentCodec(final byte[] alwaysEncodeChars, final boolean plusForSpace) {
         this.plusForSpace = plusForSpace;
         insertAlwaysEncodeChars(alwaysEncodeChars);
+        if (plusForSpace) {
+            insertAlwaysEncodeChar(PLUS_CHAR);
+        }
     }
 
     private boolean canEncode(final byte c) {
@@ -98,6 +106,8 @@ public class PercentCodec implements BinaryEncoder, BinaryDecoder {
     /**
      * Decodes bytes encoded with Percent-Encoding based on RFC 3986. The reverse process is performed in order to
      * decode the encoded characters to Unicode.
+     *
+     * @throws DecoderException Thrown if an invalid percent-encoded sequence is found.
      */
     @Override
     public byte[] decode(final byte[] bytes) throws DecoderException {
@@ -127,9 +137,9 @@ public class PercentCodec implements BinaryEncoder, BinaryDecoder {
     /**
      * Decodes a byte[] Object, whose bytes are encoded with Percent-Encoding.
      *
-     * @param obj the object to decode.
-     * @return the decoding result byte[] as Object.
-     * @throws DecoderException if the object is not a byte array.
+     * @param obj The object to decode.
+     * @return The decoding result byte[] as Object.
+     * @throws DecoderException Thrown if the object is not a byte array.
      */
     @Override
     public Object decode(final Object obj) throws DecoderException {
@@ -167,6 +177,8 @@ public class PercentCodec implements BinaryEncoder, BinaryDecoder {
     /**
      * Percent-Encoding based on RFC 3986. The non US-ASCII characters are encoded, as well as the
      * US-ASCII characters that are configured to be always encoded.
+     *
+     * @throws EncoderException Thrown if an encoding error occurs.
      */
     @Override
     public byte[] encode(final byte[] bytes) throws EncoderException {
@@ -184,9 +196,9 @@ public class PercentCodec implements BinaryEncoder, BinaryDecoder {
     /**
      * Encodes an object into using the Percent-Encoding. Only byte[] objects are accepted.
      *
-     * @param obj the object to encode.
-     * @return the encoding result byte[] as Object.
-     * @throws EncoderException if the object is not a byte array.
+     * @param obj The object to encode.
+     * @return The encoding result byte[] as Object.
+     * @throws EncoderException Thrown if the object is not a byte array.
      */
     @Override
     public Object encode(final Object obj) throws EncoderException {
@@ -225,7 +237,7 @@ public class PercentCodec implements BinaryEncoder, BinaryDecoder {
      * Inserts a single character into a BitSet and maintains the min and max of the characters of the
      * {@code BitSet alwaysEncodeChars} in order to avoid look-ups when a byte is out of this range.
      *
-     * @param b the byte that is candidate for min and max limit.
+     * @param b The byte that is candidate for min and max limit.
      */
     private void insertAlwaysEncodeChar(final byte b) {
         if (b < 0) {
@@ -243,7 +255,7 @@ public class PercentCodec implements BinaryEncoder, BinaryDecoder {
     /**
      * Inserts the byte array into a BitSet for faster lookup.
      *
-     * @param alwaysEncodeCharsArray the byte array into a BitSet for faster lookup.
+     * @param alwaysEncodeCharsArray The byte array into a BitSet for faster lookup.
      */
     private void insertAlwaysEncodeChars(final byte[] alwaysEncodeCharsArray) {
         if (alwaysEncodeCharsArray != null) {

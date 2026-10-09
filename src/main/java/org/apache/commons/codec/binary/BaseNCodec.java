@@ -17,6 +17,9 @@
 
 package org.apache.commons.codec.binary;
 
+import java.io.IOException;
+import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.function.Supplier;
@@ -34,17 +37,38 @@ import org.apache.commons.codec.EncoderException;
  * This class is thread-safe.
  * </p>
  * <p>
- * You can set the decoding behavior when the input bytes contain leftover trailing bits that cannot be created by a valid encoding. These can be bits that are
- * unused from the final character or entire characters. The default mode is lenient decoding.
+ * The default decoding policy is lenient. Strict decoding rejects trailing bits that cannot be produced by an encoding, including nonzero unused bits and
+ * impossible counts of final characters.
  * </p>
- * <ul>
- * <li>Lenient: Any trailing bits are composed into 8-bit bytes where possible. The remainder are discarded.</li>
- * <li>Strict: The decoding will raise an {@link IllegalArgumentException} if trailing bits are not part of a valid encoding. Any unused bits from the final
- * character must be zero. Impossible counts of entire final characters are not allowed.</li>
- * </ul>
+ *
  * <p>
- * When strict decoding is enabled it is expected that the decoded bytes will be re-encoded to a byte array that matches the original, i.e. no changes occur on
- * the final character. This requires that the input bytes use the same padding and alphabet as the encoder.
+ * For {@link Base32} and {@link Base64}, strict decoding additionally requires the exact canonical form produced by this instance's encoder. Re-encoding
+ * successfully decoded input reproduces the input byte for byte. This includes the configured alphabet, padding, line length, and line separator, including
+ * the final line separator when chunking is enabled. Whitespace and alphabet aliases are rejected unless the encoder produces them in that position.
+ * </p>
+ *
+ * <p>
+ * Lenient decoding can map different encoded values to the same bytes. If an application uses encoded values as identifiers for blocklists, replay caches,
+ * or deduplication, validate canonical input before comparing those identifiers, or compare a consistently normalized representation throughout the
+ * application. Decoding alone does not authenticate input; signature verification must use the representation required by the signing protocol.
+ * </p>
+ *
+ * <p>
+ * For example, select canonical Base32 decoding with:
+ * </p>
+ *
+ * <pre>
+ * Base32 base32 = Base32.builder().setDecodingPolicy(CodecPolicy.STRICT).get();
+ * </pre>
+ *
+ * <p>
+ * This instance requires the uppercase Base32 alphabet, padding for partial blocks, and no line separators. See {@link Base64} for standard and URL-safe
+ * Base64 examples.
+ * </p>
+ *
+ * <p>
+ * Strict validation completes only at the end of the input. When decoding streams, consume the input stream to EOF or finish the output stream with
+ * {@link BaseNCodecOutputStream#eof()} or {@link BaseNCodecOutputStream#close()}. A stream can emit decoded bytes before a later validation error.
  * </p>
  */
 public abstract class BaseNCodec implements BinaryEncoder, BinaryDecoder {
@@ -52,11 +76,22 @@ public abstract class BaseNCodec implements BinaryEncoder, BinaryDecoder {
     /**
      * Builds {@link Base64} instances.
      *
-     * @param <T> the codec type to build.
-     * @param <B> the codec builder subtype.
+     * @param <T> The codec type to build.
+     * @param <B> The codec builder subtype.
      * @since 1.17.0
      */
     public abstract static class AbstractBuilder<T, B extends AbstractBuilder<T, B>> implements Supplier<T> {
+
+        /**
+         * Clones the given array or returns a default array if the array is null.
+         *
+         * @param array        The array to test and clone if not null.
+         * @param defaultArray The default array to return if the array is null.
+         * @return A clone of the array or the default array if the array is null.
+         */
+        static byte[] clone(final byte[] array, final byte[] defaultArray) {
+            return array != null ? array.clone() : defaultArray;
+        }
 
         private int unencodedBlockSize;
         private int encodedBlockSize;
@@ -127,19 +162,19 @@ public abstract class BaseNCodec implements BinaryEncoder, BinaryDecoder {
         /**
          * Sets the decode table.
          *
-         * @param decodeTable the decode table.
+         * @param decodeTable The decode table.
          * @return {@code this} instance.
          * @since 1.20.0
          */
         public B setDecodeTable(final byte[] decodeTable) {
-            this.decodeTable = decodeTable != null ? decodeTable.clone() : null;
+            this.decodeTable = clone(decodeTable, null);
             return asThis();
         }
 
         /**
          * Sets the decode table.
          *
-         * @param decodeTable the decode table, null resets to the default.
+         * @param decodeTable The decode table, null resets to the default.
          * @return {@code this} instance.
          */
         B setDecodeTableRaw(final byte[] decodeTable) {
@@ -150,7 +185,7 @@ public abstract class BaseNCodec implements BinaryEncoder, BinaryDecoder {
         /**
          * Sets the decoding policy.
          *
-         * @param decodingPolicy the decoding policy, null resets to the default.
+         * @param decodingPolicy The decoding policy, null resets to the default.
          * @return {@code this} instance.
          */
         public B setDecodingPolicy(final CodecPolicy decodingPolicy) {
@@ -161,29 +196,29 @@ public abstract class BaseNCodec implements BinaryEncoder, BinaryDecoder {
         /**
          * Sets the encoded block size, subclasses normally set this on construction.
          *
-         * @param encodedBlockSize the encoded block size, subclasses normally set this on construction.
+         * @param encodedBlockSize The encoded block size, subclasses normally set this on construction.
          * @return {@code this} instance.
          */
         B setEncodedBlockSize(final int encodedBlockSize) {
-            this.encodedBlockSize = encodedBlockSize;
+            this.encodedBlockSize = gte0(encodedBlockSize);
             return asThis();
         }
 
         /**
          * Sets the encode table.
          *
-         * @param encodeTable the encode table, null resets to the default.
+         * @param encodeTable The encode table, null resets to the default.
          * @return {@code this} instance.
          */
         public B setEncodeTable(final byte... encodeTable) {
-            this.encodeTable = encodeTable != null ? encodeTable.clone() : defaultEncodeTable;
+            this.encodeTable = clone(encodeTable, defaultEncodeTable);
             return asThis();
         }
 
         /**
          * Sets the encode table.
          *
-         * @param encodeTable the encode table, null resets to the default.
+         * @param encodeTable The encode table, null resets to the default.
          * @return {@code this} instance.
          */
         B setEncodeTableRaw(final byte... encodeTable) {
@@ -194,7 +229,7 @@ public abstract class BaseNCodec implements BinaryEncoder, BinaryDecoder {
         /**
          * Sets the line length.
          *
-         * @param lineLength the line length, less than 0 resets to the default.
+         * @param lineLength The line length, less than 0 resets to the default.
          * @return {@code this} instance.
          */
         public B setLineLength(final int lineLength) {
@@ -205,18 +240,18 @@ public abstract class BaseNCodec implements BinaryEncoder, BinaryDecoder {
         /**
          * Sets the line separator.
          *
-         * @param lineSeparator the line separator, null resets to the default.
+         * @param lineSeparator The line separator, null resets to the default.
          * @return {@code this} instance.
          */
         public B setLineSeparator(final byte... lineSeparator) {
-            this.lineSeparator = lineSeparator != null ? lineSeparator.clone() : CHUNK_SEPARATOR;
+            this.lineSeparator = clone(lineSeparator , CHUNK_SEPARATOR);
             return asThis();
         }
 
         /**
          * Sets the padding byte.
          *
-         * @param padding the padding byte.
+         * @param padding The padding byte.
          * @return {@code this} instance.
          */
         public B setPadding(final byte padding) {
@@ -227,11 +262,11 @@ public abstract class BaseNCodec implements BinaryEncoder, BinaryDecoder {
         /**
          * Sets the unencoded block size, subclasses normally set this on construction.
          *
-         * @param unencodedBlockSize the unencoded block size, subclasses normally set this on construction.
+         * @param unencodedBlockSize The unencoded block size, subclasses normally set this on construction.
          * @return {@code this} instance.
          */
         B setUnencodedBlockSize(final int unencodedBlockSize) {
-            this.unencodedBlockSize = unencodedBlockSize;
+            this.unencodedBlockSize = gte0(unencodedBlockSize);
             return asThis();
         }
     }
@@ -274,7 +309,7 @@ public abstract class BaseNCodec implements BinaryEncoder, BinaryDecoder {
         boolean eof;
 
         /**
-         * Variable tracks how many characters have been written to the current line. Only used when encoding. We use it to make sure each encoded line never
+         * Variable tracks how many characters have been written to or strictly decoded from the current line. We use it to make sure each encoded line never
          * goes beyond lineLength (if lineLength &gt; 0).
          */
         int currentLinePos;
@@ -285,9 +320,24 @@ public abstract class BaseNCodec implements BinaryEncoder, BinaryDecoder {
         int modulus;
 
         /**
+         * Number of padding bytes consumed by strict decoding.
+         */
+        int strictPadding;
+
+        /**
+         * Position within the configured line separator during strict decoding.
+         */
+        int strictSeparatorPos;
+
+        /**
+         * Whether strict decoding has encountered a short final line.
+         */
+        boolean strictFinalLine;
+
+        /**
          * Returns a String useful for debugging (especially within a debugger.)
          *
-         * @return a String useful for debugging.
+         * @return A String useful for debugging.
          */
         @Override
         public String toString() {
@@ -335,7 +385,7 @@ public abstract class BaseNCodec implements BinaryEncoder, BinaryDecoder {
      * The maximum size buffer to allocate.
      *
      * <p>
-     * This is set to the same size used in the JDK {@link java.util.ArrayList}:
+     * This is set to the same size used in the JDK {@link ArrayList}:
      * </p>
      * <blockquote> Some VMs reserve some header words in an array. Attempts to allocate larger arrays may result in OutOfMemoryError: Requested array size
      * exceeds VM limit. </blockquote>
@@ -369,13 +419,26 @@ public abstract class BaseNCodec implements BinaryEncoder, BinaryDecoder {
      */
     static final byte[] EMPTY_BYTE_ARRAY = {};
 
+    static void code(final boolean doEncode, final BaseNCodec baseNCodec, final byte[] buf, final int offset, final int len, final Context context)
+            throws IOException {
+        try {
+            if (doEncode) {
+                baseNCodec.encode(buf, offset, len, context);
+            } else {
+                baseNCodec.decode(buf, offset, len, context);
+            }
+        } catch (final IllegalArgumentException e) {
+            throw new IOException(e.getMessage(), e);
+        }
+    }
+
     /**
      * Create a positive capacity at least as large the minimum required capacity. If the minimum capacity is negative then this throws an OutOfMemoryError as
      * no array can be allocated.
      *
-     * @param minCapacity the minimum capacity.
-     * @return the capacity.
-     * @throws OutOfMemoryError if the {@code minCapacity} is negative.
+     * @param minCapacity The minimum capacity.
+     * @return The capacity.
+     * @throws OutOfMemoryError Thrown if the {@code minCapacity} is negative.
      */
     private static int createPositiveCapacity(final int minCapacity) {
         if (minCapacity < 0) {
@@ -396,7 +459,7 @@ public abstract class BaseNCodec implements BinaryEncoder, BinaryDecoder {
     /**
      * Gets a copy of the chunk separator per RFC 2045 section 2.1.
      *
-     * @return the chunk separator.
+     * @return The chunk separator.
      * @see <a href="https://www.ietf.org/rfc/rfc2045">RFC 2045 section 2.1</a>
      * @since 1.15
      */
@@ -404,31 +467,17 @@ public abstract class BaseNCodec implements BinaryEncoder, BinaryDecoder {
         return CHUNK_SEPARATOR.clone();
     }
 
-    /**
-     * Gets the array length or 0 if null.
-     *
-     * @param array the array or null.
-     * @return the array length or 0 if null.
-     */
-    static int getLength(final byte[] array) {
-        return array == null ? 0 : array.length;
+    private static int gte0(final int value) {
+        if (value < 0) {
+            throw new IllegalArgumentException("value must be greater than or equal to 0.");
+        }
+        return value;
     }
 
     /**
-     * Tests whether or not the {@code value} is in the given {@code table}.
+     * Tests if a byte value is whitespace or not.
      *
-     * @param value The value to test.
-     * @param table The table to test against.
-     * @return {@code true} if the value is in the table, {@code false} otherwise.
-     */
-    static boolean isInAlphabet(final byte value, final byte[] table) {
-        return value >= 0 && value < table.length && table[value] != -1;
-    }
-
-    /**
-     * Checks if a byte value is whitespace or not.
-     *
-     * @param byteToCheck the byte to check.
+     * @param byteToCheck The byte to check.
      * @return true if byte is whitespace, false otherwise.
      * @see Character#isWhitespace(int)
      * @deprecated Use {@link Character#isWhitespace(int)}.
@@ -441,10 +490,10 @@ public abstract class BaseNCodec implements BinaryEncoder, BinaryDecoder {
     /**
      * Increases our buffer by the {@link #DEFAULT_BUFFER_RESIZE_FACTOR}.
      *
-     * @param context     the context to be used.
-     * @param minCapacity the minimum required capacity.
-     * @return the resized byte[] buffer.
-     * @throws OutOfMemoryError if the {@code minCapacity} is negative.
+     * @param context     The context to be used.
+     * @param minCapacity The minimum required capacity.
+     * @return The resized byte[] buffer.
+     * @throws OutOfMemoryError Thrown if the {@code minCapacity} is negative.
      */
     private static byte[] resizeBuffer(final Context context, final int minCapacity) {
         // Overflow-conscious code treats the min and new capacity as unsigned.
@@ -459,6 +508,25 @@ public abstract class BaseNCodec implements BinaryEncoder, BinaryDecoder {
         final byte[] b = Arrays.copyOf(context.buffer, newCapacity);
         context.buffer = b;
         return b;
+    }
+
+    /**
+     * Returns a byte-array representation of a {@code BigInteger} without sign bit.
+     * <p>
+     * The value {@link BigInteger#ZERO} maps to an empty array.
+     * </p>
+     *
+     * @param value {@code BigInteger} to be converted.
+     * @return A byte array representation of the BigInteger parameter.
+     */
+    static byte[] toUnsignedBytes(final BigInteger value) {
+        byte[] unsigned = value.equals(BigInteger.ZERO) ? EMPTY_BYTE_ARRAY : value.toByteArray();
+        if (unsigned.length > 0 && unsigned[0] == 0) {
+            final byte[] tmp = new byte[unsigned.length - 1];
+            System.arraycopy(unsigned, 1, tmp, 0, tmp.length);
+            unsigned = tmp;
+        }
+        return unsigned;
     }
 
     /**
@@ -482,7 +550,7 @@ public abstract class BaseNCodec implements BinaryEncoder, BinaryDecoder {
     private final int encodedBlockSize;
 
     /**
-     * Chunksize for encoding. Not used when decoding. A value of zero or less implies no chunking of the encoded data. Rounded down to the nearest multiple of
+     * Chunk size for encoding and strict decoding. A value of zero or less implies no chunking of the encoded data. Rounded down to the nearest multiple of
      * encodedBlockSize.
      */
     protected final int lineLength;
@@ -493,17 +561,7 @@ public abstract class BaseNCodec implements BinaryEncoder, BinaryDecoder {
     private final int chunkSeparatorLength;
 
     /**
-     * Defines the decoding behavior when the input bytes contain leftover trailing bits that cannot be created by a valid encoding. These can be bits that are
-     * unused from the final character or entire characters. The default mode is lenient decoding. Set this to {@code true} to enable strict decoding.
-     * <ul>
-     * <li>Lenient: Any trailing bits are composed into 8-bit bytes where possible. The remainder are discarded.</li>
-     * <li>Strict: The decoding will raise an {@link IllegalArgumentException} if trailing bits are not part of a valid encoding. Any unused bits from the final
-     * character must be zero. Impossible counts of entire final characters are not allowed.</li>
-     * </ul>
-     * <p>
-     * When strict decoding is enabled it is expected that the decoded bytes will be re-encoded to a byte array that matches the original, i.e. no changes occur
-     * on the final character. This requires that the input bytes use the same padding and alphabet as the encoder.
-     * </p>
+     * Decoding policy, including canonical validation for Base32 and Base64.
      */
     private final CodecPolicy decodingPolicy;
 
@@ -524,8 +582,8 @@ public abstract class BaseNCodec implements BinaryEncoder, BinaryDecoder {
      * @since 1.20.0
      */
     protected BaseNCodec(final AbstractBuilder<?, ?> builder) {
-        this.unencodedBlockSize = builder.unencodedBlockSize;
-        this.encodedBlockSize = builder.encodedBlockSize;
+        this.unencodedBlockSize = gte0(builder.unencodedBlockSize);
+        this.encodedBlockSize = gte0(builder.encodedBlockSize);
         final boolean useChunking = builder.lineLength > 0 && builder.lineSeparator.length > 0;
         this.lineLength = useChunking ? builder.lineLength / builder.encodedBlockSize * builder.encodedBlockSize : 0;
         this.chunkSeparatorLength = builder.lineSeparator.length;
@@ -542,10 +600,10 @@ public abstract class BaseNCodec implements BinaryEncoder, BinaryDecoder {
      * disabled.
      * </p>
      *
-     * @param unencodedBlockSize   the size of an unencoded block (for example Base64 = 3).
-     * @param encodedBlockSize     the size of an encoded block (for example Base64 = 4).
+     * @param unencodedBlockSize   The size of an unencoded block (for example Base64 = 3).
+     * @param encodedBlockSize     The size of an encoded block (for example Base64 = 4).
      * @param lineLength           if &gt; 0, use chunking with a length {@code lineLength}.
-     * @param chunkSeparatorLength the chunk separator length, if relevant.
+     * @param chunkSeparatorLength The chunk separator length, if relevant.
      * @deprecated Use {@link BaseNCodec#BaseNCodec(AbstractBuilder)}.
      */
     @Deprecated
@@ -560,10 +618,10 @@ public abstract class BaseNCodec implements BinaryEncoder, BinaryDecoder {
      * disabled.
      * </p>
      *
-     * @param unencodedBlockSize   the size of an unencoded block (for example Base64 = 3).
-     * @param encodedBlockSize     the size of an encoded block (for example Base64 = 4).
+     * @param unencodedBlockSize   The size of an unencoded block (for example Base64 = 3).
+     * @param encodedBlockSize     The size of an encoded block (for example Base64 = 4).
      * @param lineLength           if &gt; 0, use chunking with a length {@code lineLength}.
-     * @param chunkSeparatorLength the chunk separator length, if relevant.
+     * @param chunkSeparatorLength The chunk separator length, if relevant.
      * @param pad                  byte used as padding byte.
      * @deprecated Use {@link BaseNCodec#BaseNCodec(AbstractBuilder)}.
      */
@@ -579,10 +637,10 @@ public abstract class BaseNCodec implements BinaryEncoder, BinaryDecoder {
      * disabled.
      * </p>
      *
-     * @param unencodedBlockSize   the size of an unencoded block (for example Base64 = 3).
-     * @param encodedBlockSize     the size of an encoded block (for example Base64 = 4).
+     * @param unencodedBlockSize   The size of an unencoded block (for example Base64 = 3).
+     * @param encodedBlockSize     The size of an encoded block (for example Base64 = 4).
      * @param lineLength           if &gt; 0, use chunking with a length {@code lineLength}.
-     * @param chunkSeparatorLength the chunk separator length, if relevant.
+     * @param chunkSeparatorLength The chunk separator length, if relevant.
      * @param pad                  byte used as padding byte.
      * @param decodingPolicy       Decoding policy.
      * @since 1.15
@@ -605,7 +663,7 @@ public abstract class BaseNCodec implements BinaryEncoder, BinaryDecoder {
     /**
      * Returns the amount of buffered data available for reading.
      *
-     * @param context the context to be used.
+     * @param context The context to be used.
      * @return The amount of buffered data available for reading.
      */
     int available(final Context context) { // package protected for access from I/O streams
@@ -634,8 +692,14 @@ public abstract class BaseNCodec implements BinaryEncoder, BinaryDecoder {
     /**
      * Decodes a byte[] containing characters in the Base-N alphabet.
      *
+     * <p>
+     * Uses this instance's decoding policy. Lenient decoding can accept multiple representations of the same bytes. For canonical Base32 or Base64 input,
+     * configure {@link CodecPolicy#STRICT}; see the class documentation for examples and guidance on comparing encoded values.
+     * </p>
+     *
      * @param array A byte array containing Base-N character data.
-     * @return a byte array containing binary data.
+     * @return A byte array containing binary data.
+     * @throws IllegalArgumentException Thrown when a problem is detected processing data.
      */
     @Override
     public byte[] decode(final byte[] array) {
@@ -650,16 +714,32 @@ public abstract class BaseNCodec implements BinaryEncoder, BinaryDecoder {
         return result;
     }
 
-    // package protected for access from I/O streams
-    abstract void decode(byte[] array, int i, int length, Context context);
+    /**
+     * Decodes a byte[] containing characters in the Base-N alphabet into a temporary context buffer.
+     * <p>
+     * This method is package protected for access from I/O streams.
+     * </p>
+     *
+     * @param array  A byte array containing Base-N character data.
+     * @param offset initial offset of the subarray.
+     * @param length length of the subarray.
+     * @throws IllegalArgumentException Thrown when a problem is detected processing data.
+     */
+    abstract void decode(byte[] array, int offset, int length, Context context);
 
     /**
      * Decodes an Object using the Base-N algorithm. This method is provided in order to satisfy the requirements of the Decoder interface, and will throw a
      * DecoderException if the supplied object is not of type byte[] or String.
      *
+     * <p>
+     * Uses this instance's decoding policy. Lenient decoding can accept multiple representations of the same bytes. For canonical Base32 or Base64 input,
+     * configure {@link CodecPolicy#STRICT}; see the class documentation for examples and guidance on comparing encoded values.
+     * </p>
+     *
      * @param obj Object to decode.
      * @return An object (of type byte[]) containing the binary data which corresponds to the byte[] or String supplied.
-     * @throws DecoderException if the parameter supplied is not of type byte[].
+     * @throws DecoderException Thrown if the parameter supplied is not of type byte[].
+     * @throws IllegalArgumentException Thrown when a problem is detected processing data.
      */
     @Override
     public Object decode(final Object obj) throws DecoderException {
@@ -675,8 +755,14 @@ public abstract class BaseNCodec implements BinaryEncoder, BinaryDecoder {
     /**
      * Decodes a String containing characters in the Base-N alphabet.
      *
+     * <p>
+     * Uses this instance's decoding policy. Lenient decoding can accept multiple representations of the same bytes. For canonical Base32 or Base64 input,
+     * configure {@link CodecPolicy#STRICT}; see the class documentation for examples and guidance on comparing encoded values.
+     * </p>
+     *
      * @param array A String containing Base-N character data.
-     * @return a byte array containing binary data.
+     * @return A byte array containing binary data.
+     * @throws IllegalArgumentException Thrown when a problem is detected processing data.
      */
     public byte[] decode(final String array) {
         return decode(StringUtils.getBytesUtf8(array));
@@ -685,8 +771,9 @@ public abstract class BaseNCodec implements BinaryEncoder, BinaryDecoder {
     /**
      * Encodes a byte[] containing binary data, into a byte[] containing characters in the alphabet.
      *
-     * @param array a byte array containing binary data.
+     * @param array A byte array containing binary data.
      * @return A byte array containing only the base N alphabetic character data.
+     * @throws IllegalArgumentException Thrown when a problem is detected processing data.
      */
     @Override
     public byte[] encode(final byte[] array) {
@@ -699,10 +786,11 @@ public abstract class BaseNCodec implements BinaryEncoder, BinaryDecoder {
     /**
      * Encodes a byte[] containing binary data, into a byte[] containing characters in the alphabet.
      *
-     * @param array  a byte array containing binary data.
+     * @param array  A byte array containing binary data.
      * @param offset initial offset of the subarray.
      * @param length length of the subarray.
      * @return A byte array containing only the base N alphabetic character data.
+     * @throws IllegalArgumentException Thrown when a problem is detected processing data.
      * @since 1.11
      */
     public byte[] encode(final byte[] array, final int offset, final int length) {
@@ -717,8 +805,18 @@ public abstract class BaseNCodec implements BinaryEncoder, BinaryDecoder {
         return buf;
     }
 
-    // package protected for access from I/O streams
-    abstract void encode(byte[] array, int i, int length, Context context);
+    /**
+     * Encodes a byte[] containing characters in the Base-N alphabet into a temporary context buffer.
+     * <p>
+     * This method is package protected for access from I/O streams.
+     * </p>
+     *
+     * @param array  A byte array containing Base-N character data.
+     * @param offset initial offset of the subarray.
+     * @param length length of the subarray.
+     * @throws IllegalArgumentException Thrown when a problem is detected processing data.
+     */
+    abstract void encode(byte[] array, int offset, int length, Context context);
 
     /**
      * Encodes an Object using the Base-N algorithm. This method is provided in order to satisfy the requirements of the Encoder interface, and will throw an
@@ -726,7 +824,7 @@ public abstract class BaseNCodec implements BinaryEncoder, BinaryDecoder {
      *
      * @param obj Object to encode.
      * @return An object (of type byte[]) containing the Base-N encoded data which corresponds to the byte[] supplied.
-     * @throws EncoderException if the parameter supplied is not of type byte[].
+     * @throws EncoderException Thrown if the parameter supplied is not of type byte[].
      */
     @Override
     public Object encode(final Object obj) throws EncoderException {
@@ -742,7 +840,7 @@ public abstract class BaseNCodec implements BinaryEncoder, BinaryDecoder {
      * This is a duplicate of {@link #encodeToString(byte[])}; it was merged during refactoring.
      * </p>
      *
-     * @param array a byte array containing binary data.
+     * @param array A byte array containing binary data.
      * @return String containing only character data in the appropriate alphabet.
      * @since 1.5
      */
@@ -753,7 +851,7 @@ public abstract class BaseNCodec implements BinaryEncoder, BinaryDecoder {
     /**
      * Encodes a byte[] containing binary data, into a String containing characters in the Base-N alphabet. Uses UTF8 encoding.
      *
-     * @param array a byte array containing binary data.
+     * @param array A byte array containing binary data.
      * @return A String containing only Base-N character data.
      */
     public String encodeToString(final byte[] array) {
@@ -764,8 +862,8 @@ public abstract class BaseNCodec implements BinaryEncoder, BinaryDecoder {
      * Ensures that the buffer has room for {@code size} bytes
      *
      * @param size    minimum spare space required.
-     * @param context the context to be used.
-     * @return the buffer.
+     * @param context The context to be used.
+     * @return The buffer.
      */
     protected byte[] ensureBufferSize(final int size, final Context context) {
         if (context.buffer == null) {
@@ -784,11 +882,10 @@ public abstract class BaseNCodec implements BinaryEncoder, BinaryDecoder {
      * Gets the decoding behavior policy.
      *
      * <p>
-     * The default is lenient. If the decoding policy is strict, then decoding will raise an {@link IllegalArgumentException} if trailing bits are not part of a
-     * valid encoding. Decoding will compose trailing bits into 8-bit bytes and discard the remainder.
+     * The default is lenient. Strict decoding rejects invalid trailing bits and, for Base32 and Base64, noncanonical input as described in this class.
      * </p>
      *
-     * @return true if using strict decoding.
+     * @return The decoding policy.
      * @since 1.15
      */
     public CodecPolicy getCodecPolicy() {
@@ -798,7 +895,7 @@ public abstract class BaseNCodec implements BinaryEncoder, BinaryDecoder {
     /**
      * Gets the default buffer size. Can be overridden.
      *
-     * @return the default buffer size.
+     * @return The default buffer size.
      */
     protected int getDefaultBufferSize() {
         return DEFAULT_BUFFER_SIZE;
@@ -824,7 +921,7 @@ public abstract class BaseNCodec implements BinaryEncoder, BinaryDecoder {
     /**
      * Tests whether this object has buffered data for reading.
      *
-     * @param context the context to be used.
+     * @param context The context to be used.
      * @return true if there is data still available for reading.
      */
     boolean hasData(final Context context) { // package protected for access from I/O streams
@@ -867,10 +964,10 @@ public abstract class BaseNCodec implements BinaryEncoder, BinaryDecoder {
     }
 
     /**
-     * Tests true if decoding behavior is strict. Decoding will raise an {@link IllegalArgumentException} if trailing bits are not part of a valid encoding.
+     * Tests whether decoding behavior is strict.
      *
      * <p>
-     * The default is false for lenient decoding. Decoding will compose trailing bits into 8-bit bytes and discard the remainder.
+     * Strict decoding rejects invalid trailing bits and, for Base32 and Base64, noncanonical input as described in this class.
      * </p>
      *
      * @return true if using strict decoding.
@@ -890,7 +987,7 @@ public abstract class BaseNCodec implements BinaryEncoder, BinaryDecoder {
      * @param b         byte[] array to extract the buffered data into.
      * @param position  position in byte[] array to start extraction at.
      * @param available amount of bytes we're allowed to extract. We may extract fewer (if fewer are available).
-     * @param context   the context to be used.
+     * @param context   The context to be used.
      * @return The number of bytes successfully extracted into the provided byte[] array.
      */
     int readResults(final byte[] b, final int position, final int available, final Context context) {
@@ -908,5 +1005,78 @@ public abstract class BaseNCodec implements BinaryEncoder, BinaryDecoder {
             return len;
         }
         return context.eof ? EOF : 0;
+    }
+
+    /**
+     * Validates a byte against the canonical Base32 or Base64 encoding, consuming padding and line separators.
+     *
+     * @param value The unsigned input byte.
+     * @param lineSeparator The configured line separator.
+     * @param padded Whether the encoder pads partial blocks.
+     * @param context The decoding context, whose modulus counts alphabet characters only.
+     * @return Whether the byte is an alphabet character to decode.
+     * @throws IllegalArgumentException Thrown if the byte cannot occur in a canonical encoding.
+     */
+    boolean validateCanonicalByte(final int value, final byte[] lineSeparator, final boolean padded, final Context context) {
+        if (lineLength > 0 && (context.strictSeparatorPos > 0 || context.currentLinePos == lineLength ||
+                value == (lineSeparator[0] & MASK_8BITS))) {
+            if (context.currentLinePos == 0 || value != (lineSeparator[context.strictSeparatorPos] & MASK_8BITS)) {
+                throw new IllegalArgumentException("Strict decoding: Invalid line separator or line length.");
+            }
+            if (context.strictSeparatorPos == 0) {
+                validateCanonicalPadding(padded, context);
+                context.strictFinalLine = context.currentLinePos < lineLength;
+            }
+            if (++context.strictSeparatorPos == lineSeparator.length) {
+                context.strictSeparatorPos = 0;
+                context.currentLinePos = 0;
+            }
+            return false;
+        }
+        if (context.strictFinalLine) {
+            throw new IllegalArgumentException("Strict decoding: Data follows the final line separator.");
+        }
+        if (value == (pad & MASK_8BITS)) {
+            if (!padded || context.modulus == 0 || context.strictPadding >= encodedBlockSize - context.modulus) {
+                throw new IllegalArgumentException("Strict decoding: Unexpected padding.");
+            }
+            context.strictPadding++;
+        } else {
+            final int decoded = value < decodeTable.length ? decodeTable[value] : -1;
+            if (context.strictPadding != 0 || decoded < 0 || decoded >= encodeTable.length || (encodeTable[decoded] & MASK_8BITS) != value) {
+                throw new IllegalArgumentException("Strict decoding: Unexpected character or data after padding.");
+            }
+        }
+        if (lineLength > 0) {
+            context.currentLinePos++;
+        }
+        return value != (pad & MASK_8BITS);
+    }
+
+    /**
+     * Validates the end of a canonical Base32 or Base64 encoding.
+     *
+     * @param padded Whether the encoder pads partial blocks.
+     * @param context The decoding context.
+     * @throws IllegalArgumentException Thrown if padding or the final line separator is incomplete.
+     */
+    void validateCanonicalEnd(final boolean padded, final Context context) {
+        validateCanonicalPadding(padded, context);
+        if (context.strictSeparatorPos != 0 || context.currentLinePos != 0) {
+            throw new IllegalArgumentException("Strict decoding: Missing or incomplete final line separator.");
+        }
+    }
+
+    /**
+     * Validates the number of padding bytes at the end of a line or input.
+     *
+     * @param padded Whether the encoder pads partial blocks.
+     * @param context The decoding context.
+     * @throws IllegalArgumentException Thrown if required padding is missing.
+     */
+    private void validateCanonicalPadding(final boolean padded, final Context context) {
+        if (padded && context.modulus != 0 && context.strictPadding != encodedBlockSize - context.modulus) {
+            throw new IllegalArgumentException("Strict decoding: Incorrect padding length.");
+        }
     }
 }

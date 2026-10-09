@@ -68,29 +68,29 @@ final class B64 {
     }
 
     /**
-     * Generates a string of random chars from the B64T set.
+     * Gets a string of random chars from the B64T set.
      *
      * <p>
      * The salt is generated with {@link SecureRandom}.
      * </p>
      *
      * @param num Number of chars to generate.
-     * @return a random salt {@link String}.
+     * @return A random salt {@link String}.
      */
     static String getRandomSalt(final int num) {
         return getRandomSalt(num, new SecureRandom());
     }
 
     /**
-     * Generates a string of random chars from the B64T set.
+     * Gets a string of random chars from the B64T set.
      *
      * <p>
      * The salt is generated with the {@link Random} provided.
      * </p>
      *
      * @param num Number of chars to generate.
-     * @param random an instance of {@link Random}.
-     * @return a random salt {@link String}.
+     * @param random An instance of {@link Random}.
+     * @return A random salt {@link String}.
      */
     static String getRandomSalt(final int num, final Random random) {
       final StringBuilder saltString = new StringBuilder(num);

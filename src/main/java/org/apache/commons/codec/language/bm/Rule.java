@@ -156,7 +156,7 @@ public class Rule {
         /**
          * Gets the language set.
          *
-         * @return the language set.
+         * @return The language set.
          */
         public Languages.LanguageSet getLanguages() {
             return this.languages;
@@ -170,7 +170,7 @@ public class Rule {
         /**
          * Gets the phoneme text sequence.
          *
-         * @return the phoneme text sequence.
+         * @return The phoneme text sequence.
          */
         public CharSequence getPhonemeText() {
             return this.phonemeText;
@@ -179,8 +179,8 @@ public class Rule {
         /**
          * Deprecated since 1.9.
          *
-         * @param right the Phoneme to join.
-         * @return a new Phoneme.
+         * @param right The Phoneme to join.
+         * @return A new Phoneme.
          * @deprecated Since 1.9
          */
         @Deprecated
@@ -191,8 +191,8 @@ public class Rule {
         /**
          * Returns a new Phoneme with the same text but a union of its current language set and the given one.
          *
-         * @param lang the language set to merge.
-         * @return a new Phoneme.
+         * @param lang The language set to merge.
+         * @return A new Phoneme.
          */
         public Phoneme mergeWithLanguage(final LanguageSet lang) {
             return new Phoneme(phonemeText.toString(), languages.merge(lang));
@@ -217,14 +217,14 @@ public class Rule {
         /**
          * Gets an iteration of phonemes.
          *
-         * @return an iteration of phonemes.
+         * @return An iteration of phonemes.
          */
         Iterable<Phoneme> getPhonemes();
 
         /**
          * Gets the expression size in phonemes.
          *
-         * @return the expression size in phonemes.
+         * @return The expression size in phonemes.
          * @since 1.17.0
          */
         default int size() {
@@ -243,7 +243,7 @@ public class Rule {
         /**
          * Constructs a new instance.
          *
-         * @param phonemes the phoneme list.
+         * @param phonemes The phoneme list.
          */
         public PhonemeList(final List<Phoneme> phonemes) {
             this.phonemeList = phonemes;
@@ -268,7 +268,7 @@ public class Rule {
         /**
          * Tests whether the given input matches this instance.
          *
-         * @param input the input to test.
+         * @param input The input to test.
          * @return whether the given input matches this instance.
          */
         boolean isMatch(CharSequence input);
@@ -360,10 +360,10 @@ public class Rule {
     /**
      * Gets rules for a combination of name type, rule type and languages.
      *
-     * @param nameType the NameType to consider.
-     * @param rt       the RuleType to consider.
-     * @param langs    the set of languages to consider.
-     * @return a list of Rules that apply.
+     * @param nameType The NameType to consider.
+     * @param rt       The RuleType to consider.
+     * @param langs    The set of languages to consider.
+     * @return A list of Rules that apply.
      */
     public static List<Rule> getInstance(final NameType nameType, final RuleType rt, final Languages.LanguageSet langs) {
         final Map<String, List<Rule>> ruleMap = getInstanceMap(nameType, rt, langs);
@@ -375,10 +375,10 @@ public class Rule {
     /**
      * Gets rules for a combination of name type, rule type and a single language.
      *
-     * @param nameType the NameType to consider.
-     * @param rt       the RuleType to consider.
-     * @param lang     the language to consider.
-     * @return a list of Rules that apply.
+     * @param nameType The NameType to consider.
+     * @param rt       The RuleType to consider.
+     * @param lang     The language to consider.
+     * @return A list of Rules that apply.
      */
     public static List<Rule> getInstance(final NameType nameType, final RuleType rt, final String lang) {
         return getInstance(nameType, rt, LanguageSet.from(new HashSet<>(Arrays.asList(lang))));
@@ -387,10 +387,10 @@ public class Rule {
     /**
      * Gets rules for a combination of name type, rule type and languages.
      *
-     * @param nameType the NameType to consider.
-     * @param rt       the RuleType to consider.
-     * @param langs    the set of languages to consider.
-     * @return a map containing all Rules that apply, grouped by the first character of the rule pattern.
+     * @param nameType The NameType to consider.
+     * @param rt       The RuleType to consider.
+     * @param langs    The set of languages to consider.
+     * @return A map containing all Rules that apply, grouped by the first character of the rule pattern.
      * @since 1.9
      */
     public static Map<String, List<Rule>> getInstanceMap(final NameType nameType, final RuleType rt, final Languages.LanguageSet langs) {
@@ -400,10 +400,10 @@ public class Rule {
     /**
      * Gets rules for a combination of name type, rule type and a single language.
      *
-     * @param nameType the NameType to consider.
-     * @param rt       the RuleType to consider.
-     * @param lang     the language to consider.
-     * @return a map containing all Rules that apply, grouped by the first character of the rule pattern.
+     * @param nameType The NameType to consider.
+     * @param rt       The RuleType to consider.
+     * @param lang     The language to consider.
+     * @return A map containing all Rules that apply, grouped by the first character of the rule pattern.
      * @since 1.9
      */
     public static Map<String, List<Rule>> getInstanceMap(final NameType nameType, final RuleType rt, final String lang) {
@@ -530,8 +530,8 @@ public class Rule {
     /**
      * Attempts to compile the regex into direct string ops, falling back to Pattern and Matcher in the worst case.
      *
-     * @param regex the regular expression to compile.
-     * @return an RPattern that will match this regex.
+     * @param regex The regular expression to compile.
+     * @return An RPattern that will match this regex.
      */
     private static RPattern pattern(final String regex) {
         final boolean startsWith = regex.startsWith("^");
@@ -629,10 +629,10 @@ public class Rule {
     /**
      * Creates a new rule.
      *
-     * @param pattern  the pattern.
-     * @param lContext the left context.
-     * @param rContext the right context.
-     * @param phoneme  the resulting phoneme.
+     * @param pattern  The pattern.
+     * @param lContext The left context.
+     * @param rContext The right context.
+     * @param phoneme  The resulting phoneme.
      */
     public Rule(final String pattern, final String lContext, final String rContext, final PhonemeExpr phoneme) {
         this.pattern = pattern;
@@ -644,7 +644,7 @@ public class Rule {
     /**
      * Gets the left context. This is a regular expression that must match to the left of the pattern.
      *
-     * @return the left context Pattern.
+     * @return The left context Pattern.
      */
     public RPattern getLContext() {
         return lContext;
@@ -653,7 +653,7 @@ public class Rule {
     /**
      * Gets the pattern. This is a string-literal that must exactly match.
      *
-     * @return the pattern.
+     * @return The pattern.
      */
     public String getPattern() {
         return pattern;
@@ -662,7 +662,7 @@ public class Rule {
     /**
      * Gets the phoneme. If the rule matches, this is the phoneme associated with the pattern match.
      *
-     * @return the phoneme.
+     * @return The phoneme.
      */
     public PhonemeExpr getPhoneme() {
         return phoneme;
@@ -671,7 +671,7 @@ public class Rule {
     /**
      * Gets the right context. This is a regular expression that must match to the right of the pattern.
      *
-     * @return the right context Pattern.
+     * @return The right context Pattern.
      */
     public RPattern getRContext() {
         return rContext;
@@ -681,8 +681,8 @@ public class Rule {
      * Decides if the pattern and context match the input starting at a position. It is a match if the {@code lContext} matches {@code input} up to {@code i},
      * {@code pattern} matches at i and {@code rContext} matches from the end of the match of {@code pattern} to the end of {@code input}.
      *
-     * @param input the input String.
-     * @param i     the int position within the input.
+     * @param input The input String.
+     * @param i     The int position within the input.
      * @return true if the pattern and left/right context match, false otherwise.
      */
     public boolean patternAndContextMatches(final CharSequence input, final int i) {

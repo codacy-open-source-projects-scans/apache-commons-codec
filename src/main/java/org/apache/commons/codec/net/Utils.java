@@ -35,6 +35,8 @@ final class Utils {
      */
     private static final int RADIX = 16;
 
+    static final byte SPACE = 32;
+
     /**
      * Returns the numeric value of the character {@code b} in radix 16.
      *
@@ -51,10 +53,10 @@ final class Utils {
     }
 
     /**
-     * Returns the upper case hexadecimal digit of the lower 4 bits of the int.
+     * Returns the uppercase hexadecimal digit of the lower 4 bits of the int.
      *
-     * @param b the input int.
-     * @return the upper case hexadecimal digit of the lower 4 bits of the int.
+     * @param b The input int.
+     * @return The uppercase hexadecimal digit of the lower 4 bits of the int.
      */
     static char hexChar(final int b) {
         return Character.toUpperCase(Character.forDigit(b & 0xF, RADIX));

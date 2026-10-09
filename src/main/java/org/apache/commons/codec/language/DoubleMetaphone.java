@@ -152,7 +152,7 @@ public class DoubleMetaphone implements StringEncoder {
         /**
          * Gets the alternate string.
          *
-         * @return the alternate string.
+         * @return The alternate string.
          */
         public String getAlternate() {
             return alternate.toString();
@@ -161,7 +161,7 @@ public class DoubleMetaphone implements StringEncoder {
         /**
          * Gets the primary string.
          *
-         * @return the primary string.
+         * @return The primary string.
          */
         public String getPrimary() {
             return primary.toString();
@@ -328,7 +328,7 @@ public class DoubleMetaphone implements StringEncoder {
      * Encodes a value with Double Metaphone.
      *
      * @param value String to encode.
-     * @return an encoded string.
+     * @return An encoded string.
      */
     public String doubleMetaphone(final String value) {
         return doubleMetaphone(value, false);
@@ -339,7 +339,7 @@ public class DoubleMetaphone implements StringEncoder {
      *
      * @param value String to encode.
      * @param alternate use alternate encode.
-     * @return an encoded string.
+     * @return An encoded string.
      */
     public String doubleMetaphone(String value, final boolean alternate) {
         value = cleanInput(value);
@@ -454,7 +454,7 @@ public class DoubleMetaphone implements StringEncoder {
      *
      * @param obj Object to encode (should be of type String).
      * @return An encoded Object (will be of type String).
-     * @throws EncoderException encode parameter is not of type String.
+     * @throws EncoderException Thrown if the encode parameter is not of type String.
      */
     @Override
     public Object encode(final Object obj) throws EncoderException {
@@ -478,7 +478,7 @@ public class DoubleMetaphone implements StringEncoder {
     /**
      * Gets the maxCodeLen.
      *
-     * @return the maxCodeLen.
+     * @return The maxCodeLen.
      */
     public int getMaxCodeLen() {
         return maxCodeLen;

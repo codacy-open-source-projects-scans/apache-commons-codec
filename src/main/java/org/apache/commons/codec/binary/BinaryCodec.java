@@ -29,15 +29,11 @@ import org.apache.commons.codec.EncoderException;
  * This class is immutable and thread-safe.
  * </p>
  *
- * TODO: may want to add more bit vector functions like and/or/xor/nand TODO: also might be good to generate boolean[] from byte[] et cetera.
- *
  * @since 1.3
  */
 public class BinaryCodec implements BinaryDecoder, BinaryEncoder {
 
-    /*
-     * tried to avoid using ArrayUtils to minimize dependencies while using these empty arrays - dep is just not worth it.
-     */
+    // TODO may want to add more bit vector functions like and/or/xor/nand TODO: also might be good to generate boolean[] from byte[] et cetera.
 
     /** Empty char array. */
     private static final char[] EMPTY_CHAR_ARRAY = {};
@@ -74,15 +70,28 @@ public class BinaryCodec implements BinaryDecoder, BinaryEncoder {
     /**
      * Decodes a byte array where each byte represents an ASCII '0' or '1'.
      *
+     * <p>
+     * All input must consist of ASCII {@code '0'} and {@code '1'} values. If the input length is not a multiple of 8, the leading
+     * {@code length % 8} values are validated but omitted from the decoded result. Null or empty input produces an empty byte array.
+     * </p>
+     *
      * @param ascii each byte represents an ASCII '0' or '1'.
-     * @return the raw encoded binary where each bit corresponds to a byte in the byte array argument.
+     * @return The raw encoded binary where each bit corresponds to a byte in the byte array argument.
+     * @throws IllegalArgumentException Thrown if the input contains a value other than ASCII '0' or '1'.
      */
     public static byte[] fromAscii(final byte[] ascii) {
         if (isEmpty(ascii)) {
             return EMPTY_BYTE_ARRAY;
         }
         final int asciiLength = ascii.length;
-        // get length/8 times bytes with 3 bit shifts to the right of the length
+        // Validate all input, including leading values omitted from the decoded result.
+        for (int i = 0; i < asciiLength; i++) {
+            final byte b = ascii[i];
+            if (b != '0' && b != '1') {
+                throw new IllegalArgumentException("Input contains a value other than ASCII '0' or '1' at index " + i);
+            }
+        }
+        // Decode complete groups of 8, omitting any remaining leading values.
         final byte[] raw = new byte[asciiLength >> 3];
         /*
          * We decr index jj by 8 as we go along to not recompute indices using multiplication every time inside the loop.
@@ -100,15 +109,28 @@ public class BinaryCodec implements BinaryDecoder, BinaryEncoder {
     /**
      * Decodes a char array where each char represents an ASCII '0' or '1'.
      *
+     * <p>
+     * All input must consist of ASCII {@code '0'} and {@code '1'} values. If the input length is not a multiple of 8, the leading
+     * {@code length % 8} values are validated but omitted from the decoded result. Null or empty input produces an empty byte array.
+     * </p>
+     *
      * @param ascii each char represents an ASCII '0' or '1'.
-     * @return the raw encoded binary where each bit corresponds to a char in the char array argument.
+     * @return The raw encoded binary where each bit corresponds to a char in the char array argument.
+     * @throws IllegalArgumentException Thrown if the input contains a value other than ASCII '0' or '1'.
      */
     public static byte[] fromAscii(final char[] ascii) {
         if (ascii == null || ascii.length == 0) {
             return EMPTY_BYTE_ARRAY;
         }
         final int asciiLength = ascii.length;
-        // get length/8 times bytes with 3 bit shifts to the right of the length
+        // Validate all input, including leading values omitted from the decoded result.
+        for (int i = 0; i < asciiLength; i++) {
+            final char c = ascii[i];
+            if (c != '0' && c != '1') {
+                throw new IllegalArgumentException("Input contains a value other than ASCII '0' or '1' at index " + i);
+            }
+        }
+        // Decode complete groups of 8, omitting any remaining leading values.
         final byte[] raw = new byte[asciiLength >> 3];
         /*
          * We decr index jj by 8 as we go along to not recompute indices using multiplication every time inside the loop.
@@ -124,9 +146,9 @@ public class BinaryCodec implements BinaryDecoder, BinaryEncoder {
     }
 
     /**
-     * Returns {@code true} if the given array is {@code null} or empty (size 0.)
+     * Tests whether the given array is {@code null} or empty (size 0).
      *
-     * @param array the source array.
+     * @param array The source array.
      * @return {@code true} if the given array is {@code null} or empty (size 0.)
      */
     static boolean isEmpty(final byte[] array) {
@@ -136,8 +158,8 @@ public class BinaryCodec implements BinaryDecoder, BinaryEncoder {
     /**
      * Converts an array of raw binary data into an array of ASCII 0 and 1 character bytes - each byte is a truncated char.
      *
-     * @param raw the raw binary data to convert.
-     * @return an array of 0 and 1 character bytes for each bit of the argument.
+     * @param raw The raw binary data to convert.
+     * @return An array of 0 and 1 character bytes for each bit of the argument.
      * @see org.apache.commons.codec.BinaryEncoder#encode(byte[])
      */
     public static byte[] toAsciiBytes(final byte[] raw) {
@@ -165,8 +187,8 @@ public class BinaryCodec implements BinaryDecoder, BinaryEncoder {
     /**
      * Converts an array of raw binary data into an array of ASCII 0 and 1 characters.
      *
-     * @param raw the raw binary data to convert.
-     * @return an array of 0 and 1 characters for each bit of the argument.
+     * @param raw The raw binary data to convert.
+     * @return An array of 0 and 1 characters for each bit of the argument.
      * @see org.apache.commons.codec.BinaryEncoder#encode(byte[])
      */
     public static char[] toAsciiChars(final byte[] raw) {
@@ -194,8 +216,8 @@ public class BinaryCodec implements BinaryDecoder, BinaryEncoder {
     /**
      * Converts an array of raw binary data into a String of ASCII 0 and 1 characters.
      *
-     * @param raw the raw binary data to convert.
-     * @return a String of 0 and 1 characters representing the binary data.
+     * @param raw The raw binary data to convert.
+     * @return A String of 0 and 1 characters representing the binary data.
      * @see org.apache.commons.codec.BinaryEncoder#encode(byte[])
      */
     public static String toAsciiString(final byte[] raw) {
@@ -212,8 +234,14 @@ public class BinaryCodec implements BinaryDecoder, BinaryEncoder {
     /**
      * Decodes a byte array where each byte represents an ASCII '0' or '1'.
      *
+     * <p>
+     * All input must consist of ASCII {@code '0'} and {@code '1'} values. If the input length is not a multiple of 8, the leading
+     * {@code length % 8} values are validated but omitted from the decoded result. Null or empty input produces an empty byte array.
+     * </p>
+     *
      * @param ascii each byte represents an ASCII '0' or '1'.
-     * @return the raw encoded binary where each bit corresponds to a byte in the byte array argument.
+     * @return The raw encoded binary where each bit corresponds to a byte in the byte array argument.
+     * @throws IllegalArgumentException Thrown if the input contains a value other than ASCII '0' or '1'.
      * @see org.apache.commons.codec.Decoder#decode(Object)
      */
     @Override
@@ -224,9 +252,15 @@ public class BinaryCodec implements BinaryDecoder, BinaryEncoder {
     /**
      * Decodes a byte array where each byte represents an ASCII '0' or '1'.
      *
+     * <p>
+     * All input must consist of ASCII {@code '0'} and {@code '1'} values. If the input length is not a multiple of 8, the leading
+     * {@code length % 8} values are validated but omitted from the decoded result. Null or empty input produces an empty byte array.
+     * </p>
+     *
      * @param ascii each byte represents an ASCII '0' or '1'.
-     * @return the raw encoded binary where each bit corresponds to a byte in the byte array argument.
-     * @throws DecoderException if argument is not a byte[], char[] or String.
+     * @return The raw encoded binary where each bit corresponds to a byte in the byte array argument.
+     * @throws IllegalArgumentException Thrown if the input contains a value other than ASCII '0' or '1'.
+     * @throws DecoderException Thrown if the argument is not a byte[], char[], or String.
      * @see org.apache.commons.codec.Decoder#decode(Object)
      */
     @Override
@@ -249,7 +283,7 @@ public class BinaryCodec implements BinaryDecoder, BinaryEncoder {
     /**
      * Converts an array of raw binary data into an array of ASCII 0 and 1 characters.
      *
-     * @param raw the raw binary data to convert.
+     * @param raw The raw binary data to convert.
      * @return 0 and 1 ASCII character bytes one for each bit of the argument.
      * @see org.apache.commons.codec.BinaryEncoder#encode(byte[])
      */
@@ -261,9 +295,9 @@ public class BinaryCodec implements BinaryDecoder, BinaryEncoder {
     /**
      * Converts an array of raw binary data into an array of ASCII 0 and 1 chars.
      *
-     * @param raw the raw binary data to convert.
+     * @param raw The raw binary data to convert.
      * @return 0 and 1 ASCII character chars one for each bit of the argument.
-     * @throws EncoderException if the argument is not a byte[].
+     * @throws EncoderException Thrown if the argument is not a byte[].
      * @see org.apache.commons.codec.Encoder#encode(Object)
      */
     @Override
@@ -277,8 +311,14 @@ public class BinaryCodec implements BinaryDecoder, BinaryEncoder {
     /**
      * Decodes a String where each char of the String represents an ASCII '0' or '1'.
      *
+     * <p>
+     * All input must consist of ASCII {@code '0'} and {@code '1'} values. If the input length is not a multiple of 8, the leading
+     * {@code length % 8} values are validated but omitted from the decoded result. Null or empty input produces an empty byte array.
+     * </p>
+     *
      * @param ascii String of '0' and '1' characters.
-     * @return the raw encoded binary where each bit corresponds to a byte in the byte array argument.
+     * @return The raw encoded binary where each bit corresponds to a byte in the byte array argument.
+     * @throws IllegalArgumentException Thrown if the input contains a value other than ASCII '0' or '1'.
      * @see org.apache.commons.codec.Decoder#decode(Object)
      */
     public byte[] toByteArray(final String ascii) {

@@ -17,16 +17,21 @@
 
 package org.apache.commons.codec.net;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.nio.charset.StandardCharsets;
+import java.util.BitSet;
 
 import org.apache.commons.codec.CharEncoding;
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.EncoderException;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 /**
  * URL codec test cases
@@ -57,15 +62,18 @@ class URLCodecTest {
         validateState(urlCodec);
     }
 
-    @Test
-    void testDecodeInvalid() throws Exception {
+    @ParameterizedTest(name = "{0}: {1}")
+    // @formatter:off
+    @CsvSource({
+        "missing escape digits, %",
+        "missing second escape digit, %A",
+        "invalid first escape digit, %WW",
+        "invalid second escape digit, %0W"
+    })
+    // @formatter:on
+    void testDecodeInvalid(final String description, final String encoded) throws Exception {
         final URLCodec urlCodec = new URLCodec();
-        assertThrows(DecoderException.class, () -> urlCodec.decode("%"));
-        assertThrows(DecoderException.class, () -> urlCodec.decode("%A"));
-        // Bad 1st char after %
-        assertThrows(DecoderException.class, () -> urlCodec.decode("%WW"));
-        // Bad 2nd char after %
-        assertThrows(DecoderException.class, () -> urlCodec.decode("%0W"));
+        assertThrows(DecoderException.class, () -> urlCodec.decode(encoded), description);
         validateState(urlCodec);
     }
 
@@ -106,6 +114,70 @@ class URLCodecTest {
         final String test = null;
         final String result = urlCodec.decode(test, "charset");
         assertNull(result, "Result should be null");
+    }
+
+    @Test
+    void testDecodeUrlWithCustomBitSetAmbiguousEscapes() throws Exception {
+        final BitSet safe = new BitSet();
+        safe.set('%');
+        final byte[] encoded = URLCodec.encodeUrl(safe, new byte[] { '%', '/' });
+        assertEquals("%%2F", new String(encoded, StandardCharsets.US_ASCII));
+        assertArrayEquals(encoded, URLCodec.decodeUrl(safe, encoded));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "%", "%A", "%WW", "%0W", "%W0" })
+    void testDecodeUrlWithCustomBitSetInvalidEscapes(final String input) throws Exception {
+        final byte[] bytes = input.getBytes(StandardCharsets.US_ASCII);
+        final BitSet safe = new BitSet();
+        assertThrows(DecoderException.class, () -> URLCodec.decodeUrl(null, bytes));
+        assertThrows(DecoderException.class, () -> URLCodec.decodeUrl(safe, bytes));
+        safe.set('%');
+        assertArrayEquals(bytes, URLCodec.decodeUrl(safe, bytes));
+    }
+
+    @Test
+    void testDecodeUrlWithCustomBitSetNullAndEmpty() throws Exception {
+        assertNull(URLCodec.decodeUrl(null, null));
+        assertNull(URLCodec.decodeUrl(new BitSet(), null));
+        assertArrayEquals(new byte[0], URLCodec.decodeUrl(null, new byte[0]));
+        assertArrayEquals(new byte[0], URLCodec.decodeUrl(new BitSet(), new byte[0]));
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = { 0, 1, 2, 3 })
+    void testDecodeUrlWithCustomBitSetPlusAndSpace(final int flags) throws Exception {
+        final BitSet safe = new BitSet();
+        safe.set(' ', (flags & 1) != 0);
+        safe.set('+', (flags & 2) != 0);
+        final String expected = flags == 1 ? "  +" : "+ +";
+        assertEquals(expected, new String(URLCodec.decodeUrl(safe, "+%20%2b".getBytes(StandardCharsets.US_ASCII)), StandardCharsets.US_ASCII));
+        if (flags == 3) {
+            final byte[] encoded = URLCodec.encodeUrl(safe, " +".getBytes(StandardCharsets.US_ASCII));
+            assertEquals("++", new String(encoded, StandardCharsets.US_ASCII));
+            assertArrayEquals(encoded, URLCodec.decodeUrl(safe, encoded));
+        }
+    }
+
+    @Test
+    void testDecodeUrlWithCustomBitSetRoundTripAllBytes() throws Exception {
+        final byte[] input = new byte[256];
+        for (int i = 0; i < input.length; i++) {
+            input[i] = (byte) i;
+        }
+        final BitSet literalPlus = new BitSet(256);
+        literalPlus.set(0, 256);
+        literalPlus.clear('%');
+        literalPlus.clear(' ');
+        final BitSet spaceAsPlus = (BitSet) literalPlus.clone();
+        spaceAsPlus.clear('+');
+        spaceAsPlus.set(' ');
+        for (final BitSet safe : new BitSet[] { null, new BitSet(), literalPlus, spaceAsPlus }) {
+            final BitSet original = safe == null ? null : (BitSet) safe.clone();
+            final byte[] encoded = URLCodec.encodeUrl(safe, input);
+            assertArrayEquals(input, URLCodec.decodeUrl(safe, encoded));
+            assertEquals(original, safe, "The safe set must not be modified");
+        }
     }
 
     @Test
@@ -173,11 +245,34 @@ class URLCodecTest {
     @Test
     void testEncodeUrlWithNullBitSet() throws Exception {
         final URLCodec urlCodec = new URLCodec();
-        final String plain = "Hello there!";
+        final String plain = "Hello there!%+";
         final String encoded = new String(URLCodec.encodeUrl(null, plain.getBytes(StandardCharsets.UTF_8)));
-        assertEquals("Hello+there%21", encoded, "Basic URL encoding test");
+        assertEquals("Hello+there%21%25%2B", encoded, "Basic URL encoding test");
         assertEquals(plain, urlCodec.decode(encoded), "Basic URL decoding test");
         validateState(urlCodec);
+    }
+
+    @Test
+    void testEncodeUrlWithPercentMarkedSafePreservesPercent() {
+        final BitSet safe = new BitSet();
+        safe.set('%');
+        final String plain = "%";
+        final byte[] encoded = URLCodec.encodeUrl(safe, plain.getBytes(StandardCharsets.US_ASCII));
+        final String encodedS = new String(encoded, StandardCharsets.US_ASCII);
+        assertEquals(plain, encodedS, "URLCodec should preserve percent when marked safe");
+        assertThrows(DecoderException.class, () -> URLCodec.decodeUrl(encoded));
+    }
+
+    @Test
+    void testEncodeUrlWithPlusMarkedSafePreservesPlus() throws Exception {
+        final BitSet safe = new BitSet();
+        safe.set('+');
+        final String plain = "+";
+        final byte[] encoded = URLCodec.encodeUrl(safe, plain.getBytes(StandardCharsets.US_ASCII));
+        final String encodedS = new String(encoded, StandardCharsets.US_ASCII);
+        assertEquals(plain, encodedS, "URLCodec should preserve plus when marked safe");
+        final byte[] decoded = URLCodec.decodeUrl(encoded);
+        assertEquals(" ", new String(decoded, StandardCharsets.US_ASCII), "Default decoding interprets a literal plus as a space");
     }
 
     @Test
