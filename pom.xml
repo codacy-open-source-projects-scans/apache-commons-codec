@@ -24,11 +24,11 @@ limitations under the License.
   <parent>
     <groupId>org.apache.commons</groupId>
     <artifactId>commons-parent</artifactId>
-    <version>105</version>
+    <version>106</version>
   </parent>
   <groupId>commons-codec</groupId>
   <artifactId>commons-codec</artifactId>
-  <version>1.23.0-SNAPSHOT</version>
+  <version>1.23.1-SNAPSHOT</version>
   <name>Apache Commons Codec</name>
   <inceptionYear>2002</inceptionYear>
   <description>
@@ -101,14 +101,14 @@ limitations under the License.
     <checkstyle.header.file>${basedir}/src/conf/checkstyle-header.txt</checkstyle.header.file>
     <checkstyle.config.file>${basedir}/src/conf/checkstyle.xml</checkstyle.config.file>
     <!-- Commons Release Plugin -->
-    <commons.release.version>1.23.0</commons.release.version>
-    <commons.bc.version>1.22.1</commons.bc.version>
-    <commons.release.next>1.23.1</commons.release.next>
+    <commons.release.version>1.23.1</commons.release.version>
+    <commons.bc.version>1.23.0</commons.bc.version>
+    <commons.release.next>1.23.2</commons.release.next>
     <commons.rc.version>RC1</commons.rc.version>
     <commons.release.isDistModule>true</commons.release.isDistModule>
     <commons.distSvnStagingUrl>scm:svn:https://dist.apache.org/repos/dist/dev/commons/${commons.componentid}</commons.distSvnStagingUrl>
     <!-- project.build.outputTimestamp is managed by Maven plugins, see https://maven.apache.org/guides/mini/guide-reproducible-builds.html -->
-    <project.build.outputTimestamp>2026-07-30T09:34:50Z</project.build.outputTimestamp>
+    <project.build.outputTimestamp>2026-10-11T15:37:17Z</project.build.outputTimestamp>
     <!-- JaCoCo: Don't make code coverage worse than: -->
     <jacoco.skip>false</jacoco.skip>
     <commons.jacoco.haltOnFailure>true</commons.jacoco.haltOnFailure>
